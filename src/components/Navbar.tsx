@@ -10,7 +10,6 @@ import logo from '@/assets/logo.png';
 const navLinks = [
   { label: 'Home', href: '/#home' },
   { label: 'About', href: '/#about' },
-  { label: 'Consultant', href: '/#consultant' },
   { label: 'Partnership', href: '/#partnership' },
   { label: 'Services', href: '/#services' },
   { label: 'Portfolio', href: '/#portfolio' },
