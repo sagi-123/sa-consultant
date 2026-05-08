@@ -10,6 +10,8 @@ import logo from '@/assets/logo.png';
 const navLinks = [
   { label: 'Home', href: '/#home' },
   { label: 'About', href: '/#about' },
+  { label: 'Consultant', href: '/#consultant' },
+  { label: 'Partnership', href: '/#partnership' },
   { label: 'Services', href: '/#services' },
   { label: 'Portfolio', href: '/#portfolio' },
   { label: 'Testimonials', href: '/#testimonials' },
@@ -66,8 +68,8 @@ const Navbar = () => {
     <nav className={`fixed top-0 left-0 w-full z-[9999] transition-all duration-300 ${scrolled ? 'glass-strong py-4 shadow-lg shadow-background/50' : 'glass-strong py-4'}`}>
       <div className="container mx-auto flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2 sm:gap-4">
-          <img src={logo} alt="SA Consultant logo" className="h-10 sm:h-12 md:h-32 w-auto object-contain transition-transform duration-300 hover:scale-105" />
-          <span className="text-sm sm:text-xl md:text-4xl font-display font-black tracking-[0.1em] sm:tracking-widest gradient-text leading-tight uppercase">
+          <img src={logo} alt="SA Consultant logo" className="h-8 sm:h-10 md:h-12 w-auto object-contain transition-transform duration-300 hover:scale-105" />
+          <span className="text-xs sm:text-sm md:text-lg font-display font-black tracking-widest gradient-text leading-tight uppercase">
             SA Consultant & Staffing
           </span>
         </Link>
