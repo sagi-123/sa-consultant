@@ -38,10 +38,7 @@ const mockCandidate = {
     portfolio: "",
     github: ""
   },
-  resumeVersions: [
-    { id: "v2", name: "Frontend_Resume_v2.pdf", date: "Oct 15, 2024" },
-    { id: "v1", name: "FullStack_Resume_v1.pdf", date: "Sep 01, 2024" }
-  ],
+  resumeVersions: [] as { id: string, name: string, date: string }[],
   appliedJobs: [] as string[],
 };
 
@@ -49,8 +46,8 @@ const CandidatePortal = () => {
   const { profile, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [resumeList, setResumeList] = useState(mockCandidate.resumeVersions);
-  const [activeResume, setActiveResume] = useState(mockCandidate.resumeVersions[0]?.id || '');
+  const [resumeList, setResumeList] = useState<{ id: string, name: string, date: string }[]>([]);
+  const [activeResume, setActiveResume] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [isParsing, setIsParsing] = useState(false);
   const [candidateData, setCandidateData] = useState(mockCandidate);
@@ -77,6 +74,20 @@ const CandidatePortal = () => {
             ...(data.parsed_data as any),
             name: data.name
           }));
+        }
+        if (data.resume_url) {
+          // Extract filename from URL (e.g. ".../resumes/userId/1234_MyResume.pdf" -> "MyResume.pdf")
+          const urlParts = data.resume_url.split('/');
+          const fullFileName = urlParts[urlParts.length - 1] || 'Uploaded_Resume.pdf';
+          const cleanName = fullFileName.split('_').slice(1).join('_') || fullFileName;
+          
+          const fetchedResume = {
+            id: data.id,
+            name: cleanName,
+            date: new Date(data.created_at).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
+          };
+          setResumeList([fetchedResume]);
+          setActiveResume(fetchedResume.id);
         }
       }
     };
