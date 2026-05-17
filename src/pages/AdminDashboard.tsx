@@ -37,17 +37,20 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { CandidateProfileDialog } from '@/components/CandidateProfileDialog';
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
 type Review = Database['public']['Tables']['reviews']['Row'];
 type Project = Database['public']['Tables']['projects']['Row'];
 type Inquiry = Database['public']['Tables']['inquiries']['Row'];
+type Candidate = Database['public']['Tables']['candidates']['Row'];
 
 const AdminDashboard = () => {
   const { profile, signOut } = useAuth();
   const [users, setUsers] = useState<Profile[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
+  const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const { toast } = useToast();
@@ -63,6 +66,7 @@ const AdminDashboard = () => {
   const [savingSettings, setSavingSettings] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('overview');
+  const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
   
   // Portfolio State
   const [projects, setProjects] = useState<Project[]>([]);
@@ -84,22 +88,25 @@ const AdminDashboard = () => {
     else setRefreshing(true);
     
     try {
-      const [usersResponse, reviewsResponse, projectsResponse, inquiriesResponse] = await Promise.all([
+      const [usersResponse, reviewsResponse, projectsResponse, inquiriesResponse, candidatesResponse] = await Promise.all([
         supabase.from('profiles').select('*').order('created_at', { ascending: false }),
         supabase.from('reviews').select('*').order('created_at', { ascending: false }),
         supabase.from('projects').select('*').order('created_at', { ascending: false }),
         supabase.from('inquiries').select('*').order('created_at', { ascending: false }),
+        supabase.from('candidates').select('*').order('created_at', { ascending: false }),
       ]);
 
       if (usersResponse.error) throw usersResponse.error;
       if (reviewsResponse.error) throw reviewsResponse.error;
       if (projectsResponse.error) throw projectsResponse.error;
       if (inquiriesResponse.error) throw inquiriesResponse.error;
+      if (candidatesResponse.error && candidatesResponse.error.code !== '42P01') throw candidatesResponse.error; // Ignore table missing error for now
 
       setUsers(usersResponse.data || []);
       setReviews(reviewsResponse.data || []);
       setProjects(projectsResponse.data || []);
       setInquiries(inquiriesResponse.data || []);
+      setCandidates(candidatesResponse.data || []);
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -158,6 +165,34 @@ const AdminDashboard = () => {
       toast({
         variant: "destructive",
         title: "Error updating review",
+        description: error.message,
+      });
+    }
+  };
+
+  const handleUpdateCandidateStatus = async (id: string, status: string) => {
+    try {
+      const { error } = await supabase
+        .from('candidates')
+        .update({ status } as any)
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // Update local state immediately
+      setCandidates(prev => prev.map(c => c.id === id ? { ...c, status: status as any } : c));
+      if (selectedCandidate && selectedCandidate.id === id) {
+        setSelectedCandidate({ ...selectedCandidate, status: status as any });
+      }
+
+      toast({
+        title: "Status Updated",
+        description: `Candidate moved to ${status}.`,
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error updating status",
         description: error.message,
       });
     }
@@ -431,10 +466,10 @@ const AdminDashboard = () => {
   };
 
   const stats = [
-    { label: 'Total Users', value: users.length, icon: Users, color: 'text-blue-500' },
+    { label: 'Total Applicants', value: candidates.length, icon: Users, color: 'text-purple-500' },
+    { label: 'New Apps', value: candidates.filter(c => c.status === 'New').length, icon: Briefcase, color: 'text-blue-500' },
     { label: 'Total Reviews', value: reviews.length, icon: Star, color: 'text-yellow-500' },
     { label: 'New Messages', value: inquiries.filter(i => i.status === 'new').length, icon: Mail, color: 'text-green-500' },
-    { label: 'Staff Admins', value: users.filter((u: any) => u.role === 'admin').length, icon: ShieldCheck, color: 'text-green-500' },
   ];
 
   const filteredReviews = reviews.filter(r => 
@@ -480,6 +515,14 @@ const AdminDashboard = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
           <TabsList className="glass-strong flex lg:grid lg:grid-cols-6 overflow-x-auto w-full h-auto p-1 sticky top-20 z-40 backdrop-blur-xl border border-primary/20 touch-pan-x gap-1 justify-start flex-nowrap">
             <TabsTrigger value="overview" className="data-[state=active]:gradient-bg h-10 px-4 min-w-[120px] flex-shrink-0">Overview</TabsTrigger>
+            <TabsTrigger value="candidates" className="data-[state=active]:gradient-bg h-10 px-4 min-w-[120px] flex-shrink-0 flex gap-2 items-center justify-center relative">
+              <Users size={16} /> Candidates
+              {candidates.filter(c => c.status === 'New').length > 0 && (
+                <span className="absolute top-1 right-1 bg-blue-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center animate-pulse border border-background">
+                  {candidates.filter(c => c.status === 'New').length}
+                </span>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="inquiries" className="data-[state=active]:gradient-bg h-10 px-4 min-w-[120px] flex-shrink-0 flex gap-2 items-center justify-center relative">
               <Mail size={16} /> Messages
               {inquiries.filter(i => i.status === 'new').length > 0 && (
@@ -522,15 +565,96 @@ const AdminDashboard = () => {
             <Card className="glass mt-8 border-primary/20">
               <CardHeader>
                 <CardTitle className="gradient-text font-bold">Welcome back, Admin</CardTitle>
-                <CardDescription>Everything is running smoothly. There are {pendingCount} new reviews and {inquiries.filter(i => i.status === 'new').length} new messages.</CardDescription>
+                <CardDescription>Everything is running smoothly. There are {candidates.filter(c => c.status === 'New').length} new candidate applications and {inquiries.filter(i => i.status === 'new').length} new messages.</CardDescription>
               </CardHeader>
               <CardContent className="flex gap-4 flex-wrap">
-                <Button onClick={() => setActiveTab('inquiries')}>
-                   View Messages
+                <Button onClick={() => setActiveTab('candidates')} className="gradient-bg border-none">
+                   Review Candidates
                 </Button>
-                <Button variant="outline" onClick={() => setActiveTab('settings')}>
+                <Button variant="outline" onClick={() => setActiveTab('inquiries')}>
                    Update Contact Info
                 </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="candidates">
+            <Card className="glass">
+              <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                  <CardTitle className="font-display font-bold text-2xl flex items-center gap-2">
+                     <Users size={24} className="text-primary" /> Candidate ATS
+                  </CardTitle>
+                  <CardDescription>Manage incoming applications and track candidates through your hiring pipeline.</CardDescription>
+                </div>
+                <div className="relative w-full sm:w-64">
+                   <Search size={16} className="absolute left-3 top-3 text-muted-foreground" />
+                   <Input 
+                      placeholder="Search candidates or skills..." 
+                      className="pl-10 h-9"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                   />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Applicant</TableHead>
+                        <TableHead>Job Title</TableHead>
+                        <TableHead>Experience</TableHead>
+                        <TableHead>Location</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {candidates.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                            {searchTerm ? "No matching candidates found." : "No candidates applied yet."}
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        candidates.filter(c => 
+                          (c.name || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          (c.job_title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          JSON.stringify(c.skills || []).toLowerCase().includes(searchTerm.toLowerCase())
+                        ).map((candidate) => (
+                          <TableRow key={candidate.id} className="hover:bg-primary/5 transition-colors cursor-pointer">
+                            <TableCell className="font-medium">
+                              <div className="flex flex-col">
+                                <span>{candidate.name}</span>
+                                <span className="text-xs text-muted-foreground">{candidate.email}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell>{candidate.job_title || 'N/A'}</TableCell>
+                            <TableCell>{candidate.experience_years || 'N/A'}</TableCell>
+                            <TableCell>{candidate.location || 'N/A'}</TableCell>
+                            <TableCell>
+                              <span className={`text-[10px] px-2 py-1 rounded-full uppercase tracking-wider font-bold ${
+                                candidate.status === 'New' ? 'bg-blue-500/10 text-blue-500' : 
+                                candidate.status === 'Screened' ? 'bg-yellow-500/10 text-yellow-500' :
+                                candidate.status === 'Interview' ? 'bg-purple-500/10 text-purple-500' :
+                                candidate.status === 'Offer' ? 'bg-green-500/10 text-green-500' :
+                                'bg-red-500/10 text-red-500'
+                              }`}>
+                                {candidate.status}
+                              </span>
+                            </TableCell>
+                            <TableCell className="text-right space-x-2">
+                              <Button variant="outline" size="sm" className="h-8" onClick={() => setSelectedCandidate(candidate)}>
+                                View Profile
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -1130,6 +1254,14 @@ const AdminDashboard = () => {
             </Card>
           </TabsContent>
         </Tabs>
+        {/* Edit Project Dialog */}
+        {/* We reuse the scrollIntoView logic instead of a dialog for projects, but we add Candidate Dialog below */}
+        <CandidateProfileDialog 
+          candidate={selectedCandidate} 
+          isOpen={!!selectedCandidate} 
+          onClose={() => setSelectedCandidate(null)} 
+          onUpdateStatus={handleUpdateCandidateStatus}
+        />
       </main>
     </div>
   );

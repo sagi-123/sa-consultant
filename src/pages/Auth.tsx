@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,6 +35,8 @@ const Auth = () => {
 
   const [view, setView] = useState<AuthView>(getInitialView());
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const returnTo = searchParams.get('returnTo');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -52,9 +54,13 @@ const Auth = () => {
   useEffect(() => {
     // REGULAR REDIRECT: Only redirect if NOT in recovery mode and NOT loading auth
     if (!authLoading && user && view !== 'update_password') {
-      navigate(isAdmin ? '/admin' : '/dashboard');
+      if (returnTo) {
+        navigate(returnTo);
+      } else {
+        navigate(isAdmin ? '/admin' : '/dashboard');
+      }
     }
-  }, [user, isAdmin, navigate, view, authLoading]);
+  }, [user, isAdmin, navigate, view, authLoading, returnTo]);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();

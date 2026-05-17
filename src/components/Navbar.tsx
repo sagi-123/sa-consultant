@@ -102,11 +102,21 @@ const Navbar = () => {
           <ThemeToggle />
 
           {!user ? (
-            <Button asChild className="gradient-bg border-none">
-              <Link to="/auth">Client Access</Link>
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button asChild variant="outline" className="glass border-primary/20">
+                <Link to="/candidate-portal">Candidate Portal</Link>
+              </Button>
+              <Button asChild className="gradient-bg border-none">
+                <Link to="/auth">Client Access</Link>
+              </Button>
+            </div>
           ) : (
             <div className="flex items-center gap-2">
+              {!isAdmin && (
+                <Button asChild variant="ghost" size="sm" className="hidden sm:flex">
+                  <Link to="/candidate-portal">Candidate Portal</Link>
+                </Button>
+              )}
               <Button asChild variant="outline" size="sm" className="glass">
                 <Link to={isAdmin ? "/admin" : "/dashboard"} className="gap-2">
                   <LayoutDashboard size={16} /> Dashboard
@@ -147,11 +157,21 @@ const Navbar = () => {
             ))}
             <div className="pt-2 flex flex-col gap-3">
               {!user ? (
-                <Button asChild className="gradient-bg w-full h-12 rounded-xl text-foreground font-bold">
-                  <Link to="/auth" onClick={() => setMobileOpen(false)}>Client Access</Link>
-                </Button>
+                <div className="flex flex-col gap-3">
+                  <Button asChild variant="outline" className="w-full h-12 glass rounded-xl border-primary/30 text-foreground font-bold">
+                    <Link to="/candidate-portal" onClick={() => setMobileOpen(false)}>Candidate Portal</Link>
+                  </Button>
+                  <Button asChild className="gradient-bg w-full h-12 rounded-xl text-foreground font-bold">
+                    <Link to="/auth" onClick={() => setMobileOpen(false)}>Client Access</Link>
+                  </Button>
+                </div>
               ) : (
                 <div className="flex flex-col gap-3">
+                  {!isAdmin && (
+                    <Button asChild variant="ghost" className="w-full h-12 rounded-xl">
+                      <Link to="/candidate-portal" onClick={() => setMobileOpen(false)}>Candidate Portal</Link>
+                    </Button>
+                  )}
                   <Button asChild variant="outline" className="w-full h-12 glass rounded-xl border-primary/30">
                     <Link to={isAdmin ? "/admin" : "/dashboard"} onClick={() => setMobileOpen(false)}>
                       <LayoutDashboard size={18} className="mr-2" /> Dashboard

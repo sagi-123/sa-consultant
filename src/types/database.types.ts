@@ -145,6 +145,56 @@ export interface Database {
           created_at?: string
         }
       }
+      candidates: {
+        Row: {
+          id: string
+          user_id: string | null
+          name: string
+          email: string | null
+          phone: string | null
+          job_title: string | null
+          experience_years: string | null
+          location: string | null
+          skills: Json
+          parsed_data: Json
+          resume_url: string | null
+          status: 'New' | 'Screened' | 'Interview' | 'Offer' | 'Rejected'
+          applied_job_id: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          name: string
+          email?: string | null
+          phone?: string | null
+          job_title?: string | null
+          experience_years?: string | null
+          location?: string | null
+          skills?: Json
+          parsed_data: Json
+          resume_url?: string | null
+          status?: 'New' | 'Screened' | 'Interview' | 'Offer' | 'Rejected'
+          applied_job_id?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          name?: string
+          email?: string | null
+          phone?: string | null
+          job_title?: string | null
+          experience_years?: string | null
+          location?: string | null
+          skills?: Json
+          parsed_data?: Json
+          resume_url?: string | null
+          status?: 'New' | 'Screened' | 'Interview' | 'Offer' | 'Rejected'
+          applied_job_id?: string | null
+          created_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
