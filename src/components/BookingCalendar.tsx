@@ -417,9 +417,17 @@ export default function BookingCalendar() {
                     <Button
                       type="submit"
                       disabled={preferredSlots.length !== 3 || isSubmitting}
-                      className="w-full gradient-bg font-black text-white hover-lift hover-glow h-12 rounded-xl flex items-center justify-center gap-2 transition-all mt-6 shadow-lg shadow-primary/20"
+                      className="w-full gradient-bg font-black text-white hover-lift hover-glow py-3 h-auto min-h-12 rounded-xl flex items-center justify-center gap-2 transition-all mt-6 shadow-lg shadow-primary/20 text-sm sm:text-base"
                     >
-                      {isSubmitting ? "Booking Slots..." : "Book Slots & Open WhatsApp"} <Send size={16} />
+                      {isSubmitting ? (
+                        "Booking Slots..."
+                      ) : (
+                        <>
+                          <span className="sm:hidden">Book & Open WhatsApp</span>
+                          <span className="hidden sm:inline">Book Slots & Open WhatsApp</span>
+                        </>
+                      )}
+                      <Send size={16} className="flex-shrink-0" />
                     </Button>
                   </form>
                 </CardContent>
