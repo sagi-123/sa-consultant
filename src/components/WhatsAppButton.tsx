@@ -16,10 +16,14 @@ const WhatsAppButton = () => {
     <>
       <style>{`
         .floating-whatsapp-btn {
-          bottom: 120px !important;
+          left: 24px !important;
+          right: auto !important;
+          bottom: 24px !important;
         }
         @media (min-width: 768px) {
           .floating-whatsapp-btn {
+            right: 24px !important;
+            left: auto !important;
             bottom: 24px !important;
           }
         }
@@ -29,7 +33,7 @@ const WhatsAppButton = () => {
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Contact us on WhatsApp"
-        className="fixed right-6 z-50 w-14 h-14 rounded-full bg-[hsl(142,70%,45%)] flex items-center justify-center shadow-lg shadow-[hsl(142,70%,45%)]/30 hover:scale-110 hover:shadow-xl hover:shadow-[hsl(142,70%,45%)]/40 transition-all duration-300 animate-pulse-glow floating-whatsapp-btn"
+        className="fixed z-50 w-14 h-14 rounded-full bg-[hsl(142,70%,45%)] flex items-center justify-center shadow-lg shadow-[hsl(142,70%,45%)]/30 hover:scale-110 hover:shadow-xl hover:shadow-[hsl(142,70%,45%)]/40 transition-all duration-300 animate-pulse-glow floating-whatsapp-btn"
         style={{ '--tw-shadow-color': 'hsl(142 70% 45% / 0.3)' } as React.CSSProperties}
       >
         <svg className="w-7 h-7 text-foreground" fill="currentColor" viewBox="0 0 24 24">
