@@ -38,6 +38,8 @@ import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { CandidateProfileDialog } from '@/components/CandidateProfileDialog';
+import { AdminPartnerCRM } from '@/components/AdminPartnerCRM';
+import { AdminMasterBrain } from '@/components/AdminMasterBrain';
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
 type Review = Database['public']['Tables']['reviews']['Row'];
@@ -541,6 +543,9 @@ const AdminDashboard = () => {
                   {pendingCount}
                 </span>
               )}
+            </TabsTrigger>
+            <TabsTrigger value="partners" className="data-[state=active]:gradient-bg h-10 px-4 min-w-[120px] flex-shrink-0 flex gap-2 items-center justify-center font-bold text-primary">
+              🧠 Master CRM (The Brain)
             </TabsTrigger>
             <TabsTrigger value="settings" className="data-[state=active]:gradient-bg h-10 px-4 min-w-[120px] flex-shrink-0">Site Settings</TabsTrigger>
             <TabsTrigger value="users" className="data-[state=active]:gradient-bg h-10 px-4 min-w-[120px] flex-shrink-0">User Control</TabsTrigger>
@@ -1252,6 +1257,10 @@ const AdminDashboard = () => {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="partners">
+            <AdminMasterBrain />
           </TabsContent>
         </Tabs>
         {/* Edit Project Dialog */}

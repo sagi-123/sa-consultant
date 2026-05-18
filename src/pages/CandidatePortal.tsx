@@ -39,7 +39,6 @@ const mockCandidate = {
     github: ""
   },
   resumeVersions: [] as { id: string, name: string, date: string }[],
-  appliedJobs: [] as string[],
 };
 
 const CandidatePortal = () => {

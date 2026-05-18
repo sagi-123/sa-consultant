@@ -5,9 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
-import { Star, MessageSquare, LogOut, LayoutDashboard, User } from 'lucide-react';
+import { Star, MessageSquare, LogOut, LayoutDashboard, User, Users, ArrowUpRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Database } from '@/types/database.types';
 
@@ -96,7 +97,26 @@ const UserDashboard = () => {
         </div>
       </nav>
 
-      <main className="container mx-auto px-4 py-8 max-w-5xl">
+      <main className="container mx-auto px-4 py-8 max-w-5xl space-y-8">
+        {/* Talent Partner Promotional Banner */}
+        <Card className="glass border-primary/20 relative overflow-hidden shadow-md">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -z-10" />
+          <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6">
+            <div className="space-y-1">
+              <Badge variant="outline" className="bg-primary/10 text-primary border-none text-xs font-bold mb-1 py-0.5 px-2.5">
+                C2C Staffing Supplier Program
+              </Badge>
+              <CardTitle className="text-2xl font-display font-bold gradient-text">Talent Partner Portal</CardTitle>
+              <CardDescription className="text-sm max-w-xl">
+                Are you a C2C partner agency, subcontracting vendor, or freelance recruiter? Access your dedicated portal to browse open job requisitions, submit bench candidates with AI parsing, and track your revenue shares.
+              </CardDescription>
+            </div>
+            <Button onClick={() => navigate('/vendor-portal')} className="gradient-bg h-12 px-6 rounded-xl font-bold shadow-lg gap-2 shrink-0">
+              <Users size={18} /> Open Partner Portal <ArrowUpRight size={18} />
+            </Button>
+          </CardHeader>
+        </Card>
+
         <div className="grid md:grid-cols-3 gap-8">
           {/* Profile Card */}
           <Card className="glass h-fit">

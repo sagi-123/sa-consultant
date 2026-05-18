@@ -103,6 +103,9 @@ const Navbar = () => {
 
           {!user ? (
             <div className="flex items-center gap-2">
+              <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+                <Link to="/vendor-portal">Talent Partner</Link>
+              </Button>
               <Button asChild variant="outline" className="glass border-primary/20">
                 <Link to="/candidate-portal">Candidate Portal</Link>
               </Button>
@@ -113,9 +116,14 @@ const Navbar = () => {
           ) : (
             <div className="flex items-center gap-2">
               {!isAdmin && (
-                <Button asChild variant="ghost" size="sm" className="hidden sm:flex">
-                  <Link to="/candidate-portal">Candidate Portal</Link>
-                </Button>
+                <>
+                  <Button asChild variant="ghost" size="sm" className="hidden sm:flex text-primary font-semibold">
+                    <Link to="/vendor-portal">Talent Partner</Link>
+                  </Button>
+                  <Button asChild variant="ghost" size="sm" className="hidden sm:flex">
+                    <Link to="/candidate-portal">Candidate Portal</Link>
+                  </Button>
+                </>
               )}
               <Button asChild variant="outline" size="sm" className="glass">
                 <Link to={isAdmin ? "/admin" : "/dashboard"} className="gap-2">
@@ -158,6 +166,9 @@ const Navbar = () => {
             <div className="pt-2 flex flex-col gap-3">
               {!user ? (
                 <div className="flex flex-col gap-3">
+                  <Button asChild variant="ghost" className="w-full h-12 text-muted-foreground font-bold">
+                    <Link to="/vendor-portal" onClick={() => setMobileOpen(false)}>Talent Partner Portal</Link>
+                  </Button>
                   <Button asChild variant="outline" className="w-full h-12 glass rounded-xl border-primary/30 text-foreground font-bold">
                     <Link to="/candidate-portal" onClick={() => setMobileOpen(false)}>Candidate Portal</Link>
                   </Button>
@@ -168,9 +179,14 @@ const Navbar = () => {
               ) : (
                 <div className="flex flex-col gap-3">
                   {!isAdmin && (
-                    <Button asChild variant="ghost" className="w-full h-12 rounded-xl">
-                      <Link to="/candidate-portal" onClick={() => setMobileOpen(false)}>Candidate Portal</Link>
-                    </Button>
+                    <>
+                      <Button asChild variant="ghost" className="w-full h-12 rounded-xl text-primary font-bold">
+                        <Link to="/vendor-portal" onClick={() => setMobileOpen(false)}>Talent Partner Portal</Link>
+                      </Button>
+                      <Button asChild variant="ghost" className="w-full h-12 rounded-xl">
+                        <Link to="/candidate-portal" onClick={() => setMobileOpen(false)}>Candidate Portal</Link>
+                      </Button>
+                    </>
                   )}
                   <Button asChild variant="outline" className="w-full h-12 glass rounded-xl border-primary/30">
                     <Link to={isAdmin ? "/admin" : "/dashboard"} onClick={() => setMobileOpen(false)}>

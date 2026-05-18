@@ -195,6 +195,223 @@ export interface Database {
           created_at?: string
         }
       }
+      jobs: {
+        Row: {
+          id: string
+          title: string
+          department: string | null
+          location: string | null
+          employment_type: string | null
+          description: string | null
+          salary_range: string | null
+          status: 'Open' | 'Closed' | 'On Hold'
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          department?: string | null
+          location?: string | null
+          employment_type?: string | null
+          description?: string | null
+          salary_range?: string | null
+          status?: 'Open' | 'Closed' | 'On Hold'
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          department?: string | null
+          location?: string | null
+          employment_type?: string | null
+          description?: string | null
+          salary_range?: string | null
+          status?: 'Open' | 'Closed' | 'On Hold'
+          created_at?: string
+        }
+      }
+      vendor_candidates: {
+        Row: {
+          id: string
+          vendor_id: string
+          vendor_company_name: string
+          name: string
+          email: string | null
+          phone: string | null
+          skills: Json
+          experience_years: string | null
+          location: string | null
+          salary_expectation: string | null
+          availability: string | null
+          work_authorization: string | null
+          resume_url: string | null
+          parsed_data: Json | null
+          status: 'Available' | 'Submitted to Jobs' | 'Interviewing' | 'Offered' | 'Placed'
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          vendor_id: string
+          vendor_company_name: string
+          name: string
+          email?: string | null
+          phone?: string | null
+          skills?: Json
+          experience_years?: string | null
+          location?: string | null
+          salary_expectation?: string | null
+          availability?: string | null
+          work_authorization?: string | null
+          resume_url?: string | null
+          parsed_data?: Json | null
+          status?: 'Available' | 'Submitted to Jobs' | 'Interviewing' | 'Offered' | 'Placed'
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          vendor_id?: string
+          vendor_company_name?: string
+          name?: string
+          email?: string | null
+          phone?: string | null
+          skills?: Json
+          experience_years?: string | null
+          location?: string | null
+          salary_expectation?: string | null
+          availability?: string | null
+          work_authorization?: string | null
+          resume_url?: string | null
+          parsed_data?: Json | null
+          status?: 'Available' | 'Submitted to Jobs' | 'Interviewing' | 'Offered' | 'Placed'
+          created_at?: string
+        }
+      }
+      job_matches: {
+        Row: {
+          id: string
+          candidate_id: string
+          job_id: string
+          vendor_id: string
+          company_name: string
+          job_role: string
+          match_percentage: number
+          salary_fit: string | null
+          location_fit: string | null
+          partner_approved: boolean
+          status: 'Pending Partner Approval' | 'Approved / Submitted' | 'Interview' | 'Offered' | 'Placed' | 'Rejected'
+          interview_schedule: string | null
+          interview_feedback: string | null
+          offered_salary: string | null
+          joining_date: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          candidate_id: string
+          job_id: string
+          vendor_id: string
+          company_name: string
+          job_role: string
+          match_percentage?: number
+          salary_fit?: string | null
+          location_fit?: string | null
+          partner_approved?: boolean
+          status?: 'Pending Partner Approval' | 'Approved / Submitted' | 'Interview' | 'Offered' | 'Placed' | 'Rejected'
+          interview_schedule?: string | null
+          interview_feedback?: string | null
+          offered_salary?: string | null
+          joining_date?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          candidate_id?: string
+          job_id?: string
+          vendor_id?: string
+          company_name?: string
+          job_role?: string
+          match_percentage?: number
+          salary_fit?: string | null
+          location_fit?: string | null
+          partner_approved?: boolean
+          status?: 'Pending Partner Approval' | 'Approved / Submitted' | 'Interview' | 'Offered' | 'Placed' | 'Rejected'
+          interview_schedule?: string | null
+          interview_feedback?: string | null
+          offered_salary?: string | null
+          joining_date?: string | null
+          created_at?: string
+        }
+      }
+      revenue_shares: {
+        Row: {
+          id: string
+          match_id: string
+          vendor_id: string
+          candidate_name: string
+          company_name: string
+          placement_fee: number
+          partner_share: number
+          payment_status: 'Pending' | 'Paid'
+          paid_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          match_id: string
+          vendor_id: string
+          candidate_name: string
+          company_name: string
+          placement_fee?: number
+          partner_share?: number
+          payment_status?: 'Pending' | 'Paid'
+          paid_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          match_id?: string
+          vendor_id?: string
+          candidate_name?: string
+          company_name?: string
+          placement_fee?: number
+          partner_share?: number
+          payment_status?: 'Pending' | 'Paid'
+          paid_at?: string | null
+          created_at?: string
+        }
+      }
+      partner_messages: {
+        Row: {
+          id: string
+          vendor_id: string
+          sender_id: string
+          sender_name: string
+          sender_role: string
+          candidate_id: string | null
+          message: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          vendor_id: string
+          sender_id: string
+          sender_name: string
+          sender_role: string
+          candidate_id?: string | null
+          message: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          vendor_id?: string
+          sender_id?: string
+          sender_name?: string
+          sender_role?: string
+          candidate_id?: string | null
+          message?: string
+          created_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
