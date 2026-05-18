@@ -18,7 +18,7 @@ const WhatsAppButton = () => {
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Contact us on WhatsApp"
-      className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-[hsl(142,70%,45%)] flex items-center justify-center shadow-lg shadow-[hsl(142,70%,45%)]/30 hover:scale-110 hover:shadow-xl hover:shadow-[hsl(142,70%,45%)]/40 transition-all duration-300 animate-pulse-glow"
+      className="fixed bottom-24 md:bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-[hsl(142,70%,45%)] flex items-center justify-center shadow-lg shadow-[hsl(142,70%,45%)]/30 hover:scale-110 hover:shadow-xl hover:shadow-[hsl(142,70%,45%)]/40 transition-all duration-300 animate-pulse-glow"
       style={{ '--tw-shadow-color': 'hsl(142 70% 45% / 0.3)' } as React.CSSProperties}
     >
       <svg className="w-7 h-7 text-foreground" fill="currentColor" viewBox="0 0 24 24">
