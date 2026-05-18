@@ -32,7 +32,9 @@ import {
   Globe,
   Instagram,
   Linkedin,
-  Upload
+  Upload,
+  CalendarDays,
+  Clock
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
@@ -46,6 +48,7 @@ type Review = Database['public']['Tables']['reviews']['Row'];
 type Project = Database['public']['Tables']['projects']['Row'];
 type Inquiry = Database['public']['Tables']['inquiries']['Row'];
 type Candidate = Database['public']['Tables']['candidates']['Row'];
+type Appointment = Database['public']['Tables']['appointments']['Row'];
 
 const AdminDashboard = () => {
   const { profile, signOut } = useAuth();
@@ -53,6 +56,7 @@ const AdminDashboard = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const { toast } = useToast();
@@ -90,12 +94,13 @@ const AdminDashboard = () => {
     else setRefreshing(true);
     
     try {
-      const [usersResponse, reviewsResponse, projectsResponse, inquiriesResponse, candidatesResponse] = await Promise.all([
+      const [usersResponse, reviewsResponse, projectsResponse, inquiriesResponse, candidatesResponse, appointmentsResponse] = await Promise.all([
         supabase.from('profiles').select('*').order('created_at', { ascending: false }),
         supabase.from('reviews').select('*').order('created_at', { ascending: false }),
         supabase.from('projects').select('*').order('created_at', { ascending: false }),
         supabase.from('inquiries').select('*').order('created_at', { ascending: false }),
         supabase.from('candidates').select('*').order('created_at', { ascending: false }),
+        supabase.from('appointments').select('*').order('created_at', { ascending: false }),
       ]);
 
       if (usersResponse.error) throw usersResponse.error;
@@ -103,12 +108,14 @@ const AdminDashboard = () => {
       if (projectsResponse.error) throw projectsResponse.error;
       if (inquiriesResponse.error) throw inquiriesResponse.error;
       if (candidatesResponse.error && candidatesResponse.error.code !== '42P01') throw candidatesResponse.error; // Ignore table missing error for now
+      if (appointmentsResponse.error && appointmentsResponse.error.code !== '42P01') throw appointmentsResponse.error; // Ignore table missing error for now
 
       setUsers(usersResponse.data || []);
       setReviews(reviewsResponse.data || []);
       setProjects(projectsResponse.data || []);
       setInquiries(inquiriesResponse.data || []);
       setCandidates(candidatesResponse.data || []);
+      setAppointments(appointmentsResponse.data || []);
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -411,6 +418,76 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleConfirmAppointmentSlot = async (id: string, slotText: string) => {
+    try {
+      const { error } = await supabase
+        .from('appointments')
+        .update({ status: 'confirmed', selected_slot: slotText } as any)
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Appointment Confirmed",
+        description: `Successfully confirmed slot: ${slotText}`
+      });
+      fetchAllData(true);
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error confirming appointment",
+        description: error.message
+      });
+    }
+  };
+
+  const handleCancelAppointment = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('appointments')
+        .update({ status: 'cancelled', selected_slot: null } as any)
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Appointment Cancelled",
+        description: "The meeting slot request has been set to cancelled."
+      });
+      fetchAllData(true);
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error cancelling appointment",
+        description: error.message
+      });
+    }
+  };
+
+  const handleDeleteAppointment = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this appointment booking permanently?')) return;
+    try {
+      const { error } = await supabase
+        .from('appointments')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Appointment Deleted",
+        description: "The appointment has been removed from the database."
+      });
+      fetchAllData(true);
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error deleting appointment",
+        description: error.message
+      });
+    }
+  };
+
   const handleMarkAllAsRead = useCallback(async () => {
     const newInquiries = inquiries.filter(i => i.status === 'new');
     if (newInquiries.length === 0) return;
@@ -470,7 +547,7 @@ const AdminDashboard = () => {
   const stats = [
     { label: 'Total Applicants', value: candidates.length, icon: Users, color: 'text-purple-500' },
     { label: 'New Apps', value: candidates.filter(c => c.status === 'New').length, icon: Briefcase, color: 'text-blue-500' },
-    { label: 'Total Reviews', value: reviews.length, icon: Star, color: 'text-yellow-500' },
+    { label: 'Total Bookings', value: appointments.length, icon: CalendarDays, color: 'text-orange-500' },
     { label: 'New Messages', value: inquiries.filter(i => i.status === 'new').length, icon: Mail, color: 'text-green-500' },
   ];
 
@@ -515,7 +592,7 @@ const AdminDashboard = () => {
 
       <main className="container mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-          <TabsList className="glass-strong flex lg:grid lg:grid-cols-6 overflow-x-auto w-full h-auto p-1 sticky top-20 z-40 backdrop-blur-xl border border-primary/20 touch-pan-x gap-1 justify-start flex-nowrap">
+          <TabsList className="glass-strong flex lg:grid lg:grid-cols-9 overflow-x-auto w-full h-auto p-1 sticky top-20 z-40 backdrop-blur-xl border border-primary/20 touch-pan-x gap-1 justify-start flex-nowrap">
             <TabsTrigger value="overview" className="data-[state=active]:gradient-bg h-10 px-4 min-w-[120px] flex-shrink-0">Overview</TabsTrigger>
             <TabsTrigger value="candidates" className="data-[state=active]:gradient-bg h-10 px-4 min-w-[120px] flex-shrink-0 flex gap-2 items-center justify-center relative">
               <Users size={16} /> Candidates
@@ -547,6 +624,14 @@ const AdminDashboard = () => {
             <TabsTrigger value="partners" className="data-[state=active]:gradient-bg h-10 px-4 min-w-[120px] flex-shrink-0 flex gap-2 items-center justify-center font-bold text-primary">
               🧠 Master CRM (The Brain)
             </TabsTrigger>
+            <TabsTrigger value="appointments" className="data-[state=active]:gradient-bg h-10 px-4 min-w-[120px] flex-shrink-0 flex gap-2 items-center justify-center relative font-bold text-orange-500">
+              📅 Appointments
+              {appointments.filter(a => a.status === 'pending').length > 0 && (
+                <span className="absolute top-1 right-1 bg-orange-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center animate-pulse border border-background">
+                  {appointments.filter(a => a.status === 'pending').length}
+                </span>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="settings" className="data-[state=active]:gradient-bg h-10 px-4 min-w-[120px] flex-shrink-0">Site Settings</TabsTrigger>
             <TabsTrigger value="users" className="data-[state=active]:gradient-bg h-10 px-4 min-w-[120px] flex-shrink-0">User Control</TabsTrigger>
           </TabsList>
@@ -570,11 +655,14 @@ const AdminDashboard = () => {
             <Card className="glass mt-8 border-primary/20">
               <CardHeader>
                 <CardTitle className="gradient-text font-bold">Welcome back, Admin</CardTitle>
-                <CardDescription>Everything is running smoothly. There are {candidates.filter(c => c.status === 'New').length} new candidate applications and {inquiries.filter(i => i.status === 'new').length} new messages.</CardDescription>
+                <CardDescription>Everything is running smoothly. There are {candidates.filter(c => c.status === 'New').length} new candidate applications, {appointments.filter(a => a.status === 'pending').length} pending appointments, and {inquiries.filter(i => i.status === 'new').length} new messages.</CardDescription>
               </CardHeader>
               <CardContent className="flex gap-4 flex-wrap">
                 <Button onClick={() => setActiveTab('candidates')} className="gradient-bg border-none">
                    Review Candidates
+                </Button>
+                <Button variant="outline" onClick={() => setActiveTab('appointments')} className="gap-2">
+                   <CalendarDays size={16} /> Manage Appointments
                 </Button>
                 <Button variant="outline" onClick={() => setActiveTab('inquiries')}>
                    Update Contact Info
@@ -1254,6 +1342,254 @@ const AdminDashboard = () => {
                       )}
                     </TableBody>
                   </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="appointments">
+            <Card className="glass animate-in fade-in-50 duration-500">
+              <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                  <CardTitle className="font-display font-bold text-2xl flex items-center gap-2">
+                     <CalendarDays size={24} className="text-orange-500" /> Client Appointments
+                  </CardTitle>
+                  <CardDescription>Review meeting slot requests from clients, select a slot to confirm, or manage bookings.</CardDescription>
+                </div>
+                <div className="relative w-full sm:w-64">
+                   <Search size={16} className="absolute left-3 top-3 text-muted-foreground" />
+                   <Input 
+                      placeholder="Search bookings..." 
+                      className="pl-10 h-9"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                   />
+                </div>
+              </CardHeader>
+              <CardContent>
+                {/* Desktop View */}
+                <div className="hidden md:block overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Requested Date</TableHead>
+                        <TableHead>Client Contact</TableHead>
+                        <TableHead>Proposed Slots (Click one to Confirm)</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {appointments.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                            No appointments requested yet.
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        appointments.filter(a => 
+                          (a.client_name || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          (a.client_email || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          (a.client_phone || '').toLowerCase().includes(searchTerm.toLowerCase())
+                        ).map((app) => (
+                          <TableRow key={app.id}>
+                            <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                              {new Date(app.created_at).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell className="font-medium">
+                              <div className="flex flex-col gap-0.5">
+                                <span className="font-bold">{app.client_name}</span>
+                                <span className="text-xs text-muted-foreground flex items-center gap-1"><Mail size={12} /> {app.client_email}</span>
+                                <span className="text-xs text-muted-foreground flex items-center gap-1"><Phone size={12} /> {app.client_phone}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex flex-col gap-2 max-w-sm">
+                                {[app.slot_1, app.slot_2, app.slot_3].map((slot, index) => {
+                                  const isSelected = app.selected_slot === slot;
+                                  const isConfirmed = app.status === 'confirmed';
+                                  
+                                  return (
+                                    <button
+                                      key={index}
+                                      disabled={isConfirmed}
+                                      onClick={() => handleConfirmAppointmentSlot(app.id, slot)}
+                                      className={`flex items-center gap-2 text-left text-xs p-2 rounded-lg border transition-all ${
+                                        isSelected
+                                          ? "bg-green-500/10 border-green-500 text-green-500 font-bold shadow-sm"
+                                          : isConfirmed
+                                            ? "bg-muted/40 border-border text-muted-foreground opacity-50 cursor-not-allowed"
+                                            : "hover:bg-primary/5 hover:border-primary border-primary/20 text-foreground cursor-pointer"
+                                      }`}
+                                    >
+                                      <span className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-black ${
+                                        isSelected ? "bg-green-500 text-white" : "bg-primary/10 text-primary"
+                                      }`}>
+                                        {index + 1}
+                                      </span>
+                                      <span className="flex-1">{slot}</span>
+                                      {isSelected && <CheckCircle size={14} className="text-green-500 flex-shrink-0" />}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <span className={`text-[10px] px-2 py-1 rounded-full uppercase tracking-wider font-bold ${
+                                app.status === 'confirmed' ? 'bg-green-500/10 text-green-500 border border-green-500/30' : 
+                                app.status === 'cancelled' ? 'bg-red-500/10 text-red-500 border border-red-500/30' :
+                                'bg-yellow-500/10 text-yellow-500 border border-yellow-500/30'
+                              }`}>
+                                {app.status}
+                              </span>
+                            </TableCell>
+                            <TableCell className="text-right whitespace-nowrap">
+                              <div className="flex items-center justify-end gap-2">
+                                {app.status === 'confirmed' && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      const text = `Hi ${app.client_name}, this is SA Elevate. We are happy to confirm your appointment for ${app.selected_slot}! See you then!`;
+                                      const cleaned = app.client_phone.replace(/\D/g, '');
+                                      window.open(`https://wa.me/${cleaned}?text=${encodeURIComponent(text)}`, '_blank');
+                                    }}
+                                    className="h-8 border-green-500/30 text-green-500 hover:bg-green-500/10 gap-1 font-bold text-xs"
+                                    title="Notify Client on WhatsApp"
+                                  >
+                                    <MessageSquare size={12} /> Notify WhatsApp
+                                  </Button>
+                                )}
+                                
+                                {app.status === 'pending' && (
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    onClick={() => handleCancelAppointment(app.id)}
+                                    className="h-8 w-8 text-yellow-600 hover:bg-yellow-500/10"
+                                    title="Cancel Appointment"
+                                  >
+                                    <XCircle size={14} />
+                                  </Button>
+                                )}
+                                
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  onClick={() => handleDeleteAppointment(app.id)}
+                                  className="h-8 w-8 text-red-500 hover:bg-red-500/10"
+                                  title="Delete Appointment"
+                                >
+                                  <Trash2 size={14} />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* Mobile view */}
+                <div className="md:hidden space-y-4">
+                  {appointments.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">No appointments requested yet.</div>
+                  ) : (
+                    appointments.filter(a => 
+                      (a.client_name || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+                      (a.client_email || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+                      (a.client_phone || '').toLowerCase().includes(searchTerm.toLowerCase())
+                    ).map((app) => (
+                      <div key={app.id} className="glass rounded-xl p-5 border border-primary/10 space-y-4">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h4 className="font-bold text-lg text-foreground">{app.client_name}</h4>
+                            <p className="text-xs text-muted-foreground">Requested: {new Date(app.created_at).toLocaleString()}</p>
+                          </div>
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-bold ${
+                            app.status === 'confirmed' ? 'bg-green-500/10 text-green-500 border border-green-500/30' : 
+                            app.status === 'cancelled' ? 'bg-red-500/10 text-red-500 border border-red-500/30' :
+                            'bg-yellow-500/10 text-yellow-500 border border-yellow-500/30'
+                          }`}>
+                            {app.status}
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-1 text-xs">
+                          <span className="flex items-center gap-1.5 text-muted-foreground"><Mail size={12} /> {app.client_email}</span>
+                          <span className="flex items-center gap-1.5 text-muted-foreground"><Phone size={12} /> {app.client_phone}</span>
+                        </div>
+
+                        <div className="space-y-2 pt-2 border-t border-primary/5">
+                          <p className="text-xs font-bold text-muted-foreground mb-2">Slots (Select one to confirm):</p>
+                          {[app.slot_1, app.slot_2, app.slot_3].map((slot, index) => {
+                            const isSelected = app.selected_slot === slot;
+                            const isConfirmed = app.status === 'confirmed';
+                            return (
+                              <button
+                                key={index}
+                                disabled={isConfirmed}
+                                onClick={() => handleConfirmAppointmentSlot(app.id, slot)}
+                                className={`w-full flex items-center gap-2 text-left text-xs p-2.5 rounded-lg border transition-all ${
+                                  isSelected
+                                    ? "bg-green-500/10 border-green-500 text-green-500 font-bold"
+                                    : isConfirmed
+                                      ? "bg-muted/40 border-border text-muted-foreground opacity-50 cursor-not-allowed"
+                                      : "bg-secondary/20 hover:bg-primary/5 hover:border-primary border-primary/20 text-foreground cursor-pointer"
+                                }`}
+                              >
+                                <span className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-black ${
+                                  isSelected ? "bg-green-500 text-white" : "bg-primary/10 text-primary"
+                                }`}>
+                                  {index + 1}
+                                </span>
+                                <span className="flex-1 leading-normal">{slot}</span>
+                                {isSelected && <CheckCircle size={14} className="text-green-500 flex-shrink-0" />}
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        <div className="flex gap-2 justify-end pt-2 border-t border-primary/5">
+                          {app.status === 'confirmed' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                const text = `Hi ${app.client_name}, this is SA Elevate. We are happy to confirm your appointment for ${app.selected_slot}! See you then!`;
+                                const cleaned = app.client_phone.replace(/\D/g, '');
+                                window.open(`https://wa.me/${cleaned}?text=${encodeURIComponent(text)}`, '_blank');
+                              }}
+                              className="h-9 border-green-500/30 text-green-500 hover:bg-green-500/10 gap-1 font-bold text-xs"
+                            >
+                              <MessageSquare size={12} /> Notify WhatsApp
+                            </Button>
+                          )}
+                          
+                          {app.status === 'pending' && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleCancelAppointment(app.id)}
+                              className="h-9 text-yellow-600 hover:bg-yellow-500/10 font-bold text-xs"
+                            >
+                              <XCircle size={14} className="mr-1 inline" /> Cancel
+                            </Button>
+                          )}
+
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleDeleteAppointment(app.id)}
+                            className="h-9 text-red-500 hover:bg-red-500/10 font-bold text-xs"
+                          >
+                            <Trash2 size={14} className="mr-1 inline" /> Delete
+                          </Button>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </CardContent>
             </Card>

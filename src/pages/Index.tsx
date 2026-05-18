@@ -5,6 +5,7 @@ import Partnership from '@/components/Partnership';
 import Services from '@/components/Services';
 import Portfolio from '@/components/Portfolio';
 import Testimonials from '@/components/Testimonials';
+import BookingCalendar from '@/components/BookingCalendar';
 import Contact from '@/components/Contact';
 import Footer from '@/components/Footer';
 import WhatsAppButton from '@/components/WhatsAppButton';
@@ -22,6 +23,7 @@ const Index = () => {
       <Services />
       <Portfolio />
       <Testimonials />
+      <BookingCalendar />
       <Contact />
       <Footer />
       <WhatsAppButton />
