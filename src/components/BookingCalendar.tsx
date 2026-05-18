@@ -138,7 +138,7 @@ export default function BookingCalendar() {
       if (error) throw error;
 
       // 2. Build WhatsApp confirmation text
-      const whatsappText = `🤝 *New Appointment Request from SA Elevate*%0A%0A` +
+      const whatsappText = `🤝 *New Appointment Request from SA CONSULTANT AND STAFFING*%0A%0A` +
         `*Client:* ${formData.name}%0A` +
         `*Email:* ${formData.email}%0A` +
         `*Phone:* ${formData.phone}%0A%0A` +

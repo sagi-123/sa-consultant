@@ -1450,7 +1450,7 @@ const AdminDashboard = () => {
                                     size="sm"
                                     variant="outline"
                                     onClick={() => {
-                                      const text = `Hi ${app.client_name}, this is SA Elevate. We are happy to confirm your appointment for ${app.selected_slot}! See you then!`;
+                                      const text = `Hi ${app.client_name}, this is SA CONSULTANT AND STAFFING. We are happy to confirm your appointment for ${app.selected_slot}! See you then!`;
                                       const cleaned = app.client_phone.replace(/\D/g, '');
                                       window.open(`https://wa.me/${cleaned}?text=${encodeURIComponent(text)}`, '_blank');
                                     }}
@@ -1557,7 +1557,7 @@ const AdminDashboard = () => {
                               size="sm"
                               variant="outline"
                               onClick={() => {
-                                const text = `Hi ${app.client_name}, this is SA Elevate. We are happy to confirm your appointment for ${app.selected_slot}! See you then!`;
+                                const text = `Hi ${app.client_name}, this is SA CONSULTANT AND STAFFING. We are happy to confirm your appointment for ${app.selected_slot}! See you then!`;
                                 const cleaned = app.client_phone.replace(/\D/g, '');
                                 window.open(`https://wa.me/${cleaned}?text=${encodeURIComponent(text)}`, '_blank');
                               }}

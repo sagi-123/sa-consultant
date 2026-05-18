@@ -49,7 +49,7 @@ const Contact = () => {
       if (error) throw error;
 
       // 2. Construct WhatsApp message and redirect
-      const whatsappMessage = `*New Inquiry from SA Elevate Website*%0A%0A` +
+      const whatsappMessage = `*New Inquiry from SA CONSULTANT AND STAFFING Website*%0A%0A` +
         `*Name:* ${formData.name}%0A` +
         `*Email:* ${formData.email}%0A` +
         `*Phone:* ${formData.phone}%0A%0A` +
