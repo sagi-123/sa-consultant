@@ -504,7 +504,6 @@ export default function VendorPortal() {
                     <div className="space-y-1 text-sm">
                       <div className="flex justify-between"><span className="text-muted-foreground">Company:</span> <span className="font-bold">{vendorCompany}</span></div>
                       <div className="flex justify-between"><span className="text-muted-foreground">Tier:</span> <span className="font-bold text-primary">Premium Supplier</span></div>
-                      <div className="flex justify-between"><span className="text-muted-foreground">Rev Share:</span> <span className="font-bold text-green-600">80% / 20%</span></div>
                     </div>
                   </div>
                 </CardContent>
