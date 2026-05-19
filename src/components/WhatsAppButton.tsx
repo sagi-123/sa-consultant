@@ -16,8 +16,8 @@ const WhatsAppButton = () => {
     <>
       <style>{`
         .floating-whatsapp-btn {
-          left: 16px !important;
-          right: auto !important;
+          right: 16px !important;
+          left: auto !important;
           bottom: 16px !important;
           width: 3rem !important; /* 48px */
           height: 3rem !important; /* 48px */

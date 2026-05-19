@@ -185,7 +185,7 @@ export default function BookingCalendar() {
   };
 
   return (
-    <section id="book" className="py-10 sm:py-16 md:py-20 relative overflow-hidden w-full bg-secondary/20">
+    <section id="book" className="pt-10 pb-24 sm:py-16 md:py-20 relative overflow-hidden w-full bg-secondary/20">
       <style>{`
         /* Responsive DayPicker Custom Styles */
         .rdp-months {
@@ -470,6 +470,7 @@ export default function BookingCalendar() {
                       )}
                       <Send size={16} className="flex-shrink-0" />
                     </Button>
+                    <div className="h-2 sm:hidden" />
                   </form>
                 </CardContent>
               </Card>
