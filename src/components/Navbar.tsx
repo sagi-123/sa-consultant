@@ -8,6 +8,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import logo from '@/assets/logo.png';
 
 const desktopNavLinks = [
+  { label: 'Home', href: '/#home' },
   { label: 'About', href: '/#about' },
   { label: 'Services', href: '/#services' },
   { label: 'Partnership', href: '/#partnership' },
