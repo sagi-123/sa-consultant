@@ -185,22 +185,63 @@ export default function BookingCalendar() {
   };
 
   return (
-    <section id="book" className="section-padding relative overflow-hidden w-full bg-secondary/20">
+    <section id="book" className="py-10 sm:py-16 md:py-20 relative overflow-hidden w-full bg-secondary/20">
+      <style>{`
+        /* Responsive DayPicker Custom Styles */
+        .rdp-months {
+          width: 100% !important;
+          justify-content: center !important;
+        }
+        .rdp-month {
+          width: 100% !important;
+          max-width: 100% !important;
+        }
+        .rdp-table {
+          width: 100% !important;
+          max-width: 100% !important;
+        }
+        .rdp-day {
+          width: 100% !important;
+          max-width: 36px !important;
+          height: 36px !important;
+          margin: 0 auto !important;
+        }
+        .rdp-head_cell {
+          width: 100% !important;
+          max-width: 36px !important;
+          font-weight: 600 !important;
+        }
+        
+        @media (max-width: 380px) {
+          .rdp-day {
+            max-width: 30px !important;
+            height: 30px !important;
+            font-size: 11px !important;
+          }
+          .rdp-head_cell {
+            max-width: 30px !important;
+            font-size: 10px !important;
+          }
+          .rdp-caption_label {
+            font-size: 13px !important;
+          }
+        }
+      `}</style>
       <div className="absolute top-0 left-0 w-80 h-80 rounded-full bg-accent/10 blur-[120px] pointer-events-none" />
       <div className="container mx-auto relative z-10 w-full px-4 sm:px-6">
-        <div className="text-center mb-10 lg:mb-16 scroll-reveal">
+        <div className="text-center mb-8 sm:mb-10 lg:mb-16 scroll-reveal">
           <span className="text-primary text-sm font-semibold tracking-widest uppercase">Appointments</span>
           <h2 className="fluid-h2 font-display font-black tracking-tight mt-3 mb-4 lg:mb-6">
             Book a <span className="gradient-text">Meeting</span>
           </h2>
-          <p className="text-foreground font-semibold max-w-2xl mx-auto text-lg leading-relaxed">
+          <p className="text-foreground font-semibold max-w-2xl mx-auto text-base sm:text-lg leading-relaxed">
             Ready to consult with us? Select exactly <span className="text-primary font-black">three preferred slots</span> below to reserve your appointment on weekdays.
           </p>
         </div>
 
         {isSuccess ? (
-          <Card className="glass border-green-500/30 max-w-2xl mx-auto p-6 md:p-10 text-center space-y-6">
-            <CardHeader className="flex flex-col items-center">
+          <Card className="glass border-green-500/30 max-w-2xl mx-auto p-4 sm:p-6 md:p-10 text-center space-y-6">
+            <CardHeader className="flex flex-col items-center p-4">
               <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mb-4">
                 <CheckCircle2 size={36} className="text-green-500 animate-bounce" />
               </div>
@@ -211,7 +252,7 @@ export default function BookingCalendar() {
                 We have registered your 3 preferred meeting slots. We are redirecting you to WhatsApp to notify our consultant instantly.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 p-4">
               <p className="text-sm text-muted-foreground leading-relaxed">
                 If the WhatsApp tab did not open automatically, please click the button below to complete your booking notification.
               </p>
@@ -226,19 +267,19 @@ export default function BookingCalendar() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid lg:grid-cols-12 gap-8 max-w-6xl mx-auto w-full">
+          <div className="grid lg:grid-cols-12 gap-6 sm:gap-8 max-w-6xl mx-auto w-full">
             {/* Column 1: Date & Time Picker */}
             <div className="lg:col-span-7 flex flex-col gap-6">
               <Card className="glass border-primary/20 shadow-sm flex-1 flex flex-col">
-                <CardHeader>
+                <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-3">
                   <CardTitle className="text-lg font-bold font-display flex items-center gap-2">
                     <CalendarIcon size={20} className="text-primary" /> Step 1: Select Date & Time
                   </CardTitle>
                   <CardDescription>Meetings only available on weekdays (9:00 AM - 5:00 PM).</CardDescription>
                 </CardHeader>
-                <CardContent className="flex flex-col md:flex-row gap-6 justify-between flex-1 items-stretch">
+                <CardContent className="p-3 xs:p-4 sm:p-6 flex flex-col md:flex-row gap-4 sm:gap-6 justify-between flex-1 items-stretch">
                   {/* Calendar Widget */}
-                  <div className="flex-1 flex justify-center items-center bg-secondary/30 p-2 rounded-xl border border-border/50 max-w-full overflow-hidden">
+                  <div className="flex-1 flex justify-center items-center bg-secondary/30 p-1 sm:p-2 rounded-xl border border-border/50 max-w-full overflow-hidden">
                     <Calendar
                       mode="single"
                       selected={selectedDate}
@@ -252,12 +293,12 @@ export default function BookingCalendar() {
                   </div>
 
                   {/* Hours Selector */}
-                  <div className="md:w-60 flex flex-col">
+                  <div className="md:w-60 flex flex-col mt-4 md:mt-0">
                     <Label className="text-sm font-bold text-foreground mb-3 flex items-center gap-1">
                       <Clock size={14} className="text-accent" /> Time Slots ({selectedDate ? selectedDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : 'Choose Date'})
                     </Label>
                     {selectedDate ? (
-                      <div className="grid grid-cols-3 md:grid-cols-2 gap-2 max-h-[280px] overflow-y-auto pr-1">
+                      <div className="grid grid-cols-3 sm:grid-cols-2 md:grid-cols-2 gap-1.5 sm:gap-2 max-h-[280px] overflow-y-auto pr-1">
                         {timeSlots.map((time) => {
                           const isAdded = isSlotAdded(selectedDate, time);
                           const isSelected = selectedTime === time;
@@ -268,7 +309,7 @@ export default function BookingCalendar() {
                               variant={isSelected ? "default" : "outline"}
                               disabled={isAdded}
                               onClick={() => setSelectedTime(time)}
-                              className={`h-10 text-xs font-bold rounded-lg ${
+                              className={`h-9 sm:h-10 text-[10px] xs:text-xs font-bold rounded-lg ${
                                 isAdded 
                                   ? "bg-muted text-muted-foreground line-through opacity-40 border-muted" 
                                   : isSelected
@@ -293,7 +334,7 @@ export default function BookingCalendar() {
                         type="button"
                         onClick={handleAddSlot}
                         disabled={preferredSlots.length >= 3}
-                        className="mt-4 w-full bg-primary font-bold text-primary-foreground hover:scale-[1.02] active:scale-[0.98] transition-all h-10 rounded-lg text-xs"
+                        className="mt-4 w-full bg-primary font-bold text-primary-foreground hover:scale-[1.02] active:scale-[0.98] transition-all h-9 sm:h-10 rounded-lg text-xs"
                       >
                         Add to List ({preferredSlots.length}/3 Selected)
                       </Button>
@@ -306,7 +347,7 @@ export default function BookingCalendar() {
             {/* Column 2: Selected Slots & Client Booking Form */}
             <div className="lg:col-span-5 flex flex-col gap-6">
               <Card className="glass border-primary/20 shadow-sm flex flex-col h-full justify-between">
-                <CardHeader>
+                <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-3">
                   <CardTitle className="text-lg font-bold font-display flex items-center gap-2">
                     <Sparkles size={20} className="text-accent" /> Step 2: Book Your Slots
                   </CardTitle>
@@ -314,7 +355,7 @@ export default function BookingCalendar() {
                     Provide your contact details. Choose exactly 3 slots to finalize.
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6 flex-1">
+                <CardContent className="p-4 sm:p-6 space-y-4 sm:space-y-6 flex-1">
                   {/* Slots display */}
                   <div className="space-y-3">
                     <Label className="text-sm font-bold flex justify-between items-center text-foreground">
@@ -329,15 +370,15 @@ export default function BookingCalendar() {
                     </Label>
 
                     {preferredSlots.length === 0 ? (
-                      <div className="border border-dashed border-border p-5 rounded-xl text-center text-sm text-muted-foreground bg-secondary/10">
-                        No slots selected yet. Pick a day and time on the left to select 3 preferred meeting slots.
+                      <div className="border border-dashed border-border p-4 sm:p-5 rounded-xl text-center text-xs sm:text-sm text-muted-foreground bg-secondary/10">
+                        No slots selected yet. Pick a day and time above to select 3 preferred meeting slots.
                       </div>
                     ) : (
                       <div className="space-y-2">
                         {preferredSlots.map((slot, i) => (
                           <div 
                             key={i} 
-                            className="flex justify-between items-center bg-secondary/40 border border-primary/10 p-3 rounded-xl animate-in slide-in-from-top-1 duration-200"
+                            className="flex justify-between items-center bg-secondary/40 border border-primary/10 p-2 sm:p-3 rounded-xl animate-in slide-in-from-top-1 duration-200"
                           >
                             <div className="flex items-center gap-3">
                               <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-black">
@@ -368,17 +409,17 @@ export default function BookingCalendar() {
                   </div>
 
                   {/* Form fields */}
-                  <form onSubmit={handleSubmit} className="space-y-4">
+                  <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
                     <div className="space-y-2">
                       <Label className="text-xs font-bold text-foreground">Full Name</Label>
                       <div className="relative">
-                        <User className="absolute left-3 top-3.5 text-muted-foreground/60" size={16} />
+                        <User className="absolute left-3 top-3 sm:top-3.5 text-muted-foreground/60" size={16} />
                         <Input
                           type="text"
                           required
                           value={formData.name}
                           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                          className="pl-10 h-11 bg-secondary/40 rounded-lg"
+                          className="pl-10 h-10 sm:h-11 bg-secondary/40 rounded-lg text-sm"
                           placeholder="Your Name"
                         />
                       </div>
@@ -387,13 +428,13 @@ export default function BookingCalendar() {
                     <div className="space-y-2">
                       <Label className="text-xs font-bold text-foreground">Email Address</Label>
                       <div className="relative">
-                        <Mail className="absolute left-3 top-3.5 text-muted-foreground/60" size={16} />
+                        <Mail className="absolute left-3 top-3 sm:top-3.5 text-muted-foreground/60" size={16} />
                         <Input
                           type="email"
                           required
                           value={formData.email}
                           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                          className="pl-10 h-11 bg-secondary/40 rounded-lg"
+                          className="pl-10 h-10 sm:h-11 bg-secondary/40 rounded-lg text-sm"
                           placeholder="email@example.com"
                         />
                       </div>
@@ -402,13 +443,13 @@ export default function BookingCalendar() {
                     <div className="space-y-2">
                       <Label className="text-xs font-bold text-foreground">Phone Number</Label>
                       <div className="relative">
-                        <Phone className="absolute left-3 top-3.5 text-muted-foreground/60" size={16} />
+                        <Phone className="absolute left-3 top-3 sm:top-3.5 text-muted-foreground/60" size={16} />
                         <Input
                           type="tel"
                           required
                           value={formData.phone}
                           onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                          className="pl-10 h-11 bg-secondary/40 rounded-lg"
+                          className="pl-10 h-10 sm:h-11 bg-secondary/40 rounded-lg text-sm"
                           placeholder="+1 (123) 456-7890"
                         />
                       </div>
@@ -417,7 +458,7 @@ export default function BookingCalendar() {
                     <Button
                       type="submit"
                       disabled={preferredSlots.length !== 3 || isSubmitting}
-                      className="w-full gradient-bg font-black text-white hover-lift hover-glow py-3 h-auto min-h-12 rounded-xl flex items-center justify-center gap-2 transition-all mt-6 shadow-lg shadow-primary/20 text-sm sm:text-base"
+                      className="w-full gradient-bg font-black text-white hover-lift hover-glow py-3 h-auto min-h-12 rounded-xl flex items-center justify-center gap-2 transition-all mt-4 sm:mt-6 shadow-lg shadow-primary/20 text-sm sm:text-base"
                     >
                       {isSubmitting ? (
                         "Booking Slots..."
