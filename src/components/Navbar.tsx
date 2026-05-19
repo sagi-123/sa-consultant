@@ -152,41 +152,46 @@ const Navbar = () => {
       {mobileOpen && (
         <div className="lg:hidden glass-strong mt-2 mx-4 rounded-2xl p-6 animate-fade-in border border-primary/20 shadow-2xl backdrop-blur-3xl overflow-hidden">
           <div className="flex flex-col gap-5">
+            <a
+              href="/#home"
+              onClick={() => setMobileOpen(false)}
+              className="text-muted-foreground hover:text-foreground transition-all duration-300 font-medium py-2 border-b border-white/5"
+            >
+              Home
+            </a>
             {navLinks.map((link) => (
               <a
                 key={link.href}
                 href={link.href}
                 onClick={() => setMobileOpen(false)}
-                className="text-muted-foreground hover:text-foreground transition-all duration-300 font-medium py-2 border-b border-white/5 last:border-0"
+                className="text-muted-foreground hover:text-foreground transition-all duration-300 font-medium py-2 border-b border-white/5"
               >
                 {link.label}
               </a>
             ))}
+            <Link
+              to="/vendor-portal"
+              onClick={() => setMobileOpen(false)}
+              className="text-muted-foreground hover:text-foreground transition-all duration-300 font-medium py-2 border-b border-white/5"
+            >
+              Talent Partner
+            </Link>
+            <Link
+              to="/candidate-portal"
+              onClick={() => setMobileOpen(false)}
+              className="text-muted-foreground hover:text-foreground transition-all duration-300 font-medium py-2 border-b border-white/5 last:border-0"
+            >
+              Candidate Portal
+            </Link>
             <div className="pt-2 flex flex-col gap-3">
               {!user ? (
                 <div className="flex flex-col gap-3">
-                  <Button asChild variant="ghost" className="w-full h-12 text-muted-foreground font-bold">
-                    <Link to="/vendor-portal" onClick={() => setMobileOpen(false)}>Talent Partner Portal</Link>
-                  </Button>
-                  <Button asChild variant="outline" className="w-full h-12 glass rounded-xl border-primary/30 text-foreground font-bold">
-                    <Link to="/candidate-portal" onClick={() => setMobileOpen(false)}>Candidate Portal</Link>
-                  </Button>
                   <Button asChild className="gradient-bg w-full h-12 rounded-xl text-foreground font-bold">
                     <Link to="/auth" onClick={() => setMobileOpen(false)}>Client Access</Link>
                   </Button>
                 </div>
               ) : (
                 <div className="flex flex-col gap-3">
-                  {!isAdmin && (
-                    <>
-                      <Button asChild variant="ghost" className="w-full h-12 rounded-xl text-primary font-bold">
-                        <Link to="/vendor-portal" onClick={() => setMobileOpen(false)}>Talent Partner Portal</Link>
-                      </Button>
-                      <Button asChild variant="ghost" className="w-full h-12 rounded-xl">
-                        <Link to="/candidate-portal" onClick={() => setMobileOpen(false)}>Candidate Portal</Link>
-                      </Button>
-                    </>
-                  )}
                   <Button asChild variant="outline" className="w-full h-12 glass rounded-xl border-primary/30">
                     <Link to={isAdmin ? "/admin" : "/dashboard"} onClick={() => setMobileOpen(false)}>
                       <LayoutDashboard size={18} className="mr-2" /> Dashboard
