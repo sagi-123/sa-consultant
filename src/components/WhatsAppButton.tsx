@@ -12,24 +12,31 @@ const WhatsAppButton = () => {
     };
     fetchWhatsApp();
 
-    // Hide floating button when booking or contact section is in viewport to prevent clashing with forms/CTAs
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const isAnyIntersecting = entries.some((entry) => entry.isIntersecting);
-        setShouldHide(isAnyIntersecting);
-      },
-      { threshold: 0.05 }
-    );
+    const handleScroll = () => {
+      const bookEl = document.getElementById('book');
+      const contactEl = document.getElementById('contact');
 
-    const bookSection = document.getElementById('book');
-    const contactSection = document.getElementById('contact');
+      let isInsideSection = false;
 
-    if (bookSection) observer.observe(bookSection);
-    if (contactSection) observer.observe(contactSection);
+      [bookEl, contactEl].forEach((el) => {
+        if (!el) return;
+        const rect = el.getBoundingClientRect();
+        // Check if the section is in the viewport (with a 100px buffer)
+        const inView = rect.top < window.innerHeight - 100 && rect.bottom > 100;
+        if (inView) {
+          isInsideSection = true;
+        }
+      });
+
+      setShouldHide(isInsideSection);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    // Run once initially to set correct state if starting scrolled down
+    setTimeout(handleScroll, 100);
 
     return () => {
-      if (bookSection) observer.unobserve(bookSection);
-      if (contactSection) observer.unobserve(contactSection);
+      window.removeEventListener('scroll', handleScroll);
     };
   }, []);
 
