@@ -69,7 +69,7 @@ const Contact = () => {
   };
 
   return (
-    <section id="contact" className="pt-10 pb-24 md:py-20 lg:py-28 px-4 md:px-8 relative overflow-hidden w-full">
+    <section id="contact" className="py-10 md:py-20 lg:py-28 px-4 md:px-8 relative overflow-hidden w-full">
       <div className="absolute bottom-0 right-0 w-80 h-80 rounded-full bg-primary/10 blur-[120px] pointer-events-none" />
 
       <div className="container mx-auto relative z-10 w-full px-4 sm:px-6">
@@ -164,7 +164,6 @@ const Contact = () => {
             >
               Send Message <Send size={18} />
             </button>
-            <div className="h-2 sm:hidden" />
           </form>
         </div>
       </div>

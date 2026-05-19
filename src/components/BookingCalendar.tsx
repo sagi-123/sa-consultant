@@ -185,7 +185,7 @@ export default function BookingCalendar() {
   };
 
   return (
-    <section id="book" className="pt-10 pb-24 sm:py-16 md:py-20 relative overflow-hidden w-full bg-secondary/20">
+    <section id="book" className="py-10 md:py-20 lg:py-28 px-4 md:px-8 relative overflow-hidden w-full bg-secondary/20">
       <style>{`
         /* Responsive DayPicker Custom Styles */
         .rdp-months {
