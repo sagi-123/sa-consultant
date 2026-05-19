@@ -96,8 +96,10 @@ const Navbar = () => {
           ))}
         </div>
 
-        <div className="hidden lg:flex items-center gap-8">
-          <ThemeToggle />
+        <div className="hidden lg:flex items-center gap-4">
+          <div className="mr-8 border-r border-primary/20 pr-8">
+            <ThemeToggle />
+          </div>
 
           {!user ? (
             <div className="flex items-center gap-2">
@@ -136,7 +138,7 @@ const Navbar = () => {
         </div>
 
         {/* Mobile toggle */}
-        <div className="lg:hidden flex items-center gap-4 ml-auto">
+        <div className="lg:hidden flex items-center gap-8 ml-auto">
           <ThemeToggle />
           <button
             className="text-foreground p-2"
