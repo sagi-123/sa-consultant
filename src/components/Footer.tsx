@@ -67,6 +67,7 @@ const Footer = () => {
                 { label: 'Services', href: '/#services' },
                 { label: 'Portfolio', href: '/#portfolio' },
                 { label: 'Testimonials', href: '/#testimonials' },
+                { label: 'Appointments', href: '/#book' },
                 { label: 'Contact', href: '/#contact' },
                 { label: 'Talent Partner', href: '/vendor-portal' },
                 { label: 'Candidate Portal', href: '/candidate-portal' },
