@@ -7,7 +7,16 @@ import { supabase } from '@/lib/supabase';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import logo from '@/assets/logo.png';
 
-const navLinks = [
+const desktopNavLinks = [
+  { label: 'About', href: '/#about' },
+  { label: 'Services', href: '/#services' },
+  { label: 'Partnership', href: '/#partnership' },
+  { label: 'Appointments', href: '/#book' },
+  { label: 'Contact', href: '/#contact' },
+];
+
+const mobileNavLinks = [
+  { label: 'Home', href: '/#home' },
   { label: 'About', href: '/#about' },
   { label: 'Partnership', href: '/#partnership' },
   { label: 'Services', href: '/#services' },
@@ -73,9 +82,9 @@ const Navbar = () => {
           </span>
         </Link>
 
-        {/* Desktop - Hidden in favor of universal hamburger menu */}
-        <div className="hidden items-center gap-8">
-          {navLinks.map((link) => (
+        {/* Desktop */}
+        <div className="hidden lg:flex items-center gap-8">
+          {desktopNavLinks.map((link) => (
             <a
               key={link.href}
               href={link.href}
@@ -86,7 +95,7 @@ const Navbar = () => {
           ))}
         </div>
 
-        <div className="hidden items-center gap-4">
+        <div className="hidden lg:flex items-center gap-4">
           <div className="flex items-center gap-2 mr-2">
             <SocialIcon href={socialLinks.linkedin}>
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
@@ -137,8 +146,8 @@ const Navbar = () => {
           )}
         </div>
 
-        {/* Mobile toggle (Now universal) */}
-        <div className="flex items-center gap-2 ml-auto">
+        {/* Mobile toggle */}
+        <div className="lg:hidden flex items-center gap-2 ml-auto">
           <ThemeToggle />
           <button
             className="text-foreground p-2"
@@ -149,18 +158,11 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Mobile menu (Now universal dropdown) */}
+      {/* Mobile menu */}
       {mobileOpen && (
-        <div className="glass-strong mt-2 mx-4 lg:mx-0 lg:absolute lg:right-8 lg:top-20 lg:w-80 rounded-2xl p-6 animate-fade-in border border-primary/20 shadow-2xl backdrop-blur-3xl overflow-hidden">
+        <div className="lg:hidden glass-strong mt-2 mx-4 rounded-2xl p-6 animate-fade-in border border-primary/20 shadow-2xl backdrop-blur-3xl overflow-hidden">
           <div className="flex flex-col gap-5">
-            <a
-              href="/#home"
-              onClick={() => setMobileOpen(false)}
-              className="text-muted-foreground hover:text-foreground transition-all duration-300 font-medium py-2 border-b border-white/5"
-            >
-              Home
-            </a>
-            {navLinks.map((link) => (
+            {mobileNavLinks.map((link) => (
               <a
                 key={link.href}
                 href={link.href}
