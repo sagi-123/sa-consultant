@@ -97,7 +97,7 @@ const Navbar = () => {
         </div>
 
         <div className="hidden lg:flex items-center gap-4">
-          <div className="mr-8 border-r border-primary/20 pr-8">
+          <div className="ml-8">
             <ThemeToggle />
           </div>
 
