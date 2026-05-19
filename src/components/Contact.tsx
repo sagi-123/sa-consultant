@@ -69,16 +69,16 @@ const Contact = () => {
   };
 
   return (
-    <section id="contact" className="section-padding relative overflow-hidden w-full">
+    <section id="contact" className="pt-10 pb-24 md:py-20 lg:py-28 px-4 md:px-8 relative overflow-hidden w-full">
       <div className="absolute bottom-0 right-0 w-80 h-80 rounded-full bg-primary/10 blur-[120px] pointer-events-none" />
 
       <div className="container mx-auto relative z-10 w-full px-4 sm:px-6">
-        <div className="text-center mb-10 lg:mb-16 scroll-reveal">
+        <div className="text-center mb-8 sm:mb-10 lg:mb-16 scroll-reveal">
           <span className="text-accent text-sm font-semibold tracking-widest uppercase">Contact</span>
           <h2 className="fluid-h2 font-display font-black tracking-tight mt-3 mb-4 lg:mb-6">
             Let's <span className="gradient-text">Connect</span>
           </h2>
-          <p className="text-foreground font-semibold max-w-2xl mx-auto text-lg leading-relaxed">
+          <p className="text-foreground font-semibold max-w-2xl mx-auto text-base sm:text-lg leading-relaxed">
             Ready to transform your business? Get in touch with us today.
           </p>
         </div>
@@ -113,7 +113,7 @@ const Contact = () => {
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="scroll-reveal glass rounded-2xl p-5 md:p-8 space-y-4 lg:space-y-6 w-full max-w-full overflow-hidden box-border">
+          <form onSubmit={handleSubmit} className="scroll-reveal glass rounded-2xl p-4 sm:p-6 md:p-8 space-y-4 lg:space-y-6 w-full max-w-full overflow-hidden box-border">
             <div className="w-full">
               <label className="text-sm text-foreground font-bold mb-1.5 md:mb-2 block">Full Name</label>
               <input
@@ -164,6 +164,7 @@ const Contact = () => {
             >
               Send Message <Send size={18} />
             </button>
+            <div className="h-2 sm:hidden" />
           </form>
         </div>
       </div>
