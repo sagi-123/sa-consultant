@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 
 const WhatsAppButton = () => {
   const [whatsapp, setWhatsapp] = useState('9384797751');
+  const [shouldHide, setShouldHide] = useState(false);
 
   useEffect(() => {
     const fetchWhatsApp = async () => {
@@ -10,6 +11,26 @@ const WhatsAppButton = () => {
       if (data) setWhatsapp(data.value);
     };
     fetchWhatsApp();
+
+    // Hide floating button when booking or contact section is in viewport to prevent clashing with forms/CTAs
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const isAnyIntersecting = entries.some((entry) => entry.isIntersecting);
+        setShouldHide(isAnyIntersecting);
+      },
+      { threshold: 0.05 }
+    );
+
+    const bookSection = document.getElementById('book');
+    const contactSection = document.getElementById('contact');
+
+    if (bookSection) observer.observe(bookSection);
+    if (contactSection) observer.observe(contactSection);
+
+    return () => {
+      if (bookSection) observer.unobserve(bookSection);
+      if (contactSection) observer.unobserve(contactSection);
+    };
   }, []);
 
   return (
@@ -45,7 +66,9 @@ const WhatsAppButton = () => {
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Contact us on WhatsApp"
-        className="fixed z-50 rounded-full bg-[hsl(142,70%,45%)] flex items-center justify-center shadow-lg shadow-[hsl(142,70%,45%)]/30 hover:scale-110 hover:shadow-xl hover:shadow-[hsl(142,70%,45%)]/40 transition-all duration-300 animate-pulse-glow floating-whatsapp-btn"
+        className={`fixed z-50 rounded-full bg-[hsl(142,70%,45%)] flex items-center justify-center shadow-lg shadow-[hsl(142,70%,45%)]/30 hover:scale-110 hover:shadow-xl hover:shadow-[hsl(142,70%,45%)]/40 transition-all duration-500 floating-whatsapp-btn ${
+          shouldHide ? 'opacity-0 scale-75 pointer-events-none' : 'opacity-100 scale-100'
+        }`}
         style={{ '--tw-shadow-color': 'hsl(142 70% 45% / 0.3)' } as React.CSSProperties}
       >
         <svg className="text-foreground" fill="currentColor" viewBox="0 0 24 24">
