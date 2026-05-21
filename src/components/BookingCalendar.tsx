@@ -27,17 +27,10 @@ export default function BookingCalendar() {
     fetchSettings();
   }, []);
 
-  // Time slots available (9 AM to 5 PM)
   const timeSlots = [
-    '09:00 AM',
-    '10:00 AM',
-    '11:00 AM',
-    '12:00 PM',
-    '01:00 PM',
-    '02:00 PM',
-    '03:00 PM',
-    '04:00 PM',
-    '05:00 PM'
+    '10:00 AM (USA) - 6:00 PM (India)',
+    '12:00 PM (USA) - 10:00 PM (India)',
+    '2:00 PM (USA) - 12:00 AM (India)'
   ];
 
   // Helper to check if a slot is already added
@@ -51,11 +44,11 @@ export default function BookingCalendar() {
   const handleAddSlot = () => {
     if (!selectedDate || !selectedTime) return;
 
-    if (preferredSlots.length >= 3) {
+    if (preferredSlots.length >= 2) {
       toast({
         variant: "destructive",
         title: "Max slots reached",
-        description: "You have already selected 3 preferred slots."
+        description: "You have already selected 2 preferred slots."
       });
       return;
     }
@@ -93,11 +86,11 @@ export default function BookingCalendar() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (preferredSlots.length !== 3) {
+    if (preferredSlots.length !== 2) {
       toast({
         variant: "destructive",
         title: "Incomplete Slot Selection",
-        description: "Please choose exactly 3 preferred slots."
+        description: "Please choose exactly 2 preferred slots."
       });
       return;
     }
@@ -118,7 +111,7 @@ export default function BookingCalendar() {
 
       const s1 = formatSlot(preferredSlots[0]);
       const s2 = formatSlot(preferredSlots[1]);
-      const s3 = formatSlot(preferredSlots[2]);
+      const s3 = "N/A";
 
       // 1. Save to Supabase appointments table
       const { error } = await supabase
@@ -144,8 +137,7 @@ export default function BookingCalendar() {
         `*Phone:* ${formData.phone}%0A%0A` +
         `*Preferred Slots (Please confirm one):*%0A` +
         `1️⃣ ${s1}%0A` +
-        `2️⃣ ${s2}%0A` +
-        `3️⃣ ${s3}`;
+        `2️⃣ ${s2}`;
 
       const cleanedNumber = whatsappNumber.replace(/\D/g, '');
       const whatsappUrl = `https://wa.me/${cleanedNumber}?text=${whatsappText}`;
@@ -230,12 +222,12 @@ export default function BookingCalendar() {
       <div className="absolute top-0 left-0 w-80 h-80 rounded-full bg-accent/10 blur-[120px] pointer-events-none" />
       <div className="container mx-auto relative z-10 w-full px-4 sm:px-6">
         <div className="text-center mb-8 sm:mb-10 lg:mb-16 scroll-reveal">
-          <span className="text-primary text-sm font-semibold tracking-widest uppercase">Appointments</span>
+          <span className="text-primary text-sm font-semibold tracking-widest uppercase">Appointment Booking</span>
           <h2 className="fluid-h2 font-display font-black tracking-tight mt-3 mb-4 lg:mb-6">
             Book a <span className="gradient-text">Meeting</span>
           </h2>
           <p className="text-foreground font-semibold max-w-2xl mx-auto text-base sm:text-lg leading-relaxed">
-            Ready to consult with us? Select exactly <span className="text-primary font-black">three preferred slots</span> below to reserve your appointment on weekdays.
+            Ready to consult with us? Select exactly <span className="text-primary font-black">two preferred slots</span> below to reserve your appointment on weekdays.
           </p>
         </div>
 
@@ -249,7 +241,7 @@ export default function BookingCalendar() {
                 Booking Request Placed! <Sparkles size={20} className="text-accent" />
               </CardTitle>
               <CardDescription className="text-base text-foreground font-medium mt-2">
-                We have registered your 3 preferred meeting slots. We are redirecting you to WhatsApp to notify our consultant instantly.
+                We have registered your 2 preferred meeting slots. We are redirecting you to WhatsApp to notify our consultant instantly.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 p-4">
@@ -298,7 +290,7 @@ export default function BookingCalendar() {
                       <Clock size={14} className="text-accent" /> Time Slots ({selectedDate ? selectedDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : 'Choose Date'})
                     </Label>
                     {selectedDate ? (
-                      <div className="grid grid-cols-3 sm:grid-cols-2 md:grid-cols-2 gap-1.5 sm:gap-2 max-h-[280px] overflow-y-auto pr-1">
+                      <div className="grid grid-cols-1 gap-2 max-h-[280px] overflow-y-auto pr-1">
                         {timeSlots.map((time) => {
                           const isAdded = isSlotAdded(selectedDate, time);
                           const isSelected = selectedTime === time;
@@ -309,11 +301,11 @@ export default function BookingCalendar() {
                               variant={isSelected ? "default" : "outline"}
                               disabled={isAdded}
                               onClick={() => setSelectedTime(time)}
-                              className={`h-9 sm:h-10 text-[10px] xs:text-xs font-bold rounded-lg ${
+                              className={`h-auto min-h-[40px] py-2 text-xs font-bold rounded-lg ${
                                 isAdded 
                                   ? "bg-muted text-muted-foreground line-through opacity-40 border-muted" 
                                   : isSelected
-                                    ? "gradient-bg text-white border-none shadow-md shadow-primary/20 scale-105"
+                                    ? "gradient-bg text-white border-none shadow-md shadow-primary/20 scale-[1.02]"
                                     : "hover:bg-primary/5 hover:border-primary/50 text-foreground"
                               }`}
                             >
@@ -333,10 +325,10 @@ export default function BookingCalendar() {
                       <Button
                         type="button"
                         onClick={handleAddSlot}
-                        disabled={preferredSlots.length >= 3}
+                        disabled={preferredSlots.length >= 2}
                         className="mt-4 w-full bg-primary font-bold text-primary-foreground hover:scale-[1.02] active:scale-[0.98] transition-all h-9 sm:h-10 rounded-lg text-xs"
                       >
-                        Add to List ({preferredSlots.length}/3 Selected)
+                        Add to List ({preferredSlots.length}/2 Selected)
                       </Button>
                     )}
                   </div>
@@ -352,7 +344,7 @@ export default function BookingCalendar() {
                     <Sparkles size={20} className="text-accent" /> Step 2: Book Your Slots
                   </CardTitle>
                   <CardDescription>
-                    Provide your contact details. Choose exactly 3 slots to finalize.
+                    Provide your contact details. Choose exactly 2 slots to finalize.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="p-4 sm:p-6 space-y-4 sm:space-y-6 flex-1">
@@ -361,17 +353,17 @@ export default function BookingCalendar() {
                     <Label className="text-sm font-bold flex justify-between items-center text-foreground">
                       <span>Selected Slots Required:</span>
                       <span className={`text-xs px-2 py-0.5 rounded-full font-black ${
-                        preferredSlots.length === 3 
+                        preferredSlots.length === 2 
                           ? "bg-green-500/10 text-green-500 border border-green-500/30" 
                           : "bg-primary/10 text-primary border border-primary/30"
                       }`}>
-                        {preferredSlots.length} / 3 Chosen
+                        {preferredSlots.length} / 2 Chosen
                       </span>
                     </Label>
 
                     {preferredSlots.length === 0 ? (
                       <div className="border border-dashed border-border p-4 sm:p-5 rounded-xl text-center text-xs sm:text-sm text-muted-foreground bg-secondary/10">
-                        No slots selected yet. Pick a day and time above to select 3 preferred meeting slots.
+                        No slots selected yet. Pick a day and time above to select 2 preferred meeting slots.
                       </div>
                     ) : (
                       <div className="space-y-2">
@@ -457,7 +449,7 @@ export default function BookingCalendar() {
 
                     <Button
                       type="submit"
-                      disabled={preferredSlots.length !== 3 || isSubmitting}
+                      disabled={preferredSlots.length !== 2 || isSubmitting}
                       className="w-full gradient-bg font-black text-white hover-lift hover-glow py-3 h-auto min-h-12 rounded-xl flex items-center justify-center gap-2 transition-all mt-4 sm:mt-6 shadow-lg shadow-primary/20 text-sm sm:text-base"
                     >
                       {isSubmitting ? (

@@ -36,26 +36,8 @@ const Portfolio = () => {
     fetchProjects();
   }, [toast]);
 
-  // Handle scroll reveal for dynamically loaded projects
-  useEffect(() => {
-    if (!loading && projects.length > 0) {
-      const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              entry.target.classList.add('revealed');
-            }
-          });
-        },
-        { threshold: 0.1 }
-      );
+  // Removed IntersectionObserver logic to ensure portfolio is always visible
 
-      const elements = document.querySelectorAll('.scroll-reveal');
-      elements.forEach((el) => observer.observe(el));
-
-      return () => observer.disconnect();
-    }
-  }, [loading, projects]);
 
   if (loading) {
     return (
@@ -70,7 +52,7 @@ const Portfolio = () => {
   return (
     <section id="portfolio" className="section-padding overflow-hidden">
       <div className="container mx-auto">
-        <div className="text-center mb-16 scroll-reveal">
+        <div className="text-center mb-16">
           <span className="text-accent text-sm font-semibold tracking-widest uppercase">Portfolio</span>
           <h2 className="fluid-h2 font-display font-black tracking-tight mt-3 mb-6">
             Our <span className="gradient-text">Work</span>
@@ -89,7 +71,7 @@ const Portfolio = () => {
             projects.map((project, i) => (
               <div
                 key={project.id}
-                className="scroll-reveal group relative rounded-[2rem] overflow-hidden aspect-[4/5] md:aspect-[4/3] cursor-pointer bg-card hover-lift border border-border/40"
+                className="group relative rounded-[2rem] overflow-hidden aspect-[4/5] md:aspect-[4/3] cursor-pointer bg-card hover-lift border border-border/40"
                 style={{ transitionDelay: `${i * 100}ms` }}
               >
                 {/* Background Image, Gradient & Overlay */}

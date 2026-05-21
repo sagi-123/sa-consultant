@@ -156,6 +156,33 @@ const AdminDashboard = () => {
     fetchSettings();
   }, [fetchAllData, fetchSettings]);
 
+  // Auto-mark all 'new' inquiries as 'read' when Messages tab is opened
+  const markInquiriesAsRead = useCallback(async () => {
+    const unread = inquiries.filter(i => i.status === 'new');
+    if (unread.length === 0) return;
+    const ids = unread.map(i => i.id);
+    await supabase.from('inquiries').update({ status: 'read' } as any).in('id', ids);
+    setInquiries(prev => prev.map(i => i.status === 'new' ? { ...i, status: 'read' } : i));
+  }, [inquiries]);
+
+  const markCandidatesAsScreened = useCallback(async () => {
+    const newOnes = candidates.filter(c => c.status === 'New');
+    if (newOnes.length === 0) return;
+    const ids = newOnes.map(c => c.id);
+    await supabase.from('candidates').update({ status: 'Screened' } as any).in('id', ids);
+    setCandidates(prev => prev.map(c => c.status === 'New' ? { ...c, status: 'Screened' as any } : c));
+  }, [candidates]);
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    if (tab === 'inquiries') {
+      markInquiriesAsRead();
+    }
+    if (tab === 'candidates') {
+      markCandidatesAsScreened();
+    }
+  };
+
   const handleUpdateReviewStatus = async (id: string, status: 'approved' | 'pending') => {
     try {
       const { error } = await supabase
@@ -591,8 +618,8 @@ const AdminDashboard = () => {
       </nav>
 
       <main className="container mx-auto px-4 py-8">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-          <TabsList className="glass-strong flex lg:grid lg:grid-cols-9 overflow-x-auto w-full h-auto p-1 sticky top-20 z-40 backdrop-blur-xl border border-primary/20 touch-pan-x gap-1 justify-start flex-nowrap">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-8">
+          <TabsList className="glass-strong flex overflow-x-auto w-full h-auto p-1.5 sticky top-20 z-40 backdrop-blur-xl border border-primary/20 touch-pan-x gap-1 sm:gap-2 justify-start items-center no-scrollbar">
             <TabsTrigger value="overview" className="data-[state=active]:gradient-bg h-10 px-4 min-w-[120px] flex-shrink-0">Overview</TabsTrigger>
             <TabsTrigger value="candidates" className="data-[state=active]:gradient-bg h-10 px-4 min-w-[120px] flex-shrink-0 flex gap-2 items-center justify-center relative">
               <Users size={16} /> Candidates
@@ -625,7 +652,7 @@ const AdminDashboard = () => {
               🧠 Master CRM (The Brain)
             </TabsTrigger>
             <TabsTrigger value="appointments" className="data-[state=active]:gradient-bg h-10 px-4 min-w-[120px] flex-shrink-0 flex gap-2 items-center justify-center relative font-bold text-orange-500">
-              📅 Appointments
+              📅 Appointment Booking
               {appointments.filter(a => a.status === 'pending').length > 0 && (
                 <span className="absolute top-1 right-1 bg-orange-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center animate-pulse border border-background">
                   {appointments.filter(a => a.status === 'pending').length}
@@ -655,14 +682,14 @@ const AdminDashboard = () => {
             <Card className="glass mt-8 border-primary/20">
               <CardHeader>
                 <CardTitle className="gradient-text font-bold">Welcome back, Admin</CardTitle>
-                <CardDescription>Everything is running smoothly. There are {candidates.filter(c => c.status === 'New').length} new candidate applications, {appointments.filter(a => a.status === 'pending').length} pending appointments, and {inquiries.filter(i => i.status === 'new').length} new messages.</CardDescription>
+                <CardDescription>Everything is running smoothly. There are {candidates.filter(c => c.status === 'New').length} new candidate applications, {appointments.filter(a => a.status === 'pending').length} pending appointment bookings, and {inquiries.filter(i => i.status === 'new').length} new messages.</CardDescription>
               </CardHeader>
               <CardContent className="flex gap-4 flex-wrap">
                 <Button onClick={() => setActiveTab('candidates')} className="gradient-bg border-none">
                    Review Candidates
                 </Button>
                 <Button variant="outline" onClick={() => setActiveTab('appointments')} className="gap-2">
-                   <CalendarDays size={16} /> Manage Appointments
+                   <CalendarDays size={16} /> Manage Appointment Booking
                 </Button>
                 <Button variant="outline" onClick={() => setActiveTab('inquiries')}>
                    Update Contact Info
@@ -738,7 +765,12 @@ const AdminDashboard = () => {
                               </span>
                             </TableCell>
                             <TableCell className="text-right space-x-2">
-                              <Button variant="outline" size="sm" className="h-8" onClick={() => setSelectedCandidate(candidate)}>
+                              <Button variant="outline" size="sm" className="h-8" onClick={() => {
+                                setSelectedCandidate(candidate);
+                                if (candidate.status === 'New') {
+                                  handleUpdateCandidateStatus(candidate.id, 'Screened');
+                                }
+                              }}>
                                 View Profile
                               </Button>
                             </TableCell>
@@ -1352,7 +1384,7 @@ const AdminDashboard = () => {
               <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                   <CardTitle className="font-display font-bold text-2xl flex items-center gap-2">
-                     <CalendarDays size={24} className="text-orange-500" /> Client Appointments
+                     <CalendarDays size={24} className="text-orange-500" /> Client Appointment Booking
                   </CardTitle>
                   <CardDescription>Review meeting slot requests from clients, select a slot to confirm, or manage bookings.</CardDescription>
                 </div>
@@ -1383,7 +1415,7 @@ const AdminDashboard = () => {
                       {appointments.length === 0 ? (
                         <TableRow>
                           <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                            No appointments requested yet.
+                            No appointment bookings requested yet.
                           </TableCell>
                         </TableRow>
                       ) : (
@@ -1405,7 +1437,7 @@ const AdminDashboard = () => {
                             </TableCell>
                             <TableCell>
                               <div className="flex flex-col gap-2 max-w-sm">
-                                {[app.slot_1, app.slot_2, app.slot_3].map((slot, index) => {
+                                {[app.slot_1, app.slot_2, app.slot_3].filter(s => s && s !== "N/A").map((slot, index) => {
                                   const isSelected = app.selected_slot === slot;
                                   const isConfirmed = app.status === 'confirmed';
                                   
@@ -1494,7 +1526,7 @@ const AdminDashboard = () => {
                 {/* Mobile view */}
                 <div className="md:hidden space-y-4">
                   {appointments.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">No appointments requested yet.</div>
+                    <div className="text-center py-8 text-muted-foreground">No appointment bookings requested yet.</div>
                   ) : (
                     appointments.filter(a => 
                       (a.client_name || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -1523,7 +1555,7 @@ const AdminDashboard = () => {
 
                         <div className="space-y-2 pt-2 border-t border-primary/5">
                           <p className="text-xs font-bold text-muted-foreground mb-2">Slots (Select one to confirm):</p>
-                          {[app.slot_1, app.slot_2, app.slot_3].map((slot, index) => {
+                          {[app.slot_1, app.slot_2, app.slot_3].filter(s => s && s !== "N/A").map((slot, index) => {
                             const isSelected = app.selected_slot === slot;
                             const isConfirmed = app.status === 'confirmed';
                             return (

@@ -12,7 +12,7 @@ const desktopNavLinks = [
   { label: 'About', href: '/#about' },
   { label: 'Services', href: '/#services' },
   { label: 'Partnership', href: '/#partnership' },
-  { label: 'Appointments', href: '/#book' },
+  { label: 'Appointment Booking', href: '/#book' },
   { label: 'Contact', href: '/#contact' },
 ];
 
@@ -23,7 +23,7 @@ const mobileNavLinks = [
   { label: 'Services', href: '/#services' },
   { label: 'Portfolio', href: '/#portfolio' },
   { label: 'Testimonials', href: '/#testimonials' },
-  { label: 'Appointments', href: '/#book' },
+  { label: 'Appointment Booking', href: '/#book' },
   { label: 'Contact', href: '/#contact' },
 ];
 
