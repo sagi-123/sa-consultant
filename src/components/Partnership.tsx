@@ -1,4 +1,8 @@
-import { Users2, Handshake, Rocket, HeartHandshake, ArrowRight } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Users2, Handshake, Rocket, HeartHandshake, ArrowRight, Loader2, CheckCircle2 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import { useToast } from '@/components/ui/use-toast';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 const programs = [
   {
@@ -28,6 +32,113 @@ const programs = [
 ];
 
 const Partnership = () => {
+  const { toast } = useToast();
+  const [isOpen, setIsOpen] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [whatsappNumber, setWhatsappNumber] = useState('9384797751');
+  const [formData, setFormData] = useState({
+    referrerName: '',
+    referrerEmail: '',
+    referrerPhone: '',
+    purpose: '',
+    referredName: '',
+    referredEmail: '',
+    referredPhone: ''
+  });
+
+  useEffect(() => {
+    const fetchWhatsapp = async () => {
+      const { data } = await supabase.from('settings').select('id, value').eq('id', 'whatsapp_number').single();
+      if (data?.value) setWhatsappNumber(data.value);
+    };
+    fetchWhatsapp();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const messageBody = `[REFERRAL PROGRAM SUBMISSION]
+
+=== REFERRER DETAILS ===
+• Name: ${formData.referrerName}
+• Email: ${formData.referrerEmail}
+• Phone: ${formData.referrerPhone}
+
+=== PURPOSE OF REFERRAL ===
+${formData.purpose}
+
+=== REFERRAL CANDIDATE (WHOM THEY REFER) ===
+• Name: ${formData.referredName}
+• Email: ${formData.referredEmail}
+• Phone: ${formData.referredPhone}`;
+
+      const { error } = await supabase
+        .from('inquiries')
+        .insert([
+          {
+            name: formData.referrerName,
+            email: formData.referrerEmail,
+            phone: formData.referrerPhone,
+            message: messageBody
+          }
+        ]);
+
+      if (error) throw error;
+
+      // Build WhatsApp message as a plain string, then encode the whole thing
+      const waMessagePlain =
+        `🤝 New Referral from SA CONSULTANT & STAFFING Website\n\n` +
+        `── YOUR DETAILS (Referrer) ──\n` +
+        `Name: ${formData.referrerName}\n` +
+        `Email: ${formData.referrerEmail}\n` +
+        `Phone: ${formData.referrerPhone}\n\n` +
+        `── PURPOSE OF REFERRAL ──\n` +
+        `${formData.purpose}\n\n` +
+        `── REFERRED PERSON ──\n` +
+        `Name: ${formData.referredName}\n` +
+        `Email: ${formData.referredEmail}\n` +
+        `Phone: ${formData.referredPhone}`;
+
+      const waUrl = `https://wa.me/${whatsappNumber.replace(/\D/g, '')}?text=${encodeURIComponent(waMessagePlain)}`;
+      window.open(waUrl, '_blank');
+
+      setIsSubmitted(true);
+      toast({
+        title: "Referral Submitted!",
+        description: "Thank you for recommending us. We'll be in touch soon.",
+      });
+    } catch (err: any) {
+      console.error('Error submitting referral:', err);
+      toast({
+        variant: 'destructive',
+        title: 'Submission Failed',
+        description: 'There was an error submitting your referral. Please try again.',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleClose = () => {
+    setIsOpen(false);
+    // Reset state after transition finishes
+    setTimeout(() => {
+      setIsSubmitted(false);
+      setFormData({
+        referrerName: '',
+        referrerEmail: '',
+        referrerPhone: '',
+        purpose: '',
+        referredName: '',
+        referredEmail: '',
+        referredPhone: ''
+      });
+    }, 300);
+  };
+
   return (
     <section id="partnership" className="section-padding relative overflow-hidden bg-background">
       {/* Decorative Orbs */}
@@ -45,37 +156,60 @@ const Partnership = () => {
         </div>
 
         <div className="grid md:grid-cols-2 gap-8 mb-16">
-          {programs.map((program, i) => (
-            <div 
-              key={program.title}
-              className="scroll-reveal glass p-8 md:p-10 rounded-[2.5rem] hover-lift hover-glow transition-all duration-500 border border-border group relative overflow-hidden"
-              style={{ transitionDelay: `${i * 150}ms` }}
-            >
-              {/* Subtle accent line */}
-              <div className="absolute top-0 left-0 right-0 h-1 gradient-bg opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              
-              <div className="flex flex-col md:flex-row gap-8 items-start">
-                <div className="w-16 h-16 rounded-2xl gradient-bg flex items-center justify-center flex-shrink-0 shadow-lg shadow-primary/20">
-                  <program.icon size={32} className="text-white" />
-                </div>
+          {programs.map((program, i) => {
+            const isReferral = program.title === 'Referral Program';
+            return (
+              <div 
+                key={program.title}
+                className={`scroll-reveal glass p-8 md:p-10 rounded-[2.5rem] hover-lift hover-glow transition-all duration-500 border border-border group relative overflow-hidden ${isReferral ? 'cursor-pointer hover:border-primary/45' : ''}`}
+                style={{ transitionDelay: `${i * 150}ms` }}
+                onClick={() => {
+                  if (isReferral) {
+                    setIsOpen(true);
+                  }
+                }}
+              >
+                {/* Subtle accent line */}
+                <div className="absolute top-0 left-0 right-0 h-1 gradient-bg opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 
-                <div className="flex-1">
-                  <h3 className="text-2xl font-display font-black mb-4 group-hover:text-primary transition-colors">{program.title}</h3>
-                  <p className="text-muted-foreground font-medium mb-6 leading-relaxed">
-                    {program.description}
-                  </p>
+                <div className="flex flex-col md:flex-row gap-8 items-start h-full justify-between">
+                  <div className="w-16 h-16 rounded-2xl gradient-bg flex items-center justify-center flex-shrink-0 shadow-lg shadow-primary/20">
+                    <program.icon size={32} className="text-white" />
+                  </div>
                   
-                  <div className="flex flex-wrap gap-2">
-                    {program.benefits.map((benefit) => (
-                      <span key={benefit} className="text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full bg-secondary text-foreground/70 border border-border">
-                        {benefit}
-                      </span>
-                    ))}
+                  <div className="flex-1 flex flex-col h-full justify-between">
+                    <div>
+                      <h3 className="text-2xl font-display font-black mb-4 group-hover:text-primary transition-colors flex items-center gap-2">
+                        {program.title}
+                        {isReferral && (
+                          <span className="text-[9px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/25 font-bold uppercase tracking-widest group-hover:animate-pulse">
+                            Apply Now
+                          </span>
+                        )}
+                      </h3>
+                      <p className="text-muted-foreground font-medium mb-6 leading-relaxed text-sm md:text-base">
+                        {program.description}
+                      </p>
+                    </div>
+                    
+                    <div className="flex flex-wrap gap-2 items-center">
+                      {program.benefits.map((benefit) => (
+                        <span key={benefit} className="text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full bg-secondary text-foreground/70 border border-border">
+                          {benefit}
+                        </span>
+                      ))}
+                    </div>
+
+                    {isReferral && (
+                      <div className="mt-6 flex items-center gap-2 text-primary font-black text-xs md:text-sm group-hover:translate-x-1 transition-transform">
+                        Open Referral Form <ArrowRight size={16} />
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className="scroll-reveal glass-strong p-8 md:p-12 rounded-[3rem] text-center max-w-4xl mx-auto border-2 border-primary/10 relative overflow-hidden group">
@@ -97,8 +231,169 @@ const Partnership = () => {
           </div>
         </div>
       </div>
+
+      {/* REFERRAL FORM DIALOG */}
+      <Dialog open={isOpen} onOpenChange={(open) => { if (!open) handleClose(); }}>
+        <DialogContent className="glass-strong border border-primary/20 max-w-3xl max-h-[90vh] overflow-y-auto p-6 md:p-8 pt-10 md:pt-12 rounded-3xl shadow-2xl">
+          {!isSubmitted ? (
+            <>
+              <DialogHeader className="mb-6 pr-8">
+                <DialogTitle className="text-xl md:text-2xl font-display font-black tracking-tight flex items-center gap-2">
+                  <Users2 className="text-primary" size={24} />
+                  SA Consultant <span className="gradient-text">Referral Program</span>
+                </DialogTitle>
+                <DialogDescription className="text-muted-foreground text-sm mt-2 leading-relaxed">
+                  Recommend a client to SA Consultant and earn rewards for every successful partnership!
+                </DialogDescription>
+              </DialogHeader>
+
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* Section 1: Referrer Information */}
+                  <div className="p-5 rounded-2xl bg-secondary/35 border border-primary/5 space-y-4">
+                    <h4 className="text-xs font-black text-primary uppercase tracking-wider flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full gradient-bg" />
+                      Your Details (Referrer)
+                    </h4>
+                    <div className="space-y-4">
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-black uppercase tracking-wider text-muted-foreground">Name *</label>
+                        <input
+                          type="text"
+                          required
+                          value={formData.referrerName}
+                          onChange={(e) => setFormData({ ...formData, referrerName: e.target.value })}
+                          placeholder="John Doe"
+                          className="w-full px-4 py-3 rounded-xl bg-background/50 border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-foreground text-sm font-medium"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-black uppercase tracking-wider text-muted-foreground">Email *</label>
+                        <input
+                          type="email"
+                          required
+                          value={formData.referrerEmail}
+                          onChange={(e) => setFormData({ ...formData, referrerEmail: e.target.value })}
+                          placeholder="john@example.com"
+                          className="w-full px-4 py-3 rounded-xl bg-background/50 border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-foreground text-sm font-medium"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-black uppercase tracking-wider text-muted-foreground">Phone Number *</label>
+                        <input
+                          type="tel"
+                          required
+                          value={formData.referrerPhone}
+                          onChange={(e) => setFormData({ ...formData, referrerPhone: e.target.value })}
+                          placeholder="+1 (123) 456-7890"
+                          className="w-full px-4 py-3 rounded-xl bg-background/50 border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-foreground text-sm font-medium"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section 2: Referral Candidate Details */}
+                  <div className="p-5 rounded-2xl bg-secondary/35 border border-primary/5 space-y-4">
+                    <h4 className="text-xs font-black text-accent uppercase tracking-wider flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-accent" />
+                      Candidate Details
+                    </h4>
+                    <div className="space-y-4">
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-black uppercase tracking-wider text-muted-foreground">Full Name *</label>
+                        <input
+                          type="text"
+                          required
+                          value={formData.referredName}
+                          onChange={(e) => setFormData({ ...formData, referredName: e.target.value })}
+                          placeholder="Jane Smith"
+                          className="w-full px-4 py-3 rounded-xl bg-background/50 border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-foreground text-sm font-medium"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-black uppercase tracking-wider text-muted-foreground">Email Address *</label>
+                        <input
+                          type="email"
+                          required
+                          value={formData.referredEmail}
+                          onChange={(e) => setFormData({ ...formData, referredEmail: e.target.value })}
+                          placeholder="jane@example.com"
+                          className="w-full px-4 py-3 rounded-xl bg-background/50 border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-foreground text-sm font-medium"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-black uppercase tracking-wider text-muted-foreground">Phone Number *</label>
+                        <input
+                          type="tel"
+                          required
+                          value={formData.referredPhone}
+                          onChange={(e) => setFormData({ ...formData, referredPhone: e.target.value })}
+                          placeholder="+1 (987) 654-3210"
+                          className="w-full px-4 py-3 rounded-xl bg-background/50 border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-foreground text-sm font-medium"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 3: Referral Purpose */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-black uppercase tracking-wider text-muted-foreground">For which purpose do you refer them? *</label>
+                  <textarea
+                    required
+                    rows={2}
+                    value={formData.purpose}
+                    onChange={(e) => setFormData({ ...formData, purpose: e.target.value })}
+                    placeholder="Describe their project scope, staffing or consulting needs..."
+                    className="w-full px-4 py-3 rounded-xl bg-background/50 border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all resize-none text-foreground text-sm font-medium"
+                  />
+                </div>
+
+                {/* Submit Button */}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full gradient-bg py-4 rounded-2xl font-black text-white hover-lift hover-glow flex items-center justify-center gap-2 transition-all duration-300 disabled:opacity-75 disabled:cursor-not-allowed shadow-lg shadow-primary/20 text-base"
+                >
+                  {loading ? (
+                    <>
+                      Submitting Referral... <Loader2 className="animate-spin" size={20} />
+                    </>
+                  ) : (
+                    <>
+                      Submit Referral <ArrowRight size={20} />
+                    </>
+                  )}
+                </button>
+              </form>
+            </>
+          ) : (
+            <div className="text-center py-10 px-4 space-y-6 animate-in fade-in zoom-in-95 duration-500">
+              <div className="w-20 h-20 rounded-full bg-green-500/10 text-green-500 flex items-center justify-center mx-auto shadow-lg shadow-green-500/10 border border-green-500/20">
+                <CheckCircle2 size={48} className="animate-bounce" style={{ animationDuration: '2s' }} />
+              </div>
+              <div className="space-y-3">
+                <h3 className="text-3xl font-display font-black gradient-text">Referral Received!</h3>
+                <p className="text-foreground font-black text-xl max-w-md mx-auto leading-relaxed">
+                  SA Consultant members will reach you soon!
+                </p>
+                <p className="text-muted-foreground text-sm font-medium max-w-sm mx-auto leading-relaxed">
+                  We appreciate your recommendation. An advisor will contact both you and the referred candidate shortly to coordinate and explain our competitive rewards.
+                </p>
+              </div>
+              <button
+                onClick={handleClose}
+                className="px-8 py-3.5 bg-foreground text-background font-black rounded-xl hover-lift transition-all duration-300 text-sm shadow-md"
+              >
+                Back to Partnerships
+              </button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </section>
   );
 };
 
 export default Partnership;
+

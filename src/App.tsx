@@ -11,6 +11,7 @@ import AdminDashboard from "./pages/AdminDashboard.tsx";
 import UserDashboard from "./pages/UserDashboard.tsx";
 import CandidatePortal from "./pages/CandidatePortal.tsx";
 import VendorPortal from "./pages/VendorPortal.tsx";
+import Jobs from "./pages/Jobs.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -74,6 +75,7 @@ const App = () => (
                   </ProtectedRoute>
                 } 
               />
+              <Route path="/jobs" element={<Jobs />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

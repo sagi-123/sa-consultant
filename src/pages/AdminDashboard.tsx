@@ -34,7 +34,11 @@ import {
   Linkedin,
   Upload,
   CalendarDays,
-  Clock
+  Clock,
+  X,
+  Building2,
+  DollarSign,
+  FileText
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
@@ -49,6 +53,18 @@ type Project = Database['public']['Tables']['projects']['Row'];
 type Inquiry = Database['public']['Tables']['inquiries']['Row'];
 type Candidate = Database['public']['Tables']['candidates']['Row'];
 type Appointment = Database['public']['Tables']['appointments']['Row'];
+type JobOpening = {
+  id: string;
+  title: string;
+  department: string | null;
+  location: string | null;
+  job_type: string | null;
+  salary_range: string | null;
+  description: string | null;
+  requirements: string | null;
+  status: string | null;
+  created_at: string;
+};
 
 const AdminDashboard = () => {
   const { profile, signOut } = useAuth();
@@ -89,26 +105,34 @@ const AdminDashboard = () => {
     color: 'from-[hsl(220,90%,56%)] to-[hsl(270,70%,60%)]'
   });
 
+  // Careers State
+  const [jobs, setJobs] = useState<JobOpening[]>([]);
+  const [isEditingJob, setIsEditingJob] = useState<string | null>(null); // null = closed, 'new' = new form, id = editing
+  const [savingJob, setSavingJob] = useState(false);
+  const blankJobForm = { title: '', department: '', location: '', job_type: 'Full-time', salary_range: '', description: '', requirements: '', status: 'Active' };
+  const [jobForm, setJobForm] = useState(blankJobForm);
+
   const fetchAllData = useCallback(async (isSilent = false) => {
     if (!isSilent) setLoading(true);
     else setRefreshing(true);
     
     try {
-      const [usersResponse, reviewsResponse, projectsResponse, inquiriesResponse, candidatesResponse, appointmentsResponse] = await Promise.all([
+      const [usersResponse, reviewsResponse, projectsResponse, inquiriesResponse, candidatesResponse, appointmentsResponse, jobsResponse] = await Promise.all([
         supabase.from('profiles').select('*').order('created_at', { ascending: false }),
         supabase.from('reviews').select('*').order('created_at', { ascending: false }),
         supabase.from('projects').select('*').order('created_at', { ascending: false }),
         supabase.from('inquiries').select('*').order('created_at', { ascending: false }),
         supabase.from('candidates').select('*').order('created_at', { ascending: false }),
         supabase.from('appointments').select('*').order('created_at', { ascending: false }),
+        supabase.from('job_openings').select('*').order('created_at', { ascending: false }),
       ]);
 
       if (usersResponse.error) throw usersResponse.error;
       if (reviewsResponse.error) throw reviewsResponse.error;
       if (projectsResponse.error) throw projectsResponse.error;
       if (inquiriesResponse.error) throw inquiriesResponse.error;
-      if (candidatesResponse.error && candidatesResponse.error.code !== '42P01') throw candidatesResponse.error; // Ignore table missing error for now
-      if (appointmentsResponse.error && appointmentsResponse.error.code !== '42P01') throw appointmentsResponse.error; // Ignore table missing error for now
+      if (candidatesResponse.error && candidatesResponse.error.code !== '42P01') throw candidatesResponse.error;
+      if (appointmentsResponse.error && appointmentsResponse.error.code !== '42P01') throw appointmentsResponse.error;
 
       setUsers(usersResponse.data || []);
       setReviews(reviewsResponse.data || []);
@@ -116,6 +140,7 @@ const AdminDashboard = () => {
       setInquiries(inquiriesResponse.data || []);
       setCandidates(candidatesResponse.data || []);
       setAppointments(appointmentsResponse.data || []);
+      setJobs((jobsResponse.data as JobOpening[]) || []);
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -445,6 +470,68 @@ const AdminDashboard = () => {
     }
   };
 
+  // ── Careers / Job Openings CRUD ──────────────────────────────────────
+  const handleSaveJob = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingJob(true);
+    try {
+      if (isEditingJob && isEditingJob !== 'new') {
+        const { error } = await supabase.from('job_openings').update(jobForm as any).eq('id', isEditingJob);
+        if (error) throw error;
+        toast({ title: "Job Updated", description: "The job posting has been updated." });
+      } else {
+        const { error } = await supabase.from('job_openings').insert([jobForm as any]);
+        if (error) throw error;
+        toast({ title: "Job Posted!", description: `"${jobForm.title}" is now live.` });
+      }
+      setIsEditingJob(null);
+      setJobForm(blankJobForm);
+      fetchAllData(true);
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Error saving job", description: error.message });
+    } finally {
+      setSavingJob(false);
+    }
+  };
+
+  const handleDeleteJob = async (id: string) => {
+    if (!confirm('Delete this job posting?')) return;
+    try {
+      const { error } = await supabase.from('job_openings').delete().eq('id', id);
+      if (error) throw error;
+      toast({ title: "Job Deleted" });
+      fetchAllData(true);
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Error", description: error.message });
+    }
+  };
+
+  const handleEditJob = (job: JobOpening) => {
+    setJobForm({
+      title: job.title,
+      department: job.department || '',
+      location: job.location || '',
+      job_type: job.job_type || 'Full-time',
+      salary_range: job.salary_range || '',
+      description: job.description || '',
+      requirements: job.requirements || '',
+      status: job.status || 'Active',
+    });
+    setIsEditingJob(job.id);
+  };
+
+  const handleToggleJobStatus = async (job: JobOpening) => {
+    const newStatus = job.status === 'Active' ? 'Closed' : 'Active';
+    try {
+      const { error } = await supabase.from('job_openings').update({ status: newStatus } as any).eq('id', job.id);
+      if (error) throw error;
+      toast({ title: `Job ${newStatus === 'Active' ? 'Activated' : 'Closed'}` });
+      fetchAllData(true);
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Error", description: error.message });
+    }
+  };
+
   const handleConfirmAppointmentSlot = async (id: string, slotText: string) => {
     try {
       const { error } = await supabase
@@ -651,6 +738,9 @@ const AdminDashboard = () => {
             <TabsTrigger value="partners" className="data-[state=active]:gradient-bg h-10 px-4 min-w-[120px] flex-shrink-0 flex gap-2 items-center justify-center font-bold text-primary">
               🧠 Master CRM (The Brain)
             </TabsTrigger>
+            <TabsTrigger value="careers" className="data-[state=active]:gradient-bg h-10 px-4 min-w-[120px] flex-shrink-0 flex gap-2 items-center justify-center font-bold text-accent">
+              💼 Careers / Jobs
+            </TabsTrigger>
             <TabsTrigger value="appointments" className="data-[state=active]:gradient-bg h-10 px-4 min-w-[120px] flex-shrink-0 flex gap-2 items-center justify-center relative font-bold text-orange-500">
               📅 Appointment Booking
               {appointments.filter(a => a.status === 'pending').length > 0 && (
@@ -838,14 +928,83 @@ const AdminDashboard = () => {
                             <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                               {new Date(inquiry.created_at).toLocaleDateString()}
                             </TableCell>
-                            <TableCell className="font-medium whitespace-nowrap">{inquiry.name}</TableCell>
+                            <TableCell className="font-medium whitespace-nowrap">
+                              {inquiry.message?.startsWith('[PARTNER/VENDOR SUBMISSION]') ? (
+                                <span className="text-xs font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-accent/15 text-accent border border-accent/30">Vendor</span>
+                              ) : inquiry.message?.startsWith('[JOB APPLICATION]') ? (
+                                <span className="text-xs font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-500 border border-blue-500/30">Job App</span>
+                              ) : null}
+                              <div>{inquiry.name}</div>
+                            </TableCell>
                             <TableCell className="text-xs">
                               <div className="flex flex-col gap-1">
                                 <span className="flex items-center gap-1"><Mail size={12} className="text-primary" /> {inquiry.email}</span>
                                 <span className="flex items-center gap-1"><Phone size={12} className="text-accent" /> {inquiry.phone}</span>
                               </div>
                             </TableCell>
-                            <TableCell className="min-w-[200px] text-sm italic">"{inquiry.message}"</TableCell>
+                            <TableCell className="min-w-[260px] text-sm">
+                              {inquiry.message?.startsWith('[PARTNER/VENDOR SUBMISSION]') ? (() => {
+                                const lines = inquiry.message.split('\n').filter(Boolean);
+                                const get = (key: string) => lines.find(l => l.startsWith(key))?.replace(key, '').trim() ?? '';
+                                const resumeUrl = get('Resume URL:') || get('Resume Link:');
+                                return (
+                                  <div className="space-y-1.5">
+                                    <div className="text-xs text-muted-foreground"><span className="font-bold text-foreground">Company:</span> {get('Vendor Company:')}</div>
+                                    <div className="text-xs text-muted-foreground"><span className="font-bold text-foreground">Candidate:</span> {get('Candidate Name:')}</div>
+                                    <div className="text-xs text-muted-foreground"><span className="font-bold text-foreground">Email:</span> {get('Candidate Email:')}</div>
+                                    <div className="text-xs text-muted-foreground"><span className="font-bold text-foreground">Phone:</span> {get('Candidate Phone:')}</div>
+                                    {resumeUrl && (
+                                      <a href={resumeUrl} target="_blank" rel="noreferrer"
+                                        className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-accent hover:bg-accent/80 px-3 py-1.5 rounded-lg transition-colors mt-1">
+                                        📄 View / Download Resume
+                                      </a>
+                                    )}
+                                  </div>
+                                );
+                              })() : inquiry.message?.startsWith('[JOB APPLICATION]') ? (() => {
+                                const lines = inquiry.message.split('\n').filter(Boolean);
+                                const get = (key: string) => lines.find(l => l.startsWith(key))?.replace(key, '').trim() ?? '';
+                                const resumeUrl = get('Resume Link:');
+                                
+                                // Extract Cover Letter safely
+                                const clHeader = 'Cover Letter:';
+                                const coverLineIndex = lines.findIndex(l => l.startsWith(clHeader));
+                                let coverLetterText = '';
+                                if (coverLineIndex !== -1) {
+                                  const rawText = lines[coverLineIndex].replace(clHeader, '').trim();
+                                  // If there are lines below that aren't "Resume Link:", they could be part of the cover letter
+                                  const textAfter = [];
+                                  if (rawText) textAfter.push(rawText);
+                                  for (let i = coverLineIndex + 1; i < lines.length; i++) {
+                                    if (lines[i].startsWith('Resume Link:')) break;
+                                    textAfter.push(lines[i]);
+                                  }
+                                  coverLetterText = textAfter.join('\n');
+                                }
+
+                                return (
+                                  <div className="space-y-1.5">
+                                    <div className="text-xs text-muted-foreground"><span className="font-bold text-foreground">Position:</span> {get('Applied Position:')} ({get('Department:')})</div>
+                                    <div className="text-xs text-muted-foreground"><span className="font-bold text-foreground">Candidate:</span> {get('Candidate Name:')}</div>
+                                    <div className="text-xs text-muted-foreground"><span className="font-bold text-foreground">Email:</span> {get('Candidate Email:')}</div>
+                                    <div className="text-xs text-muted-foreground"><span className="font-bold text-foreground">Phone:</span> {get('Candidate Phone:')}</div>
+                                    {coverLetterText && (
+                                      <div className="text-xs text-muted-foreground bg-secondary/30 p-2 rounded-lg mt-1 italic whitespace-pre-line border border-border/20">
+                                        "{coverLetterText}"
+                                      </div>
+                                    )}
+                                    {resumeUrl && resumeUrl !== 'No resume uploaded yet.' && (
+                                      <a href={resumeUrl} target="_blank" rel="noreferrer"
+                                        className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-blue-500 hover:bg-blue-600 px-3 py-1.5 rounded-lg transition-colors mt-1">
+                                        📄 View / Download Resume
+                                      </a>
+                                    )}
+                                  </div>
+                                );
+                              })() : (
+                                <span className="italic text-muted-foreground">"{inquiry.message}"</span>
+                              )}
+                            </TableCell>
                             <TableCell className="text-right">
                               <Button 
                                 size="icon" 
@@ -874,9 +1033,20 @@ const AdminDashboard = () => {
                       i.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
                       i.email.toLowerCase().includes(searchTerm.toLowerCase())
                     ).map((inquiry) => (
-                      <div key={inquiry.id} className="glass rounded-xl p-5 border border-primary/10 space-y-4">
+                      <div key={inquiry.id} className={`glass rounded-xl p-5 border space-y-4 ${
+                        inquiry.message?.startsWith('[PARTNER/VENDOR SUBMISSION]') 
+                          ? 'border-accent/30 bg-accent/5' 
+                          : inquiry.message?.startsWith('[JOB APPLICATION]')
+                            ? 'border-blue-500/30 bg-blue-500/5'
+                            : 'border-primary/10'
+                      }`}>
                         <div className="flex justify-between items-start">
                           <div>
+                            {inquiry.message?.startsWith('[PARTNER/VENDOR SUBMISSION]') ? (
+                              <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-accent/15 text-accent border border-accent/30 mb-2 inline-block">Partner/Vendor Submission</span>
+                            ) : inquiry.message?.startsWith('[JOB APPLICATION]') ? (
+                              <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-500 border border-blue-500/30 mb-2 inline-block">Job Application</span>
+                            ) : null}
                             <h4 className="font-bold text-lg text-foreground">{inquiry.name}</h4>
                             <p className="text-xs text-muted-foreground">{new Date(inquiry.created_at).toLocaleString()}</p>
                           </div>
@@ -899,11 +1069,72 @@ const AdminDashboard = () => {
                           </div>
                         </div>
 
-                        <div className="bg-secondary/30 p-3 rounded-lg border border-border/50">
-                          <p className="text-sm italic text-foreground leading-relaxed">
-                            "{inquiry.message}"
-                          </p>
-                        </div>
+                        {inquiry.message?.startsWith('[PARTNER/VENDOR SUBMISSION]') ? (() => {
+                          const lines = inquiry.message.split('\n').filter(Boolean);
+                          const get = (key: string) => lines.find(l => l.startsWith(key))?.replace(key, '').trim() ?? '';
+                          const resumeUrl = get('Resume Link:');
+                          return (
+                            <div className="bg-accent/10 border border-accent/20 rounded-xl p-4 space-y-2">
+                              <p className="text-xs font-black text-accent uppercase tracking-wider mb-3">Candidate Details</p>
+                              <div className="text-sm"><span className="font-bold">Company:</span> {get('Vendor Company:')}</div>
+                              <div className="text-sm"><span className="font-bold">Candidate:</span> {get('Candidate Name:')}</div>
+                              <div className="text-sm"><span className="font-bold">Email:</span> {get('Candidate Email:')}</div>
+                              <div className="text-sm"><span className="font-bold">Phone:</span> {get('Candidate Phone:')}</div>
+                              {resumeUrl && (
+                                <a href={resumeUrl} target="_blank" rel="noreferrer"
+                                  className="mt-3 flex items-center gap-2 text-sm font-bold text-white bg-accent hover:bg-accent/80 px-4 py-2 rounded-lg transition-colors w-fit">
+                                  📄 View / Download Resume
+                                </a>
+                              )}
+                            </div>
+                          );
+                        })() : inquiry.message?.startsWith('[JOB APPLICATION]') ? (() => {
+                          const lines = inquiry.message.split('\n').filter(Boolean);
+                          const get = (key: string) => lines.find(l => l.startsWith(key))?.replace(key, '').trim() ?? '';
+                          const resumeUrl = get('Resume Link:');
+                          
+                          // Extract Cover Letter safely
+                          const clHeader = 'Cover Letter:';
+                          const coverLineIndex = lines.findIndex(l => l.startsWith(clHeader));
+                          let coverLetterText = '';
+                          if (coverLineIndex !== -1) {
+                            const rawText = lines[coverLineIndex].replace(clHeader, '').trim();
+                            const textAfter = [];
+                            if (rawText) textAfter.push(rawText);
+                            for (let i = coverLineIndex + 1; i < lines.length; i++) {
+                              if (lines[i].startsWith('Resume Link:')) break;
+                              textAfter.push(lines[i]);
+                            }
+                            coverLetterText = textAfter.join('\n');
+                          }
+
+                          return (
+                            <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 space-y-2">
+                              <p className="text-xs font-black text-blue-500 uppercase tracking-wider mb-3">Application Details</p>
+                              <div className="text-sm"><span className="font-bold">Position:</span> {get('Applied Position:')} ({get('Department:')})</div>
+                              <div className="text-sm"><span className="font-bold">Candidate:</span> {get('Candidate Name:')}</div>
+                              <div className="text-sm"><span className="font-bold">Email:</span> {get('Candidate Email:')}</div>
+                              <div className="text-sm"><span className="font-bold">Phone:</span> {get('Candidate Phone:')}</div>
+                              {coverLetterText && (
+                                <div className="text-xs text-muted-foreground bg-secondary/30 p-2.5 rounded-lg mt-2 italic whitespace-pre-line border border-border/20">
+                                  "{coverLetterText}"
+                                </div>
+                              )}
+                              {resumeUrl && resumeUrl !== 'No resume uploaded yet.' && (
+                                <a href={resumeUrl} target="_blank" rel="noreferrer"
+                                  className="mt-3 flex items-center gap-2 text-sm font-bold text-white bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-lg transition-colors w-fit">
+                                  📄 View / Download Resume
+                                </a>
+                              )}
+                            </div>
+                          );
+                        })() : (
+                          <div className="bg-secondary/30 p-3 rounded-lg border border-border/50">
+                            <p className="text-sm italic text-foreground leading-relaxed">
+                              "{inquiry.message}"
+                            </p>
+                          </div>
+                        )}
                       </div>
                     ))
                   )}
@@ -1623,6 +1854,232 @@ const AdminDashboard = () => {
                     ))
                   )}
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="careers" className="space-y-8 animate-in fade-in-50 duration-300">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <h2 className="text-3xl font-display font-black text-foreground flex items-center gap-2">
+                  <Briefcase size={28} className="text-accent" /> Job Openings & Careers
+                </h2>
+                <p className="text-muted-foreground text-sm">Post, update, and manage job opportunities visible to candidates.</p>
+              </div>
+              <Button 
+                onClick={() => {
+                  setJobForm(blankJobForm);
+                  setIsEditingJob('new');
+                }} 
+                className="gradient-bg text-white font-bold h-10 px-5 rounded-xl shadow-lg hover:shadow-primary/20 flex gap-2 items-center"
+              >
+                <Plus size={18} /> Post a Job Opening
+              </Button>
+            </div>
+
+            {/* Post/Edit Job Form */}
+            {isEditingJob && (
+              <Card className="glass border-accent/20 animate-in slide-in-from-top-4 duration-300" id="job-form">
+                <CardHeader className="border-b border-border/50 pb-4">
+                  <div className="flex justify-between items-center">
+                    <CardTitle className="text-xl font-display flex items-center gap-2">
+                      <Briefcase className="text-accent" /> {isEditingJob === 'new' ? 'New Job Posting' : 'Edit Job Posting'}
+                    </CardTitle>
+                    <Button variant="ghost" size="icon" onClick={() => setIsEditingJob(null)} className="h-8 w-8 rounded-lg">
+                      <X size={16} />
+                    </Button>
+                  </div>
+                  <CardDescription>All fields marked with * are required. Job details will be formatted for candidate display.</CardDescription>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <form onSubmit={handleSaveJob} className="space-y-6">
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                      <div className="space-y-2 col-span-1 sm:col-span-2">
+                        <Label className="text-sm font-semibold">Job Title *</Label>
+                        <Input 
+                          required 
+                          value={jobForm.title} 
+                          onChange={e => setJobForm({...jobForm, title: e.target.value})} 
+                          placeholder="e.g. Senior Full Stack Developer" 
+                          className="bg-background/50"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-sm font-semibold">Department *</Label>
+                        <Input 
+                          required 
+                          value={jobForm.department} 
+                          onChange={e => setJobForm({...jobForm, department: e.target.value})} 
+                          placeholder="e.g. Engineering" 
+                          className="bg-background/50"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-sm font-semibold">Location *</Label>
+                        <Input 
+                          required 
+                          value={jobForm.location} 
+                          onChange={e => setJobForm({...jobForm, location: e.target.value})} 
+                          placeholder="e.g. Hyderabad, IN / Remote" 
+                          className="bg-background/50"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-sm font-semibold">Job Type</Label>
+                        <select 
+                          value={jobForm.job_type} 
+                          onChange={e => setJobForm({...jobForm, job_type: e.target.value})} 
+                          className="w-full h-10 px-3 rounded-lg bg-background/50 border border-input focus:border-accent outline-none text-sm"
+                        >
+                          <option value="Full-time">Full-time</option>
+                          <option value="Part-time">Part-time</option>
+                          <option value="Contract">Contract</option>
+                          <option value="Remote">Remote</option>
+                          <option value="Internship">Internship</option>
+                        </select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-sm font-semibold">Salary Range</Label>
+                        <Input 
+                          value={jobForm.salary_range} 
+                          onChange={e => setJobForm({...jobForm, salary_range: e.target.value})} 
+                          placeholder="e.g. $80k - $100k / ₹12L - ₹18L" 
+                          className="bg-background/50"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-sm font-semibold">Status</Label>
+                        <select 
+                          value={jobForm.status} 
+                          onChange={e => setJobForm({...jobForm, status: e.target.value})} 
+                          className="w-full h-10 px-3 rounded-lg bg-background/50 border border-input focus:border-accent outline-none text-sm"
+                        >
+                          <option value="Active">Active (Visible)</option>
+                          <option value="Draft">Draft (Hidden)</option>
+                          <option value="Closed">Closed</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid sm:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label className="text-sm font-semibold">Job Description *</Label>
+                        <textarea 
+                          required 
+                          rows={6}
+                          value={jobForm.description} 
+                          onChange={e => setJobForm({...jobForm, description: e.target.value})} 
+                          placeholder="Provide a comprehensive job description. Markdown or simple paragraphs are allowed." 
+                          className="w-full p-3 rounded-lg bg-background/50 border border-input focus:border-accent outline-none text-sm transition-all resize-none"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-sm font-semibold">Job Requirements / Key Skills *</Label>
+                        <textarea 
+                          required 
+                          rows={6}
+                          value={jobForm.requirements} 
+                          onChange={e => setJobForm({...jobForm, requirements: e.target.value})} 
+                          placeholder="List requirements or candidate profile. Put each on a new line or separate by commas." 
+                          className="w-full p-3 rounded-lg bg-background/50 border border-input focus:border-accent outline-none text-sm transition-all resize-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3 justify-end pt-4 border-t border-border/50">
+                      <Button type="button" variant="outline" onClick={() => setIsEditingJob(null)} className="h-10 px-5 rounded-xl">
+                        Cancel
+                      </Button>
+                      <Button type="submit" disabled={savingJob} className="gradient-bg text-white font-bold h-10 px-5 rounded-xl shadow-lg">
+                        {savingJob ? 'Saving...' : 'Save Job Posting'}
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Job Openings List */}
+            <Card className="glass">
+              <CardHeader className="border-b border-border/50 pb-4 flex flex-row justify-between items-center">
+                <div>
+                  <CardTitle className="text-xl font-display flex items-center gap-2">
+                    <FileText className="text-accent" /> Active Job Postings ({jobs.length})
+                  </CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-6">
+                {jobs.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <Briefcase size={40} className="mx-auto text-muted-foreground/30 mb-3" />
+                    No jobs posted yet. Click "Post a Job Opening" to get started.
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Job Title</TableHead>
+                          <TableHead>Department</TableHead>
+                          <TableHead>Location</TableHead>
+                          <TableHead>Type</TableHead>
+                          <TableHead>Salary Range</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {jobs.map((job) => (
+                          <TableRow key={job.id}>
+                            <TableCell className="font-bold text-foreground whitespace-nowrap">{job.title}</TableCell>
+                            <TableCell className="whitespace-nowrap text-sm text-muted-foreground">{job.department || 'N/A'}</TableCell>
+                            <TableCell className="whitespace-nowrap text-sm text-muted-foreground flex items-center gap-1 mt-3.5"><MapPin size={12} /> {job.location || 'N/A'}</TableCell>
+                            <TableCell className="whitespace-nowrap">
+                              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-secondary/80 text-foreground border border-border">
+                                {job.job_type}
+                              </span>
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap text-sm font-semibold text-accent">{job.salary_range || 'Not Specified'}</TableCell>
+                            <TableCell>
+                              <button 
+                                onClick={() => handleToggleJobStatus(job)}
+                                className={`text-[10px] px-2.5 py-1 rounded-full uppercase tracking-wider font-bold transition-all border ${
+                                  job.status === 'Active' ? 'bg-green-500/10 text-green-500 border-green-500/30 hover:bg-green-500/20' : 
+                                  job.status === 'Draft' ? 'bg-yellow-500/10 text-yellow-500 border-yellow-500/30 hover:bg-yellow-500/20' :
+                                  'bg-red-500/10 text-red-500 border-red-500/30 hover:bg-red-500/20'
+                                }`}
+                              >
+                                {job.status}
+                              </button>
+                            </TableCell>
+                            <TableCell className="text-right whitespace-nowrap">
+                              <div className="flex items-center justify-end gap-1">
+                                <Button 
+                                  size="icon" 
+                                  variant="ghost" 
+                                  className="h-8 w-8 text-primary hover:bg-primary/10"
+                                  onClick={() => handleEditJob(job)}
+                                  title="Edit Job"
+                                >
+                                  <Edit size={14} />
+                                </Button>
+                                <Button 
+                                  size="icon" 
+                                  variant="ghost" 
+                                  className="h-8 w-8 text-red-500 hover:bg-red-500/10"
+                                  onClick={() => handleDeleteJob(job.id)}
+                                  title="Delete Job"
+                                >
+                                  <Trash2 size={14} />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

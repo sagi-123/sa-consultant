@@ -1,3 +1,4 @@
+// Updated imports
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
@@ -6,11 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
+import { Input } from '@/components/ui/input';
+import {
   User, Mail, Phone, MapPin, Briefcase, Download, Upload,
-  Linkedin, Globe, Calendar, FileText, CheckCircle2, 
+  Linkedin, Globe, Calendar, FileText, CheckCircle2,
   Clock, LayoutDashboard, LogOut, FileCode2, GraduationCap,
-  Loader2
+  Loader2, Paperclip, UserCircle2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { extractTextFromPDF } from '@/lib/pdfExtractor';
@@ -52,6 +54,20 @@ const CandidatePortal = () => {
   const [candidateData, setCandidateData] = useState(mockCandidate);
   const [applicationStatus, setApplicationStatus] = useState<string | null>(null);
 
+  // Vendor form state
+  const [vendorForm, setVendorForm] = useState({
+    companyName: '',
+    vendorName: '',
+    vendorEmail: '',
+    vendorPhone: '',
+    candidateName: '',
+    candidateEmail: '',
+    candidatePhone: '',
+    jobTitle: '',
+  });
+  const [vendorFile, setVendorFile] = useState<File | null>(null);
+  const [isSubmittingVendor, setIsSubmittingVendor] = useState(false);
+
   // Fetch candidate profile and subscribe to realtime updates
   useEffect(() => {
     if (!profile?.id) return;
@@ -64,7 +80,7 @@ const CandidatePortal = () => {
         .order('created_at', { ascending: false })
         .limit(1)
         .single();
-      
+
       if (!error && data) {
         setApplicationStatus(data.status);
         if (data.parsed_data) {
@@ -79,7 +95,7 @@ const CandidatePortal = () => {
           const urlParts = data.resume_url.split('/');
           const fullFileName = urlParts[urlParts.length - 1] || 'Uploaded_Resume.pdf';
           const cleanName = fullFileName.split('_').slice(1).join('_') || fullFileName;
-          
+
           const fetchedResume = {
             id: data.id,
             name: cleanName,
@@ -145,7 +161,7 @@ const CandidatePortal = () => {
       setIsUploading(true);
       try {
         const fileName = `${Math.random().toString(36).substring(2)}_${file.name}`;
-        
+
         // Uploading to a folder named after the user's ID (best practice for security policies)
         const userId = profile?.id || 'anonymous';
         const { error } = await supabase.storage
@@ -160,7 +176,7 @@ const CandidatePortal = () => {
           name: file.name,
           date: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
         };
-        
+
         setResumeList(prev => [newResume, ...prev]);
         setActiveResume(newResume.id);
 
@@ -180,7 +196,7 @@ const CandidatePortal = () => {
           const parsedData = await parseResumeWithAI(text);
           console.log('=== GROQ PARSED DATA ===');
           console.log(JSON.stringify(parsedData, null, 2));
-          
+
           setCandidateData(prev => ({
             ...prev,
             name: parsedData.name ?? '',
@@ -254,6 +270,79 @@ const CandidatePortal = () => {
     }
   };
 
+  // Handle vendor/partner submission
+  const handleVendorSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!vendorFile) {
+      toast({
+        variant: "destructive",
+        title: "No file selected",
+        description: "Please attach a resume before submitting.",
+      });
+      return;
+    }
+    setIsSubmittingVendor(true);
+    try {
+        // Upload resume to resumes bucket inside a vendor subfolder
+        const userId = profile?.id || 'vendor_anonymous';
+        const fileName = `${Math.random().toString(36).substring(2)}_${vendorFile.name}`;
+        const storagePath = `${userId}/${fileName}`;
+        const { error: uploadError } = await supabase.storage
+          .from('resumes')
+          .upload(storagePath, vendorFile);
+      if (uploadError) throw uploadError;
+      // Get public URL of the uploaded file
+      const { data: { publicUrl } } = supabase.storage
+        .from('resumes')
+        .getPublicUrl(storagePath);
+
+      // Build a structured message string with all vendor & candidate details
+      const messageBody = [
+        `[PARTNER/VENDOR SUBMISSION]`,
+        `Vendor Company: ${vendorForm.companyName}`,
+        `Vendor Name: ${vendorForm.vendorName}`,
+        `Vendor Email: ${vendorForm.vendorEmail}`,
+        `Vendor Phone: ${vendorForm.vendorPhone}`,
+        `Candidate Name: ${vendorForm.candidateName}`,
+        `Candidate Email: ${vendorForm.candidateEmail}`,
+        `Candidate Phone: ${vendorForm.candidatePhone}`,
+        `Job Title: ${vendorForm.jobTitle}`,
+        `Resume URL: ${publicUrl}`,
+      ].join('\n');
+
+      // Insert inquiry record using only existing columns
+      const { data: insertedData, error: dbError } = await supabase.from('inquiries').insert({
+        name: vendorForm.vendorName,
+        email: vendorForm.vendorEmail,
+        phone: vendorForm.vendorPhone || 'N/A',
+        message: messageBody,
+        vendor_name: vendorForm.vendorName,
+        vendor_email: vendorForm.vendorEmail,
+        vendor_phone: vendorForm.vendorPhone,
+      } as any);
+      console.log('Supabase insert result:', { insertedData, dbError });
+      if (dbError) throw dbError;
+
+      toast({
+        title: "Submission Sent",
+        description: "Vendor submission has been recorded.",
+      });
+      // Reset form
+      setVendorForm({ companyName: '', vendorName: '', vendorEmail: '', vendorPhone: '', candidateName: '', candidateEmail: '', candidatePhone: '', jobTitle: '' });
+      setVendorFile(null);
+    } catch (err: any) {
+      console.error('Vendor submission error:', err);
+      toast({
+        variant: "destructive",
+        title: "Submission failed",
+        description: err.message || "Failed to submit vendor information.",
+      });
+    } finally {
+      setIsSubmittingVendor(false);
+    }
+  };
+
+
   return (
     <div className="min-h-screen bg-background">
       <nav className="border-b glass sticky top-0 z-50">
@@ -273,16 +362,15 @@ const CandidatePortal = () => {
       </nav>
 
       <main className="container mx-auto px-4 py-8 max-w-5xl space-y-8">
-        
+
         {/* Realtime Status Banner */}
         {applicationStatus && (
-          <div className={`p-4 rounded-xl border flex items-center justify-between gap-4 animate-in slide-in-from-top-4 ${
-            applicationStatus === 'New' ? 'bg-blue-500/10 border-blue-500/20 text-blue-700' :
+          <div className={`p-4 rounded-xl border flex items-center justify-between gap-4 animate-in slide-in-from-top-4 ${applicationStatus === 'New' ? 'bg-blue-500/10 border-blue-500/20 text-blue-700' :
             applicationStatus === 'Screened' ? 'bg-yellow-500/10 border-yellow-500/20 text-yellow-700' :
-            applicationStatus === 'Interview' ? 'bg-purple-500/10 border-purple-500/20 text-purple-700' :
-            applicationStatus === 'Offer' ? 'bg-green-500/10 border-green-500/20 text-green-700' :
-            'bg-red-500/10 border-red-500/20 text-red-700'
-          }`}>
+              applicationStatus === 'Interview' ? 'bg-purple-500/10 border-purple-500/20 text-purple-700' :
+                applicationStatus === 'Offer' ? 'bg-green-500/10 border-green-500/20 text-green-700' :
+                  'bg-red-500/10 border-red-500/20 text-red-700'
+            }`}>
             <div>
               <h3 className="font-bold flex items-center gap-2">
                 <CheckCircle2 size={18} /> Application Status: {applicationStatus}
@@ -303,7 +391,7 @@ const CandidatePortal = () => {
           <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[80px] -z-10" />
           <CardContent className="p-6 sm:p-8">
             <div className="flex flex-col md:flex-row gap-6 md:gap-8 items-start">
-              
+
               {/* Photo & Name */}
               <div className="flex flex-col items-center gap-4 shrink-0">
                 <div className="w-28 h-28 rounded-full bg-primary/10 border-4 border-background flex items-center justify-center shadow-xl overflow-hidden relative text-4xl font-display font-bold text-primary">
@@ -323,16 +411,16 @@ const CandidatePortal = () => {
 
               {/* Details grid */}
               <div className="flex-1 w-full grid grid-cols-1 sm:grid-cols-2 gap-6">
-                
+
                 <div className="space-y-4">
                   <div>
                     <h3 className="font-semibold text-lg flex items-center gap-2">
-                      <Briefcase size={16} className="text-muted-foreground" /> 
+                      <Briefcase size={16} className="text-muted-foreground" />
                       {candidateData.title}
                     </h3>
                     <p className="text-muted-foreground text-sm">{candidateData.company}</p>
                   </div>
-                  
+
                   <div className="space-y-2 text-sm">
                     <p className="flex items-center gap-2 text-foreground/80">
                       <Clock size={14} className="text-accent" />
@@ -408,9 +496,9 @@ const CandidatePortal = () => {
                 </CardTitle>
                 <CardDescription>Your professional background, skills, and original resume documents.</CardDescription>
               </div>
-              
+
               <div className="flex flex-col gap-2 w-full sm:w-auto">
-                <select 
+                <select
                   className="bg-secondary border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                   value={activeResume}
                   onChange={(e) => setActiveResume(e.target.value)}
@@ -427,9 +515,9 @@ const CandidatePortal = () => {
                       <Upload size={16} />
                     )}
                     {isUploading ? 'Uploading...' : isParsing ? 'Parsing AI...' : 'Upload'}
-                    <input 
-                      type="file" 
-                      className="absolute inset-0 opacity-0 cursor-pointer" 
+                    <input
+                      type="file"
+                      className="absolute inset-0 opacity-0 cursor-pointer"
                       accept=".pdf,.doc,.docx"
                       onChange={handleFileUpload}
                       disabled={isUploading || isParsing}
@@ -463,11 +551,11 @@ const CandidatePortal = () => {
                 <div className="space-y-6 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-border before:to-transparent">
                   {candidateData.experienceTimeline.map((exp, index) => (
                     <div key={index} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
-                      
+
                       <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-background bg-primary/20 text-primary shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow z-10">
                         <Briefcase size={16} />
                       </div>
-                      
+
                       <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-xl glass border border-primary/10 hover:border-primary/30 transition-colors shadow-sm">
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 gap-2">
                           <h4 className="font-bold text-foreground text-lg">{exp.role}</h4>
@@ -585,6 +673,50 @@ const CandidatePortal = () => {
             </Tabs>
           </CardContent>
         </Card>
+
+        {/* Partner & Vendor Submissions */}
+        <div className="mt-12">
+          <Card className="glass border-primary/20">
+            <CardHeader>
+              <CardTitle className="text-2xl font-display flex items-center gap-2">
+                <UserCircle2 size={20} className="text-primary" /> Partner & Vendor Submissions
+              </CardTitle>
+              <CardDescription>Submit a candidate resume directly to the admin team.</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-4">
+              <div className="mb-4">
+                <h3 className="text-xl font-bold">Vendor Details</h3>
+              </div>
+              <form onSubmit={handleVendorSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Input placeholder="Company Name" name="companyName" value={vendorForm.companyName} onChange={e => setVendorForm({ ...vendorForm, companyName: e.target.value })} required />
+                  <Input placeholder="Vendor Name" name="vendorName" value={vendorForm.vendorName} onChange={e => setVendorForm({ ...vendorForm, vendorName: e.target.value })} required />
+                  <Input type="email" placeholder="Vendor Email" name="vendorEmail" value={vendorForm.vendorEmail} onChange={e => setVendorForm({ ...vendorForm, vendorEmail: e.target.value })} required />
+                  <Input placeholder="Vendor Phone" name="vendorPhone" value={vendorForm.vendorPhone} onChange={e => setVendorForm({ ...vendorForm, vendorPhone: e.target.value })} required />
+                  <Input placeholder="Candidate Name" name="candidateName" value={vendorForm.candidateName} onChange={e => setVendorForm({ ...vendorForm, candidateName: e.target.value })} required />
+                  <Input type="email" placeholder="Candidate Email" name="candidateEmail" value={vendorForm.candidateEmail} onChange={e => setVendorForm({ ...vendorForm, candidateEmail: e.target.value })} required />
+                  <Input placeholder="Phone Number" name="candidatePhone" value={vendorForm.candidatePhone} onChange={e => setVendorForm({ ...vendorForm, candidatePhone: e.target.value })} required />
+                  <Input placeholder="Job Title" name="jobTitle" value={vendorForm.jobTitle} onChange={e => setVendorForm({ ...vendorForm, jobTitle: e.target.value })} required />
+                </div>
+                <div className="flex items-center gap-4 mt-4 flex-wrap">
+                  <label className="flex items-center gap-2 cursor-pointer border border-dashed border-primary/30 rounded-lg px-4 py-2 hover:bg-primary/5 transition-colors">
+                    <Paperclip size={16} className="text-primary" />
+                    <span className="text-sm font-medium text-foreground">{vendorFile ? vendorFile.name : 'Attach Resume'}</span>
+                    <input type="file" className="hidden" accept=".pdf,.doc,.docx" onChange={e => setVendorFile(e.target.files?.[0] ?? null)} />
+                  </label>
+                  {vendorFile && (
+                    <span className="text-xs text-green-600 flex items-center gap-1">
+                      <CheckCircle2 size={14} /> File selected
+                    </span>
+                  )}
+                  <Button type="submit" disabled={isSubmittingVendor} className="gradient-bg">
+                    {isSubmittingVendor ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Submitting...</> : 'Submit Candidate'}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
 
       </main>
     </div>

@@ -15,8 +15,84 @@ export default function BookingCalendar() {
   const [formData, setFormData] = useState({ name: '', email: '', phone: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [whatsappNumber, setWhatsappNumber] = useState('9384797751');
+  const [callMeBotKey, setCallMeBotKey] = useState('');
+  const [whatsappNumber, setWhatsappNumber] = useState('');
+  // whatsappNumber will be loaded from settings
+  // Load CallMeBot API key from settings
+useEffect(() => {
+  const fetchApiKey = async () => {
+    try {
+      // Fetch all rows from settings table
+      const { data, error } = await supabase.from('settings').select('*');
+      console.log('📦 Settings fetch result:', { data, error });
+
+      if (error) {
+        console.warn('⚠️ Error fetching settings, proceeding with available data');
+      }
+
+      let apiKey: string | undefined;
+      if (Array.isArray(data)) {
+        for (const row of data) {
+          // Direct column named whatsapp_api_key
+          if ((row as any).whatsapp_api_key) {
+            apiKey = (row as any).whatsapp_api_key;
+            break;
+          }
+          // Conventional id/key with separate value column
+          if ((row as any).id === 'whatsapp_api_key' && (row as any).value) {
+            apiKey = (row as any).value;
+            break;
+          }
+          if ((row as any).key === 'whatsapp_api_key' && (row as any).value) {
+            apiKey = (row as any).value;
+            break;
+          }
+        }
+      }
+
+      if (apiKey) {
+        setCallMeBotKey(apiKey);
+        console.log('✅ CallMeBot key loaded from Supabase settings');
+      } else {
+        console.warn('⚠️ CallMeBot API key not found in Supabase settings');
+      }
+    } catch (e) {
+      console.error('❌ Unexpected error while fetching CallMeBot key:', e);
+    }
+  };
+  fetchApiKey();
+}, []);
   const { toast } = useToast();
+
+  // Load CallMeBot API key from settings (explicit query)
+  useEffect(() => {
+    const fetchKey = async () => {
+      // Try fetching via a column named 'key'
+      let { data, error } = await supabase
+        .from('settings')
+        .select('value')
+        .eq('key', 'whatsapp_api_key')
+        .single();
+      if (!error && data && (data as any).value) {
+        setCallMeBotKey((data as any).value);
+        console.log('✅ CallMeBot key fetched via key column');
+        return;
+      }
+      // Fallback: fetch via id column
+      ({ data, error } = await supabase
+        .from('settings')
+        .select('value')
+        .eq('id', 'whatsapp_api_key')
+        .single());
+      if (!error && data && (data as any).value) {
+        setCallMeBotKey((data as any).value);
+        console.log('✅ CallMeBot key fetched via id column');
+      } else {
+        console.warn('⚠️ CallMeBot API key not found in settings after explicit queries');
+      }
+    };
+    fetchKey();
+  }, []);
 
   // Load WhatsApp number from settings
   useEffect(() => {
@@ -28,9 +104,9 @@ export default function BookingCalendar() {
   }, []);
 
   const timeSlots = [
-    '10:00 AM (USA) - 6:00 PM (India)',
-    '12:00 PM (USA) - 10:00 PM (India)',
-    '2:00 PM (USA) - 12:00 AM (India)'
+    '10:00 AM (EST)',
+    '12:00 PM (EST)',
+    '2:00 PM (EST)'
   ];
 
   // Helper to check if a slot is already added
@@ -44,14 +120,7 @@ export default function BookingCalendar() {
   const handleAddSlot = () => {
     if (!selectedDate || !selectedTime) return;
 
-    if (preferredSlots.length >= 2) {
-      toast({
-        variant: "destructive",
-        title: "Max slots reached",
-        description: "You have already selected 2 preferred slots."
-      });
-      return;
-    }
+    // No limit on number of slots; users can add as many as they like.
 
     if (isSlotAdded(selectedDate, selectedTime)) {
       toast({
@@ -86,11 +155,11 @@ export default function BookingCalendar() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (preferredSlots.length !== 2) {
+    if (preferredSlots.length === 0) {
       toast({
         variant: "destructive",
-        title: "Incomplete Slot Selection",
-        description: "Please choose exactly 2 preferred slots."
+        title: "No Slots Selected",
+        description: "Please select at least one preferred slot."
       });
       return;
     }
@@ -109,9 +178,13 @@ export default function BookingCalendar() {
         return `${formattedDate} at ${slot.time}`;
       };
 
-      const s1 = formatSlot(preferredSlots[0]);
-      const s2 = formatSlot(preferredSlots[1]);
-      const s3 = "N/A";
+      const s1 = preferredSlots[0] ? formatSlot(preferredSlots[0]) : "N/A";
+      const s2 = preferredSlots[1] ? formatSlot(preferredSlots[1]) : "N/A";
+      let s3 = preferredSlots[2] ? formatSlot(preferredSlots[2]) : "N/A";
+
+      if (preferredSlots.length > 3) {
+        s3 = preferredSlots.slice(2).map(formatSlot).join(', ');
+      }
 
       // 1. Save to Supabase appointments table
       const { error } = await supabase
@@ -131,25 +204,59 @@ export default function BookingCalendar() {
       if (error) throw error;
 
       // 2. Build WhatsApp confirmation text
+      let slotsText = "";
+      preferredSlots.forEach((slot, index) => {
+        slotsText += `${index + 1}️⃣ ${formatSlot(slot)}%0A`;
+      });
+
       const whatsappText = `🤝 *New Appointment Request from SA CONSULTANT AND STAFFING*%0A%0A` +
         `*Client:* ${formData.name}%0A` +
         `*Email:* ${formData.email}%0A` +
         `*Phone:* ${formData.phone}%0A%0A` +
         `*Preferred Slots (Please confirm one):*%0A` +
-        `1️⃣ ${s1}%0A` +
-        `2️⃣ ${s2}`;
+        slotsText;
 
-      const cleanedNumber = whatsappNumber.replace(/\D/g, '');
-      const whatsappUrl = `https://wa.me/${cleanedNumber}?text=${whatsappText}`;
 
-      // Open WhatsApp in a new window/tab
-      window.open(whatsappUrl, '_blank');
 
-      setIsSuccess(true);
-      toast({
-        title: "Slots Booked Successfully!",
-        description: "Your slots have been saved. Sending a message on WhatsApp..."
-      });
+      // Send booking details via email using a serverless function
+const emailRecipients = ['sagina@saconsultantandstaffing.com', 'sajaruthmahjabeen@gmail.com'];
+const emailSubject = 'New Appointment Request';
+const emailBody = `Client: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone}\n\nPreferred Slots:\n${preferredSlots
+  .map((slot, i) => `${i + 1}. ${slot.date.toLocaleDateString()} ${slot.time}`)
+  .join('\n')}`;
+try {
+  const { data, error } = await supabase.functions.invoke(
+    'send-email',
+    {
+      body: {
+        recipients: emailRecipients,
+        subject: emailSubject,
+        text: emailBody,
+      },
+    }
+  );
+
+  if (error) {
+    throw error;
+  }
+
+  console.log('✅ Email sent successfully', data);
+} catch (emailErr) {
+  console.error('📧 Email send error:', emailErr);
+
+  toast({
+    variant: 'destructive',
+    title: 'Email Notification Failed',
+    description: emailErr.message || 'Could not send email notification.',
+  });
+}
+setIsSuccess(true);
+toast({
+  title: 'Slots Booked Successfully!',
+  description: 'Your slots have been saved and email notifications sent.',
+});
+
+
 
       // Reset form
       setFormData({ name: '', email: '', phone: '' });
@@ -227,7 +334,7 @@ export default function BookingCalendar() {
             Book a <span className="gradient-text">Meeting</span>
           </h2>
           <p className="text-foreground font-semibold max-w-2xl mx-auto text-base sm:text-lg leading-relaxed">
-            Ready to consult with us? Select exactly <span className="text-primary font-black">two preferred slots</span> below to reserve your appointment on weekdays.
+            Ready to consult with us? Select your preferred slots below to reserve your appointment on weekdays.
           </p>
         </div>
 
@@ -241,7 +348,7 @@ export default function BookingCalendar() {
                 Booking Request Placed! <Sparkles size={20} className="text-accent" />
               </CardTitle>
               <CardDescription className="text-base text-foreground font-medium mt-2">
-                We have registered your 2 preferred meeting slots. We are redirecting you to WhatsApp to notify our consultant instantly.
+                We have registered your preferred meeting slots. We are redirecting you to WhatsApp to notify our consultant instantly.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 p-4">
@@ -301,13 +408,12 @@ export default function BookingCalendar() {
                               variant={isSelected ? "default" : "outline"}
                               disabled={isAdded}
                               onClick={() => setSelectedTime(time)}
-                              className={`h-auto min-h-[40px] py-2 text-xs font-bold rounded-lg ${
-                                isAdded 
-                                  ? "bg-muted text-muted-foreground line-through opacity-40 border-muted" 
+                              className={`h-auto min-h-[40px] py-2 text-xs font-bold rounded-lg ${isAdded
+                                  ? "bg-muted text-muted-foreground line-through opacity-40 border-muted"
                                   : isSelected
                                     ? "gradient-bg text-white border-none shadow-md shadow-primary/20 scale-[1.02]"
                                     : "hover:bg-primary/5 hover:border-primary/50 text-foreground"
-                              }`}
+                                }`}
                             >
                               {time}
                             </Button>
@@ -325,10 +431,10 @@ export default function BookingCalendar() {
                       <Button
                         type="button"
                         onClick={handleAddSlot}
-                        disabled={preferredSlots.length >= 2}
+                        disabled={false}
                         className="mt-4 w-full bg-primary font-bold text-primary-foreground hover:scale-[1.02] active:scale-[0.98] transition-all h-9 sm:h-10 rounded-lg text-xs"
                       >
-                        Add to List ({preferredSlots.length}/2 Selected)
+                        Add to List ({preferredSlots.length} Selected)
                       </Button>
                     )}
                   </div>
@@ -344,32 +450,30 @@ export default function BookingCalendar() {
                     <Sparkles size={20} className="text-accent" /> Step 2: Book Your Slots
                   </CardTitle>
                   <CardDescription>
-                    Provide your contact details. Choose exactly 2 slots to finalize.
+                    Provide your contact details. Choose your preferred slots to finalize.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="p-4 sm:p-6 space-y-4 sm:space-y-6 flex-1">
                   {/* Slots display */}
                   <div className="space-y-3">
                     <Label className="text-sm font-bold flex justify-between items-center text-foreground">
-                      <span>Selected Slots Required:</span>
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-black ${
-                        preferredSlots.length === 2 
-                          ? "bg-green-500/10 text-green-500 border border-green-500/30" 
+                      <span>Selected Slots</span>
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-black ${preferredSlots.length > 0
+                          ? "bg-green-500/10 text-green-500 border border-green-500/30"
                           : "bg-primary/10 text-primary border border-primary/30"
-                      }`}>
-                        {preferredSlots.length} / 2 Chosen
-                      </span>
+                        }`}
+                      >{preferredSlots.length} Chosen</span>
                     </Label>
 
                     {preferredSlots.length === 0 ? (
                       <div className="border border-dashed border-border p-4 sm:p-5 rounded-xl text-center text-xs sm:text-sm text-muted-foreground bg-secondary/10">
-                        No slots selected yet. Pick a day and time above to select 2 preferred meeting slots.
+                        No slots selected yet. Pick a day and time above to select your preferred meeting slots.
                       </div>
                     ) : (
                       <div className="space-y-2">
                         {preferredSlots.map((slot, i) => (
-                          <div 
-                            key={i} 
+                          <div
+                            key={i}
                             className="flex justify-between items-center bg-secondary/40 border border-primary/10 p-2 sm:p-3 rounded-xl animate-in slide-in-from-top-1 duration-200"
                           >
                             <div className="flex items-center gap-3">
@@ -449,15 +553,15 @@ export default function BookingCalendar() {
 
                     <Button
                       type="submit"
-                      disabled={preferredSlots.length !== 2 || isSubmitting}
+                      disabled={preferredSlots.length === 0 || isSubmitting}
                       className="w-full gradient-bg font-black text-white hover-lift hover-glow py-3 h-auto min-h-12 rounded-xl flex items-center justify-center gap-2 transition-all mt-4 sm:mt-6 shadow-lg shadow-primary/20 text-sm sm:text-base"
                     >
                       {isSubmitting ? (
                         "Booking Slots..."
                       ) : (
                         <>
-                          <span className="sm:hidden">Book & Open WhatsApp</span>
-                          <span className="hidden sm:inline">Book Slots & Open WhatsApp</span>
+                          <span className="sm:hidden">Confirm Booking</span>
+                          <span className="hidden sm:inline">Confirm Booking</span>
                         </>
                       )}
                       <Send size={16} className="flex-shrink-0" />

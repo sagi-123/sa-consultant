@@ -14,6 +14,7 @@ const desktopNavLinks = [
   { label: 'Partnership', href: '/#partnership' },
   { label: 'Appointment Booking', href: '/#book' },
   { label: 'Contact', href: '/#contact' },
+  { label: 'Jobs', href: '/jobs' },
 ];
 
 const mobileNavLinks = [
@@ -24,7 +25,7 @@ const mobileNavLinks = [
   { label: 'Portfolio', href: '/#portfolio' },
   { label: 'Testimonials', href: '/#testimonials' },
   { label: 'Appointment Booking', href: '/#book' },
-  { label: 'Contact', href: '/#contact' },
+  { label: 'Jobs', href: '/jobs' },
 ];
 
 const SocialIcon = ({ href, children }: { href: string; children: React.ReactNode }) => (
