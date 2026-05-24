@@ -1,17 +1,12 @@
 // Supabase Edge Function: send-email
-// This function expects a POST request with JSON body:
-// { recipients: string[], subject: string, text: string }
-// It forwards the email using Resend API.
-// Ensure you have RESEND_API_KEY in your environment variables.
+// Sends email via Gmail SMTP using denomailer (no domain verification needed)
+// Required Supabase Secrets:
+//   GMAIL_USER       = sajaruthmahjabeen@gmail.com
+//   GMAIL_APP_PASS   = 16-character Google App Password
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-if (!RESEND_API_KEY) {
-  console.error("RESEND_API_KEY not set in environment");
-}
-
-// CORS headers
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
@@ -20,7 +15,6 @@ const corsHeaders = {
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    // Handle preflight request
     return new Response(null, { status: 204, headers: corsHeaders });
   }
   if (req.method !== "POST") {
@@ -29,50 +23,63 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
+
   try {
-    // Use built-in JSON parser
     const payload = await req.json();
-    console.log('Parsed payload:', payload);
-    // Optional validation of required fields
+    console.log("📧 send-email payload:", payload);
+
     if (!payload.recipients || !payload.subject || (!payload.text && !payload.html)) {
-      return new Response(JSON.stringify({ error: 'Missing required fields: recipients, subject, and either text or html body' }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ error: "Missing required fields: recipients, subject, and text or html" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
+
+    const GMAIL_USER = Deno.env.get("GMAIL_USER");
+    const GMAIL_APP_PASS = Deno.env.get("GMAIL_APP_PASS");
+
+    if (!GMAIL_USER || !GMAIL_APP_PASS) {
+      console.error("❌ Missing GMAIL_USER or GMAIL_APP_PASS secrets");
+      return new Response(
+        JSON.stringify({ error: "Gmail credentials not configured in Supabase secrets" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const client = new SMTPClient({
+      connection: {
+        hostname: "smtp.gmail.com",
+        port: 465,
+        tls: true,
+        auth: {
+          username: GMAIL_USER,
+          password: GMAIL_APP_PASS,
+        },
+      },
+    });
+
     const { recipients, subject, text, html } = payload;
 
-    const emailData = {
-      from: "SA Consultant & Staffing <no-reply@resend.dev>",
+    await client.send({
+      from: `SA Consultant & Staffing <${GMAIL_USER}>`,
       to: recipients,
       subject,
-      text,
-      html,
-    };
-    const sendRes = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${RESEND_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(emailData),
+      content: text ?? "Please view this email in an HTML-capable email client.",
+      html: html ?? undefined,
     });
-    if (!sendRes.ok) {
-      const errText = await sendRes.text();
-      return new Response(JSON.stringify({ error: `Resend failed: ${sendRes.status} ${errText}` }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+
+    await client.close();
+
+    console.log("✅ Email sent via Gmail SMTP to:", recipients);
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
-    console.error("Error in send-email function:", e);
-    return new Response(JSON.stringify({ error: "Invalid request body" }), {
-      status: 400,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    console.error("❌ Error in send-email function:", e);
+    return new Response(
+      JSON.stringify({ error: String(e) }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   }
 });
