@@ -221,7 +221,7 @@ useEffect(() => {
 
 
       // Send booking details via email using our upgraded Edge Function
-      const adminRecipients = ['sajaruthmahjabeen@gmail.com'];
+      const adminRecipients = ['sajaruthmahjabeen@gmail.com', 'sagina111@gmail.com'];
       const adminSubject = `New Appointment Request - ${formData.name}`;
       const plainTextFallback = `New consultation request from ${formData.name}.\nEmail: ${formData.email}\nPhone: ${formData.phone}\n\nPreferred slots:\n${preferredSlots
         .map((slot, i) => `${i + 1}. ${slot.date.toLocaleDateString()} at ${slot.time}`)
