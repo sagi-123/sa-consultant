@@ -532,16 +532,8 @@ const AdminDashboard = () => {
     }
   };
 
-  const sendConfirmationEmail = (app: Appointment) => {
-    if (!app.client_email) {
-      toast({ variant: 'destructive', title: 'No client email', description: 'This booking has no client email on record.' });
-      return;
-    }
-    if (!app.selected_slot) {
-      toast({ variant: 'destructive', title: 'No slot confirmed', description: 'Please select a slot first before notifying.' });
-      return;
-    }
-
+  const getEmailMailtoUrl = (app: Appointment) => {
+    if (!app.client_email) return '#';
     const subject = encodeURIComponent(`Appointment Confirmed - SA Consultant & Staffing`);
     const body = encodeURIComponent(
 `Hi ${app.client_name},
@@ -558,9 +550,7 @@ If you have any questions or need to reschedule, please reply directly to this e
 Warm regards,
 SA Consultant & Staffing Team`
     );
-
-    window.location.href = `mailto:${app.client_email}?subject=${subject}&body=${body}`;
-    toast({ title: '📧 Opening Email Client', description: `Pre-filled email opened for ${app.client_email}` });
+    return `mailto:${app.client_email}?subject=${subject}&body=${body}`;
   };
 
   const handleConfirmAppointmentSlot = async (id: string, slotText: string) => {
@@ -1739,15 +1729,17 @@ SA Consultant & Staffing Team`
                             </TableCell>
                             <TableCell className="text-right whitespace-nowrap">
                               <div className="flex items-center justify-end gap-2">
-                                {app.status === 'confirmed' && (
+                                {app.status === 'confirmed' && app.client_email && (
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    onClick={() => sendConfirmationEmail(app)}
+                                    asChild
                                     className="h-8 border-green-500/30 text-green-500 hover:bg-green-500/10 gap-1 font-bold text-xs"
                                     title="Send Confirmation Email to Client"
                                   >
-                                    <Mail size={12} /> Notify Email
+                                    <a href={getEmailMailtoUrl(app)}>
+                                      <Mail size={12} /> Notify Email
+                                    </a>
                                   </Button>
                                 )}
                                 
@@ -1842,14 +1834,16 @@ SA Consultant & Staffing Team`
                         </div>
 
                         <div className="flex gap-2 justify-end pt-2 border-t border-primary/5">
-                          {app.status === 'confirmed' && (
+                          {app.status === 'confirmed' && app.client_email && (
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => sendConfirmationEmail(app)}
+                              asChild
                               className="h-9 border-green-500/30 text-green-500 hover:bg-green-500/10 gap-1 font-bold text-xs"
                             >
-                              <Mail size={12} /> Notify Email
+                              <a href={getEmailMailtoUrl(app)}>
+                                <Mail size={12} /> Notify Email
+                              </a>
                             </Button>
                           )}
                           
