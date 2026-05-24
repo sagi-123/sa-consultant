@@ -8,6 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Calendar as CalendarIcon, Clock, Trash2, User, Mail, Phone, CheckCircle2, Sparkles, Send } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 
+import { getAdminBookingEmailHtml, getClientBookingEmailHtml } from '@/utils/emailTemplates';
+
 export default function BookingCalendar() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
@@ -218,43 +220,70 @@ useEffect(() => {
 
 
 
-      // Send booking details via email using a serverless function
-const emailRecipients = ['sagina@saconsultantandstaffing.com', 'sajaruthmahjabeen@gmail.com'];
-const emailSubject = 'New Appointment Request';
-const emailBody = `Client: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone}\n\nPreferred Slots:\n${preferredSlots
-  .map((slot, i) => `${i + 1}. ${slot.date.toLocaleDateString()} ${slot.time}`)
-  .join('\n')}`;
-try {
-  const { data, error } = await supabase.functions.invoke(
-    'send-email',
-    {
-      body: {
-        recipients: emailRecipients,
-        subject: emailSubject,
-        text: emailBody,
-      },
-    }
-  );
+      // Send booking details via email using our upgraded Edge Function
+      const adminRecipients = ['sajaruthmahjabeen@gmail.com'];
+      const adminSubject = `New Appointment Request - ${formData.name}`;
+      const plainTextFallback = `New consultation request from ${formData.name}.\nEmail: ${formData.email}\nPhone: ${formData.phone}\n\nPreferred slots:\n${preferredSlots
+        .map((slot, i) => `${i + 1}. ${slot.date.toLocaleDateString()} at ${slot.time}`)
+        .join('\n')}`;
+      
+      const adminHtml = getAdminBookingEmailHtml(formData.name, formData.email, formData.phone, preferredSlots);
+      const clientHtml = getClientBookingEmailHtml(formData.name, preferredSlots);
 
-  if (error) {
-    throw error;
-  }
+      // Trigger both email dispatches concurrently so they do not block each other
+      const emailPromises = [
+        // 1. Send detailed notification to administrators
+        supabase.functions.invoke('send-email', {
+          body: {
+            recipients: adminRecipients,
+            subject: adminSubject,
+            text: plainTextFallback,
+            html: adminHtml,
+          },
+        }),
+        // 2. Send professional confirmation receipt to the client
+        supabase.functions.invoke('send-email', {
+          body: {
+            recipients: [formData.email],
+            subject: 'Booking Request Placed! - SA Consultant & Staffing',
+            text: `Hi ${formData.name}, thank you for choosing SA Consultant. Your preferred slots are registered and we will connect shortly.`,
+            html: clientHtml,
+          },
+        })
+      ];
 
-  console.log('✅ Email sent successfully', data);
-} catch (emailErr) {
-  console.error('📧 Email send error:', emailErr);
+      try {
+        const results = await Promise.allSettled(emailPromises);
+        let emailFailed = false;
 
-  toast({
-    variant: 'destructive',
-    title: 'Email Notification Failed',
-    description: emailErr.message || 'Could not send email notification.',
-  });
-}
-setIsSuccess(true);
-toast({
-  title: 'Slots Booked Successfully!',
-  description: 'Your slots have been saved and email notifications sent.',
-});
+        results.forEach((res, idx) => {
+          if (res.status === 'rejected') {
+            console.error(`📧 Email dispatch ${idx === 0 ? 'Admin' : 'Client'} failed:`, res.reason);
+            emailFailed = true;
+          } else if (res.value.error) {
+            console.error(`📧 Email dispatch ${idx === 0 ? 'Admin' : 'Client'} returned error:`, res.value.error);
+            emailFailed = true;
+          } else {
+            console.log(`✅ Email dispatch ${idx === 0 ? 'Admin' : 'Client'} succeeded:`, res.value.data);
+          }
+        });
+
+        if (emailFailed) {
+          toast({
+            variant: 'destructive',
+            title: 'Partial Email Notification Delay',
+            description: 'Your booking has been registered, but some email confirmations could not be dispatched instantly.',
+          });
+        }
+      } catch (emailErr) {
+        console.error('📧 Email processing error:', emailErr);
+      }
+
+      setIsSuccess(true);
+      toast({
+        title: 'Slots Booked Successfully!',
+        description: 'Your slots have been saved and email notifications have been triggered.',
+      });
 
 
 

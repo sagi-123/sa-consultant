@@ -1,14 +1,14 @@
 // Supabase Edge Function: send-email
 // This function expects a POST request with JSON body:
 // { recipients: string[], subject: string, text: string }
-// It forwards the email using SendGrid API.
-// Ensure you have SENDGRID_API_KEY in your environment variables.
+// It forwards the email using Resend API.
+// Ensure you have RESEND_API_KEY in your environment variables.
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 
-const SENDGRID_API_KEY = Deno.env.get("SENDGRID_API_KEY");
-if (!SENDGRID_API_KEY) {
-  console.error("SENDGRID_API_KEY not set in environment");
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+if (!RESEND_API_KEY) {
+  console.error("RESEND_API_KEY not set in environment");
 }
 
 // CORS headers
@@ -30,23 +30,36 @@ serve(async (req) => {
     });
   }
   try {
-    const { recipients, subject, text } = await req.json();
+    // Use built-in JSON parser
+    const payload = await req.json();
+    console.log('Parsed payload:', payload);
+    // Optional validation of required fields
+    if (!payload.recipients || !payload.subject || (!payload.text && !payload.html)) {
+      return new Response(JSON.stringify({ error: 'Missing required fields: recipients, subject, and either text or html body' }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const { recipients, subject, text, html } = payload;
+
     const emailData = {
-      personalizations: [{ to: recipients.map((email: string) => ({ email })), subject }],
-      from: { email: "no-reply@yourdomain.com" },
-      content: [{ type: "text/plain", value: text }],
+      from: "SA Consultant & Staffing <no-reply@resend.dev>",
+      to: recipients,
+      subject,
+      text,
+      html,
     };
-    const sendRes = await fetch("https://api.sendgrid.com/v3/mail/send", {
+    const sendRes = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${SENDGRID_API_KEY}`,
+        "Authorization": `Bearer ${RESEND_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(emailData),
     });
     if (!sendRes.ok) {
       const errText = await sendRes.text();
-      return new Response(JSON.stringify({ error: `SendGrid failed: ${sendRes.status} ${errText}` }), {
+      return new Response(JSON.stringify({ error: `Resend failed: ${sendRes.status} ${errText}` }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
