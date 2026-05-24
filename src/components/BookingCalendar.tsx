@@ -304,12 +304,18 @@ useEffect(() => {
     }
   };
 
-  // Custom function to disable weekends and past dates
+  // Disable weekends, today, and all past dates
+  // Clients can only book from TOMORROW onwards (Mon today → Tue–Fri available)
   const isDateDisabled = (date: Date) => {
-    const day = date.getDay();
+    const day = date.getDay(); // 0=Sun, 6=Sat
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    return day === 0 || day === 6 || date < today;
+
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+
+    // Disable: weekends, today itself, and any day before today
+    return day === 0 || day === 6 || date < tomorrow;
   };
 
   return (
