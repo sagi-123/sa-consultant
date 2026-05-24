@@ -126,23 +126,6 @@ ${formData.purpose}
         }
       }).catch(err => console.error('Error sending referral email:', err));
 
-      // Build WhatsApp message as a plain string, then encode the whole thing
-      const waMessagePlain =
-        `🤝 New Referral from SA CONSULTANT & STAFFING Website\n\n` +
-        `── YOUR DETAILS (Referrer) ──\n` +
-        `Name: ${formData.referrerName}\n` +
-        `Email: ${formData.referrerEmail}\n` +
-        `Phone: ${formData.referrerPhone}\n\n` +
-        `── PURPOSE OF REFERRAL ──\n` +
-        `${formData.purpose}\n\n` +
-        `── REFERRED PERSON ──\n` +
-        `Name: ${formData.referredName}\n` +
-        `Email: ${formData.referredEmail}\n` +
-        `Phone: ${formData.referredPhone}`;
-
-      const waUrl = `https://wa.me/${whatsappNumber.replace(/\D/g, '')}?text=${encodeURIComponent(waMessagePlain)}`;
-      window.open(waUrl, '_blank');
-
       setIsSubmitted(true);
       toast({
         title: "Referral Submitted!",
