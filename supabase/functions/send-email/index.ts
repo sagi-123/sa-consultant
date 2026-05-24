@@ -56,9 +56,28 @@ serve(async (req) => {
           password: GMAIL_APP_PASS,
         },
       },
+      debug: {
+        encodeLB: true,
+      },
     });
 
-    const { recipients, subject, text, html } = payload;
+    let { recipients, subject, text, html } = payload;
+
+    if (html) {
+      // Remove all carriage returns/line feeds and collapse multiple spaces to prevent Quoted-Printable "=20" or "=0D" artifacts
+      html = html
+        .replace(/\r?\n|\r/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    if (text) {
+      // Remove trailing whitespace from each line to prevent trailing space "=20" encodings
+      text = text
+        .split(/\r?\n/)
+        .map((line: string) => line.trimEnd())
+        .join("\n");
+    }
 
     await client.send({
       from: `SA Consultant & Staffing <${GMAIL_USER}>`,
