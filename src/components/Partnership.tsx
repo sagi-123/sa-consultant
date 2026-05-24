@@ -88,6 +88,44 @@ ${formData.purpose}
 
       if (error) throw error;
 
+      // Send email to both admins
+      const adminRecipients = ['sajaruthmahjabeen@gmail.com', 'sagina111@gmail.com'];
+      const emailHtml = `
+        <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#f8fafc;color:#0f172a;border-radius:16px;overflow:hidden;border:1px solid #e2e8f0">
+          <div style="background:linear-gradient(135deg,#4f46e5,#06b6d4);padding:32px;text-align:center">
+            <h1 style="margin:0;font-size:24px;color:#fff">🤝 New Referral Submission</h1>
+            <p style="margin:8px 0 0;color:#e0e7ff;font-size:14px">SA Consultant &amp; Staffing</p>
+          </div>
+          <div style="padding:32px">
+            <div style="background:#fff;border-radius:12px;padding:20px;margin-bottom:16px;border:1px solid #e2e8f0">
+              <h3 style="margin:0 0 12px;color:#4f46e5;font-size:14px;text-transform:uppercase;letter-spacing:0.05em">Referrer (Who Referred)</h3>
+              <p style="margin:0 0 6px;font-size:14px"><strong>Name:</strong> ${formData.referrerName}</p>
+              <p style="margin:0 0 6px;font-size:14px"><strong>Email:</strong> <a href="mailto:${formData.referrerEmail}" style="color:#4f46e5;text-decoration:none">${formData.referrerEmail}</a></p>
+              <p style="margin:0;font-size:14px"><strong>Phone:</strong> <a href="tel:${formData.referrerPhone}" style="color:#4f46e5;text-decoration:none">${formData.referrerPhone}</a></p>
+            </div>
+            <div style="background:#fff;border-radius:12px;padding:20px;margin-bottom:16px;border-left:4px solid #06b6d4;border:1px solid #e2e8f0">
+              <h3 style="margin:0 0 12px;color:#0f172a;font-size:14px;text-transform:uppercase;letter-spacing:0.05em">Referred Person (Candidate)</h3>
+              <p style="margin:0 0 6px;font-size:14px"><strong>Name:</strong> ${formData.referredName}</p>
+              <p style="margin:0 0 6px;font-size:14px"><strong>Email:</strong> <a href="mailto:${formData.referredEmail}" style="color:#4f46e5;text-decoration:none">${formData.referredEmail}</a></p>
+              <p style="margin:0;font-size:14px"><strong>Phone:</strong> <a href="tel:${formData.referredPhone}" style="color:#4f46e5;text-decoration:none">${formData.referredPhone}</a></p>
+            </div>
+            <div style="background:#fff;border-radius:12px;padding:20px;margin-bottom:24px;border:1px solid #e2e8f0">
+              <h3 style="margin:0 0 8px;color:#0f172a;font-size:14px;text-transform:uppercase;letter-spacing:0.05em">Purpose of Referral</h3>
+              <p style="margin:0;font-size:14px;line-height:1.6;color:#334155">${formData.purpose}</p>
+            </div>
+            <p style="color:#64748b;font-size:12px;text-align:center;margin:0">This is an automated notification from SA Consultant & Staffing Website.</p>
+          </div>
+        </div>`;
+
+      supabase.functions.invoke('send-email', {
+        body: {
+          recipients: adminRecipients,
+          subject: `🤝 New Referral Submitted by ${formData.referrerName}`,
+          text: `New Referral Program Submission:\n\nReferrer:\nName: ${formData.referrerName}\nEmail: ${formData.referrerEmail}\nPhone: ${formData.referrerPhone}\n\nReferred Person:\nName: ${formData.referredName}\nEmail: ${formData.referredEmail}\nPhone: ${formData.referredPhone}\n\nPurpose:\n${formData.purpose}`,
+          html: emailHtml
+        }
+      }).catch(err => console.error('Error sending referral email:', err));
+
       // Build WhatsApp message as a plain string, then encode the whole thing
       const waMessagePlain =
         `🤝 New Referral from SA CONSULTANT & STAFFING Website\n\n` +
