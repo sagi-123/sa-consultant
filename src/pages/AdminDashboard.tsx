@@ -559,7 +559,7 @@ Warm regards,
 SA Consultant & Staffing Team`
     );
 
-    window.open(`mailto:${app.client_email}?subject=${subject}&body=${body}`, '_blank');
+    window.location.href = `mailto:${app.client_email}?subject=${subject}&body=${body}`;
     toast({ title: '📧 Opening Email Client', description: `Pre-filled email opened for ${app.client_email}` });
   };
 
