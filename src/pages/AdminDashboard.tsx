@@ -532,6 +532,48 @@ const AdminDashboard = () => {
     }
   };
 
+  const sendConfirmationEmail = async (app: Appointment) => {
+    if (!app.client_email) {
+      toast({ variant: 'destructive', title: 'No client email', description: 'This booking has no client email address.' });
+      return;
+    }
+    try {
+      const html = `
+        <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#0f172a;color:#e2e8f0;border-radius:16px;overflow:hidden">
+          <div style="background:linear-gradient(135deg,#6366f1,#8b5cf6);padding:32px;text-align:center">
+            <h1 style="margin:0;font-size:24px;color:#fff">✅ Appointment Confirmed!</h1>
+            <p style="margin:8px 0 0;color:#c7d2fe;font-size:14px">SA Consultant & Staffing</p>
+          </div>
+          <div style="padding:32px">
+            <p style="font-size:16px;margin:0 0 16px">Hi <strong>${app.client_name}</strong>,</p>
+            <p style="color:#94a3b8;margin:0 0 24px">We are pleased to confirm your appointment. Please find the details below:</p>
+            <div style="background:#1e293b;border-radius:12px;padding:20px;margin-bottom:24px;border-left:4px solid #6366f1">
+              <p style="margin:0 0 8px"><strong style="color:#a5b4fc">Confirmed Slot:</strong></p>
+              <p style="font-size:18px;font-weight:bold;color:#fff;margin:0">${app.selected_slot}</p>
+            </div>
+            <p style="color:#94a3b8;font-size:13px">If you have any questions, please reply to this email or contact us directly.</p>
+            <p style="margin:24px 0 0;color:#e2e8f0">Warm regards,<br/><strong>SA Consultant & Staffing Team</strong></p>
+          </div>
+        </div>`;
+
+      const { error } = await supabase.functions.invoke('send-email', {
+        body: {
+          recipients: [app.client_email],
+          subject: `Appointment Confirmed – ${app.selected_slot}`,
+          text: `Hi ${app.client_name}, your appointment for ${app.selected_slot} is confirmed! Contact us if you have any questions.`,
+          html,
+        },
+      });
+
+      if (error) throw error;
+
+      toast({ title: '✅ Email Sent!', description: `Confirmation email delivered to ${app.client_email}` });
+    } catch (err: any) {
+      console.error('Email error:', err);
+      toast({ variant: 'destructive', title: '❌ Email Failed', description: err.message ?? 'Could not send email.' });
+    }
+  };
+
   const handleConfirmAppointmentSlot = async (id: string, slotText: string) => {
     try {
       const { error } = await supabase
@@ -1712,15 +1754,11 @@ const AdminDashboard = () => {
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    onClick={() => {
-                                      const text = `Hi ${app.client_name}, this is SA CONSULTANT AND STAFFING. We are happy to confirm your appointment for ${app.selected_slot}! See you then!`;
-                                      const cleaned = app.client_phone.replace(/\D/g, '');
-                                      window.open(`https://wa.me/${cleaned}?text=${encodeURIComponent(text)}`, '_blank');
-                                    }}
+                                    onClick={() => sendConfirmationEmail(app)}
                                     className="h-8 border-green-500/30 text-green-500 hover:bg-green-500/10 gap-1 font-bold text-xs"
-                                    title="Notify Client on WhatsApp"
+                                    title="Send Confirmation Email to Client"
                                   >
-                                    <MessageSquare size={12} /> Notify WhatsApp
+                                    <Mail size={12} /> Notify Email
                                   </Button>
                                 )}
                                 
@@ -1819,14 +1857,10 @@ const AdminDashboard = () => {
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => {
-                                const text = `Hi ${app.client_name}, this is SA CONSULTANT AND STAFFING. We are happy to confirm your appointment for ${app.selected_slot}! See you then!`;
-                                const cleaned = app.client_phone.replace(/\D/g, '');
-                                window.open(`https://wa.me/${cleaned}?text=${encodeURIComponent(text)}`, '_blank');
-                              }}
+                              onClick={() => sendConfirmationEmail(app)}
                               className="h-9 border-green-500/30 text-green-500 hover:bg-green-500/10 gap-1 font-bold text-xs"
                             >
-                              <MessageSquare size={12} /> Notify WhatsApp
+                              <Mail size={12} /> Notify Email
                             </Button>
                           )}
                           
