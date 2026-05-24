@@ -38,7 +38,10 @@ import {
   X,
   Building2,
   DollarSign,
-  FileText
+  FileText,
+  Video,
+  Loader2,
+  Save
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
@@ -53,6 +56,28 @@ type Project = Database['public']['Tables']['projects']['Row'];
 type Inquiry = Database['public']['Tables']['inquiries']['Row'];
 type Candidate = Database['public']['Tables']['candidates']['Row'];
 type Appointment = Database['public']['Tables']['appointments']['Row'];
+
+type Webinar = {
+  id: string;
+  title: string;
+  description: string | null;
+  date: string;
+  time: string;
+  duration: string | null;
+  host_name: string | null;
+  meeting_link: string | null;
+  status: 'upcoming' | 'completed' | 'cancelled';
+  created_at: string;
+};
+
+type WebinarRegistration = {
+  id: string;
+  webinar_id: string;
+  name: string;
+  email: string;
+  phone: string;
+  created_at: string;
+};
 type JobOpening = {
   id: string;
   title: string;
@@ -89,6 +114,24 @@ const AdminDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
+
+  // Webinars State
+  const [webinars, setWebinars] = useState<Webinar[]>([]);
+  const [webinarRegistrations, setWebinarRegistrations] = useState<WebinarRegistration[]>([]);
+  const [isEditingWebinar, setIsEditingWebinar] = useState<string | null>(null); // null = closed, 'new' = new form, id = editing
+  const [savingWebinar, setSavingWebinar] = useState(false);
+  const blankWebinarForm = {
+    title: '',
+    description: '',
+    date: '',
+    time: '',
+    duration: '1 hour',
+    host_name: '',
+    meeting_link: '',
+    status: 'upcoming' as 'upcoming' | 'completed' | 'cancelled'
+  };
+  const [webinarForm, setWebinarForm] = useState(blankWebinarForm);
+  const [viewingRegistrantsForWebinarId, setViewingRegistrantsForWebinarId] = useState<string | null>(null);
   
   // Portfolio State
   const [projects, setProjects] = useState<Project[]>([]);
@@ -117,7 +160,7 @@ const AdminDashboard = () => {
     else setRefreshing(true);
     
     try {
-      const [usersResponse, reviewsResponse, projectsResponse, inquiriesResponse, candidatesResponse, appointmentsResponse, jobsResponse] = await Promise.all([
+      const [usersResponse, reviewsResponse, projectsResponse, inquiriesResponse, candidatesResponse, appointmentsResponse, jobsResponse, webinarsResponse, webinarRegsResponse] = await Promise.all([
         supabase.from('profiles').select('*').order('created_at', { ascending: false }),
         supabase.from('reviews').select('*').order('created_at', { ascending: false }),
         supabase.from('projects').select('*').order('created_at', { ascending: false }),
@@ -125,6 +168,8 @@ const AdminDashboard = () => {
         supabase.from('candidates').select('*').order('created_at', { ascending: false }),
         supabase.from('appointments').select('*').order('created_at', { ascending: false }),
         supabase.from('job_openings').select('*').order('created_at', { ascending: false }),
+        supabase.from('webinars').select('*').order('date', { ascending: true }),
+        supabase.from('webinar_registrations').select('*').order('created_at', { ascending: false }),
       ]);
 
       if (usersResponse.error) throw usersResponse.error;
@@ -141,6 +186,8 @@ const AdminDashboard = () => {
       setCandidates(candidatesResponse.data || []);
       setAppointments(appointmentsResponse.data || []);
       setJobs((jobsResponse.data as JobOpening[]) || []);
+      if (!webinarsResponse.error) setWebinars((webinarsResponse.data as Webinar[]) || []);
+      if (!webinarRegsResponse.error) setWebinarRegistrations((webinarRegsResponse.data as WebinarRegistration[]) || []);
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -679,6 +726,93 @@ SA Consultant & Staffing Team`
     document.body.removeChild(link);
   };
 
+  // ── Webinar Handlers ──────────────────────────────────────
+  const handleSaveWebinar = async () => {
+    if (!webinarForm.title || !webinarForm.date || !webinarForm.time) {
+      toast({ variant: 'destructive', title: 'Missing Fields', description: 'Title, Date, and Time are required.' });
+      return;
+    }
+    setSavingWebinar(true);
+    try {
+      if (isEditingWebinar === 'new') {
+        const { error } = await supabase.from('webinars').insert({
+          title: webinarForm.title,
+          description: webinarForm.description || null,
+          date: webinarForm.date,
+          time: webinarForm.time,
+          duration: webinarForm.duration || '1 hour',
+          host_name: webinarForm.host_name || null,
+          meeting_link: webinarForm.meeting_link || null,
+          status: webinarForm.status,
+        } as any);
+        if (error) throw error;
+        toast({ title: 'Webinar Created!', description: `"${webinarForm.title}" has been added.` });
+      } else if (isEditingWebinar) {
+        const { error } = await supabase.from('webinars').update({
+          title: webinarForm.title,
+          description: webinarForm.description || null,
+          date: webinarForm.date,
+          time: webinarForm.time,
+          duration: webinarForm.duration || '1 hour',
+          host_name: webinarForm.host_name || null,
+          meeting_link: webinarForm.meeting_link || null,
+          status: webinarForm.status,
+        } as any).eq('id', isEditingWebinar);
+        if (error) throw error;
+        toast({ title: 'Webinar Updated!', description: `"${webinarForm.title}" has been saved.` });
+      }
+      setIsEditingWebinar(null);
+      setWebinarForm(blankWebinarForm);
+      fetchAllData(true);
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: 'Error', description: err.message });
+    } finally {
+      setSavingWebinar(false);
+    }
+  };
+
+  const handleDeleteWebinar = async (id: string, title: string) => {
+    if (!confirm(`Delete "${title}"? All registrations for this webinar will also be deleted.`)) return;
+    try {
+      const { error } = await supabase.from('webinars').delete().eq('id', id);
+      if (error) throw error;
+      toast({ title: 'Webinar Deleted', description: `"${title}" has been removed.` });
+      fetchAllData(true);
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: 'Error', description: err.message });
+    }
+  };
+
+  const handleEditWebinar = (webinar: Webinar) => {
+    setWebinarForm({
+      title: webinar.title,
+      description: webinar.description || '',
+      date: webinar.date,
+      time: webinar.time,
+      duration: webinar.duration || '1 hour',
+      host_name: webinar.host_name || '',
+      meeting_link: webinar.meeting_link || '',
+      status: webinar.status,
+    });
+    setIsEditingWebinar(webinar.id);
+  };
+
+  const exportWebinarRegistrants = (webinar: Webinar) => {
+    const regs = webinarRegistrations.filter(r => r.webinar_id === webinar.id);
+    if (regs.length === 0) { toast({ title: 'No Registrants', description: 'This webinar has no registrations yet.' }); return; }
+    const headers = ['Name', 'Email', 'Phone', 'Registered At'];
+    const rows = regs.map(r => [r.name, r.email, r.phone, new Date(r.created_at).toLocaleString()]);
+    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.setAttribute('href', URL.createObjectURL(blob));
+    link.setAttribute('download', `webinar_registrants_${webinar.title.replace(/\s+/g, '_')}_${webinar.date}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const stats = [
     { label: 'Total Applicants', value: candidates.length, icon: Users, color: 'text-purple-500' },
     { label: 'New Apps', value: candidates.filter(c => c.status === 'New').length, icon: Briefcase, color: 'text-blue-500' },
@@ -772,6 +906,14 @@ SA Consultant & Staffing Team`
             </TabsTrigger>
             <TabsTrigger value="settings" className="data-[state=active]:gradient-bg h-10 px-4 min-w-[120px] flex-shrink-0">Site Settings</TabsTrigger>
             <TabsTrigger value="users" className="data-[state=active]:gradient-bg h-10 px-4 min-w-[120px] flex-shrink-0">User Control</TabsTrigger>
+            <TabsTrigger value="webinars" className="data-[state=active]:gradient-bg h-10 px-4 min-w-[120px] flex-shrink-0 flex gap-2 items-center justify-center font-bold text-teal-500">
+              <Video size={16} /> 📹 Webinars
+              {webinars.filter(w => w.status === 'upcoming').length > 0 && (
+                <span className="ml-1 bg-teal-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center border border-background">
+                  {webinars.filter(w => w.status === 'upcoming').length}
+                </span>
+              )}
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview">
@@ -2104,6 +2246,252 @@ SA Consultant & Staffing Team`
           <TabsContent value="partners">
             <AdminMasterBrain />
           </TabsContent>
+
+          {/* ── WEBINARS TAB ─────────────────────────────────── */}
+          <TabsContent value="webinars" className="space-y-6 animate-in fade-in-50 duration-300">
+            {/* Header row */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <h2 className="text-2xl font-display font-bold gradient-text flex items-center gap-2">
+                  <Video size={22} /> Webinar Management
+                </h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {webinars.length} total webinar{webinars.length !== 1 ? 's' : ''} &bull;{' '}
+                  {webinarRegistrations.length} total registrant{webinarRegistrations.length !== 1 ? 's' : ''}
+                </p>
+              </div>
+              <Button
+                onClick={() => { setWebinarForm(blankWebinarForm); setIsEditingWebinar('new'); }}
+                className="gradient-bg border-none gap-2 rounded-xl"
+              >
+                <Plus size={16} /> Schedule New Webinar
+              </Button>
+            </div>
+
+            {/* Create / Edit Webinar Form */}
+            {isEditingWebinar && (
+              <Card className="glass border border-teal-500/30 rounded-2xl">
+                <CardHeader>
+                  <CardTitle className="text-teal-500 flex items-center gap-2">
+                    <Video size={18} />
+                    {isEditingWebinar === 'new' ? 'Schedule New Webinar' : 'Edit Webinar'}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="sm:col-span-2 space-y-1.5">
+                    <Label>Title *</Label>
+                    <Input
+                      placeholder="e.g. How to Land a Job in the US Tech Industry"
+                      value={webinarForm.title}
+                      onChange={e => setWebinarForm(p => ({ ...p, title: e.target.value }))}
+                      className="rounded-xl"
+                    />
+                  </div>
+                  <div className="sm:col-span-2 space-y-1.5">
+                    <Label>Description</Label>
+                    <textarea
+                      rows={3}
+                      placeholder="Brief overview of what this webinar covers..."
+                      value={webinarForm.description}
+                      onChange={e => setWebinarForm(p => ({ ...p, description: e.target.value }))}
+                      className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Date *</Label>
+                    <Input
+                      type="date"
+                      value={webinarForm.date}
+                      onChange={e => setWebinarForm(p => ({ ...p, date: e.target.value }))}
+                      className="rounded-xl"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Time *</Label>
+                    <Input
+                      placeholder="e.g. 10:00 AM IST / 11:30 PM EST"
+                      value={webinarForm.time}
+                      onChange={e => setWebinarForm(p => ({ ...p, time: e.target.value }))}
+                      className="rounded-xl"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Duration</Label>
+                    <Input
+                      placeholder="e.g. 1 hour, 90 minutes"
+                      value={webinarForm.duration}
+                      onChange={e => setWebinarForm(p => ({ ...p, duration: e.target.value }))}
+                      className="rounded-xl"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Host Name</Label>
+                    <Input
+                      placeholder="e.g. SA Consulting Team"
+                      value={webinarForm.host_name}
+                      onChange={e => setWebinarForm(p => ({ ...p, host_name: e.target.value }))}
+                      className="rounded-xl"
+                    />
+                  </div>
+                  <div className="sm:col-span-2 space-y-1.5">
+                    <Label>Meeting Link (Zoom / Google Meet / Teams)</Label>
+                    <Input
+                      placeholder="https://zoom.us/j/..."
+                      value={webinarForm.meeting_link}
+                      onChange={e => setWebinarForm(p => ({ ...p, meeting_link: e.target.value }))}
+                      className="rounded-xl"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Status</Label>
+                    <select
+                      value={webinarForm.status}
+                      onChange={e => setWebinarForm(p => ({ ...p, status: e.target.value as 'upcoming' | 'completed' | 'cancelled' }))}
+                      className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    >
+                      <option value="upcoming">Upcoming</option>
+                      <option value="completed">Completed</option>
+                      <option value="cancelled">Cancelled</option>
+                    </select>
+                  </div>
+                </CardContent>
+                <CardFooter className="flex gap-3">
+                  <Button
+                    onClick={handleSaveWebinar}
+                    disabled={savingWebinar}
+                    className="gradient-bg border-none gap-2 rounded-xl"
+                  >
+                    {savingWebinar ? <><Loader2 size={16} className="animate-spin" /> Saving...</> : <><Save size={16} /> {isEditingWebinar === 'new' ? 'Create Webinar' : 'Save Changes'}</>}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => { setIsEditingWebinar(null); setWebinarForm(blankWebinarForm); }}
+                    className="rounded-xl gap-2"
+                  >
+                    <X size={16} /> Cancel
+                  </Button>
+                </CardFooter>
+              </Card>
+            )}
+
+            {/* Webinar Cards */}
+            {webinars.length === 0 ? (
+              <Card className="glass p-12 text-center rounded-2xl">
+                <Video size={40} className="mx-auto text-muted-foreground mb-4 opacity-40" />
+                <p className="font-bold text-lg mb-1">No Webinars Scheduled</p>
+                <p className="text-sm text-muted-foreground">Click "Schedule New Webinar" to add your first session.</p>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {webinars.map((webinar) => {
+                  const regCount = webinarRegistrations.filter(r => r.webinar_id === webinar.id).length;
+                  const isViewingThis = viewingRegistrantsForWebinarId === webinar.id;
+                  return (
+                    <Card key={webinar.id} className="glass rounded-2xl border border-border overflow-hidden">
+                      <CardHeader className="pb-3">
+                        <div className="flex justify-between items-start gap-2">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
+                                webinar.status === 'upcoming' ? 'bg-teal-500/10 text-teal-500 border border-teal-500/20' :
+                                webinar.status === 'completed' ? 'bg-green-500/10 text-green-600 border border-green-500/20' :
+                                'bg-red-500/10 text-red-500 border border-red-500/20'
+                              }`}>
+                                {webinar.status}
+                              </span>
+                              <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                                {regCount} registrant{regCount !== 1 ? 's' : ''}
+                              </span>
+                            </div>
+                            <CardTitle className="text-base font-bold leading-snug">{webinar.title}</CardTitle>
+                          </div>
+                          <div className="flex gap-1 flex-shrink-0">
+                            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => handleEditWebinar(webinar)}>
+                              <Edit size={14} />
+                            </Button>
+                            <Button size="icon" variant="ghost" className="h-8 w-8 text-red-500 hover:text-red-600" onClick={() => handleDeleteWebinar(webinar.id, webinar.title)}>
+                              <Trash2 size={14} />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="pt-0 space-y-2">
+                        <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                          <span className="flex items-center gap-1.5">
+                            <CalendarDays size={13} className="text-teal-500" />
+                            {new Date(webinar.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+                          </span>
+                          <span className="flex items-center gap-1.5">
+                            <Clock size={13} className="text-teal-500" />
+                            {webinar.time} ({webinar.duration || '1 hour'})
+                          </span>
+                          {webinar.host_name && (
+                            <span className="flex items-center gap-1.5">
+                              <Users size={13} className="text-teal-500" />
+                              {webinar.host_name}
+                            </span>
+                          )}
+                        </div>
+                        {webinar.description && (
+                          <p className="text-sm text-muted-foreground line-clamp-2">{webinar.description}</p>
+                        )}
+                        {webinar.meeting_link && (
+                          <a href={webinar.meeting_link} target="_blank" rel="noopener noreferrer" className="text-xs text-teal-500 hover:underline flex items-center gap-1">
+                            <ExternalLink size={11} /> {webinar.meeting_link}
+                          </a>
+                        )}
+                      </CardContent>
+                      <CardFooter className="pt-0 flex gap-2 flex-wrap border-t border-border mt-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="rounded-xl gap-2 h-8 text-xs"
+                          onClick={() => setViewingRegistrantsForWebinarId(isViewingThis ? null : webinar.id)}
+                        >
+                          <Users size={13} /> {isViewingThis ? 'Hide' : 'View'} Registrants ({regCount})
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="rounded-xl gap-2 h-8 text-xs"
+                          onClick={() => exportWebinarRegistrants(webinar)}
+                        >
+                          <FileText size={13} /> Export CSV
+                        </Button>
+                      </CardFooter>
+
+                      {/* Inline registrant list */}
+                      {isViewingThis && (
+                        <div className="border-t border-border px-6 pb-4">
+                          {regCount === 0 ? (
+                            <p className="text-sm text-muted-foreground py-4 text-center">No registrations yet.</p>
+                          ) : (
+                            <div className="mt-3 space-y-2 max-h-64 overflow-y-auto">
+                              {webinarRegistrations
+                                .filter(r => r.webinar_id === webinar.id)
+                                .map(reg => (
+                                  <div key={reg.id} className="flex items-center justify-between bg-muted/40 rounded-xl px-3 py-2 text-sm">
+                                    <div>
+                                      <p className="font-medium">{reg.name}</p>
+                                      <p className="text-xs text-muted-foreground">{reg.email} · {reg.phone}</p>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground whitespace-nowrap">
+                                      {new Date(reg.created_at).toLocaleDateString()}
+                                    </p>
+                                  </div>
+                                ))
+                              }
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </TabsContent>
+
         </Tabs>
         {/* Edit Project Dialog */}
         {/* We reuse the scrollIntoView logic instead of a dialog for projects, but we add Candidate Dialog below */}
