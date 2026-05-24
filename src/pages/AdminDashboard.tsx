@@ -40,8 +40,7 @@ import {
   DollarSign,
   FileText,
   Video,
-  Loader2,
-  Save
+  Loader2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
