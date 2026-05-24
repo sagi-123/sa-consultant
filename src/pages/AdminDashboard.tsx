@@ -533,10 +533,6 @@ const AdminDashboard = () => {
   };
 
   const sendConfirmationEmail = async (app: Appointment) => {
-    if (!app.client_email) {
-      toast({ variant: 'destructive', title: 'No client email', description: 'This booking has no client email on record.' });
-      return;
-    }
     if (!app.selected_slot) {
       toast({ variant: 'destructive', title: 'No slot confirmed', description: 'Please select a slot first before sending the email.' });
       return;
@@ -545,50 +541,43 @@ const AdminDashboard = () => {
       const html = `
         <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#0f172a;color:#e2e8f0;border-radius:16px;overflow:hidden">
           <div style="background:linear-gradient(135deg,#6366f1,#8b5cf6);padding:32px;text-align:center">
-            <h1 style="margin:0;font-size:26px;color:#fff">✅ Appointment Confirmed!</h1>
-            <p style="margin:10px 0 0;color:#c7d2fe;font-size:15px">SA Consultant &amp; Staffing</p>
+            <h1 style="margin:0;font-size:24px;color:#fff">📅 Appointment Confirmed!</h1>
+            <p style="margin:8px 0 0;color:#c7d2fe;font-size:14px">Admin Notification — SA Consultant & Staffing</p>
           </div>
           <div style="padding:32px">
-            <p style="font-size:16px;margin:0 0 8px">Hi <strong style="color:#fff">${app.client_name}</strong>,</p>
-            <p style="color:#94a3b8;margin:0 0 28px;line-height:1.6">
-              Great news! We are pleased to confirm your appointment with <strong style="color:#e2e8f0">SA Consultant &amp; Staffing</strong>. 
-              Your meeting slot has been officially reserved.
-            </p>
-            <div style="background:#1e293b;border-radius:12px;padding:20px;margin-bottom:24px;border-left:4px solid #22c55e">
-              <p style="margin:0 0 6px;color:#86efac;font-size:12px;text-transform:uppercase;letter-spacing:1px;font-weight:bold">📅 Your Confirmed Appointment</p>
-              <p style="font-size:20px;font-weight:bold;color:#fff;margin:0">${app.selected_slot}</p>
+            <p style="font-size:16px;margin:0 0 24px">A client appointment has been <strong style="color:#86efac">confirmed</strong>. Details below:</p>
+            <div style="background:#1e293b;border-radius:12px;padding:20px;margin-bottom:16px;border-left:4px solid #6366f1">
+              <p style="margin:0 0 6px;color:#a5b4fc;font-size:12px;text-transform:uppercase;letter-spacing:1px">Client Name</p>
+              <p style="font-size:18px;font-weight:bold;color:#fff;margin:0">${app.client_name}</p>
             </div>
-            <div style="background:#1e293b;border-radius:12px;padding:16px;margin-bottom:24px">
-              <p style="margin:0 0 4px;color:#a5b4fc;font-size:12px;text-transform:uppercase;letter-spacing:1px">What to expect</p>
-              <p style="color:#cbd5e1;margin:0;font-size:14px;line-height:1.6">
-                Our consultant will connect with you at the scheduled time. Please ensure you are available and have a stable internet connection for a video/call meeting.
-              </p>
+            <div style="background:#1e293b;border-radius:12px;padding:16px;margin-bottom:16px">
+              <p style="margin:0 0 4px;color:#a5b4fc;font-size:12px;text-transform:uppercase;letter-spacing:1px">Email</p>
+              <p style="color:#e2e8f0;margin:0">${app.client_email || 'N/A'}</p>
             </div>
-            <p style="color:#94a3b8;font-size:13px;margin:0 0 24px">
-              If you need to reschedule or have any questions, please contact us directly by replying to this email.
-            </p>
-            <p style="margin:0;color:#e2e8f0;font-size:14px">
-              Warm regards,<br/>
-              <strong style="color:#a5b4fc">SA Consultant &amp; Staffing Team</strong>
-            </p>
-          </div>
-          <div style="background:#0d1424;padding:16px;text-align:center">
-            <p style="margin:0;color:#475569;font-size:12px">© 2025 SA Consultant &amp; Staffing. All rights reserved.</p>
+            <div style="background:#1e293b;border-radius:12px;padding:16px;margin-bottom:16px">
+              <p style="margin:0 0 4px;color:#a5b4fc;font-size:12px;text-transform:uppercase;letter-spacing:1px">Phone</p>
+              <p style="color:#e2e8f0;margin:0">${app.client_phone || 'N/A'}</p>
+            </div>
+            <div style="background:#1e293b;border-radius:12px;padding:16px;margin-bottom:24px;border-left:4px solid #22c55e">
+              <p style="margin:0 0 4px;color:#86efac;font-size:12px;text-transform:uppercase;letter-spacing:1px">✅ Confirmed Slot</p>
+              <p style="font-size:16px;font-weight:bold;color:#fff;margin:0">${app.selected_slot}</p>
+            </div>
+            <p style="color:#94a3b8;font-size:13px">Please follow up with the client to confirm their attendance.</p>
           </div>
         </div>`;
 
       const { error } = await supabase.functions.invoke('send-email', {
         body: {
-          recipients: [app.client_email],
-          subject: `✅ Your Appointment is Confirmed — ${app.selected_slot}`,
-          text: `Hi ${app.client_name}, your appointment with SA Consultant & Staffing has been confirmed for ${app.selected_slot}. We look forward to meeting you!`,
+          recipients: ['sajaruthmahjabeen@gmail.com'],
+          subject: `📅 Appointment Confirmed — ${app.client_name} | ${app.selected_slot}`,
+          text: `Appointment confirmed for ${app.client_name} (${app.client_email}, ${app.client_phone}). Confirmed slot: ${app.selected_slot}.`,
           html,
         },
       });
 
       if (error) throw error;
 
-      toast({ title: '✅ Confirmation Email Sent!', description: `Email delivered to ${app.client_email}` });
+      toast({ title: '✅ Email Sent!', description: `Admin notification sent for ${app.client_name}'s confirmed appointment.` });
     } catch (err: any) {
       console.error('Email error:', err);
       toast({ variant: 'destructive', title: '❌ Email Failed', description: err.message ?? 'Could not send email.' });
