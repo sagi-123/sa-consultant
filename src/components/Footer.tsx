@@ -66,11 +66,7 @@ const Footer = () => {
                 { label: 'Partnership', href: '/#partnership' },
                 { label: 'Services', href: '/#services' },
                 { label: 'Portfolio', href: '/#portfolio' },
-                { label: 'Testimonials', href: '/#testimonials' },
                 { label: 'Appointment Booking', href: '/#book' },
-                { label: 'Contact', href: '/#contact' },
-                { label: 'Talent Partner', href: '/vendor-portal' },
-                { label: 'Candidate Portal', href: '/candidate-portal' },
               ].map((link) => (
                 <a
                   key={link.label}

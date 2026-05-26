@@ -12,7 +12,6 @@ import { getAdminBookingEmailHtml, getClientBookingEmailHtml } from '@/utils/ema
 
 export default function BookingCalendar() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-  const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [preferredSlots, setPreferredSlots] = useState<{ date: Date; time: string }[]>([]);
   const [formData, setFormData] = useState({ name: '', email: '', phone: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -118,13 +117,9 @@ useEffect(() => {
     );
   };
 
-  // Add slot to selections (Exactly 3)
-  const handleAddSlot = () => {
-    if (!selectedDate || !selectedTime) return;
-
-    // No limit on number of slots; users can add as many as they like.
-
-    if (isSlotAdded(selectedDate, selectedTime)) {
+  // Add slot directly to selections
+  const handleAddSlot = (date: Date, time: string) => {
+    if (isSlotAdded(date, time)) {
       toast({
         variant: "destructive",
         title: "Slot already selected",
@@ -133,16 +128,15 @@ useEffect(() => {
       return;
     }
 
-    setPreferredSlots([...preferredSlots, { date: selectedDate, time: selectedTime }]);
-    setSelectedTime(null);
+    setPreferredSlots([...preferredSlots, { date, time }]);
 
     toast({
       title: "Slot Added",
-      description: `Added: ${selectedDate.toLocaleDateString('en-US', {
+      description: `Added: ${date.toLocaleDateString('en-US', {
         weekday: 'short',
         month: 'short',
         day: 'numeric'
-      })} at ${selectedTime}`
+      })} at ${time}`
     });
   };
 
@@ -291,7 +285,6 @@ useEffect(() => {
       setFormData({ name: '', email: '', phone: '' });
       setPreferredSlots([]);
       setSelectedDate(undefined);
-      setSelectedTime(null);
     } catch (err: any) {
       console.error('Error saving appointment:', err);
       toast({
@@ -304,18 +297,18 @@ useEffect(() => {
     }
   };
 
-  // Disable weekends, today, and all past dates
-  // Clients can only book from TOMORROW onwards (Mon today → Tue–Fri available)
+  // Disable weekends and all dates within 2 days of today
+  // Clients can only book starting 2 days from today (e.g., Mon today → Wed onwards available)
   const isDateDisabled = (date: Date) => {
     const day = date.getDay(); // 0=Sun, 6=Sat
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const tomorrow = new Date(today);
-    tomorrow.setDate(today.getDate() + 1);
+    const minDate = new Date(today);
+    minDate.setDate(today.getDate() + 2); // Bookings start from 2 days after today
 
-    // Disable: weekends, today itself, and any day before today
-    return day === 0 || day === 6 || date < tomorrow;
+    // Disable: weekends, and any day before minDate
+    return day === 0 || day === 6 || date < minDate;
   };
 
   return (
@@ -419,7 +412,6 @@ useEffect(() => {
                       selected={selectedDate}
                       onSelect={(date) => {
                         setSelectedDate(date);
-                        setSelectedTime(null);
                       }}
                       disabled={isDateDisabled}
                       className="rounded-md border-0 w-full"
@@ -435,19 +427,16 @@ useEffect(() => {
                       <div className="grid grid-cols-1 gap-2 max-h-[280px] overflow-y-auto pr-1">
                         {timeSlots.map((time) => {
                           const isAdded = isSlotAdded(selectedDate, time);
-                          const isSelected = selectedTime === time;
                           return (
                             <Button
                               key={time}
                               type="button"
-                              variant={isSelected ? "default" : "outline"}
+                              variant="outline"
                               disabled={isAdded}
-                              onClick={() => setSelectedTime(time)}
+                              onClick={() => selectedDate && handleAddSlot(selectedDate, time)}
                               className={`h-auto min-h-[40px] py-2 text-xs font-bold rounded-lg ${isAdded
                                   ? "bg-muted text-muted-foreground line-through opacity-40 border-muted"
-                                  : isSelected
-                                    ? "gradient-bg text-white border-none shadow-md shadow-primary/20 scale-[1.02]"
-                                    : "hover:bg-primary/5 hover:border-primary/50 text-foreground"
+                                  : "hover:bg-primary/5 hover:border-primary/50 text-foreground"
                                 }`}
                             >
                               {time}
@@ -460,17 +449,6 @@ useEffect(() => {
                         <CalendarIcon size={24} className="opacity-40 mb-2" />
                         <span className="text-xs font-medium px-4">Please select a weekday on the calendar</span>
                       </div>
-                    )}
-
-                    {selectedDate && selectedTime && (
-                      <Button
-                        type="button"
-                        onClick={handleAddSlot}
-                        disabled={false}
-                        className="mt-4 w-full bg-primary font-bold text-primary-foreground hover:scale-[1.02] active:scale-[0.98] transition-all h-9 sm:h-10 rounded-lg text-xs"
-                      >
-                        Add to List ({preferredSlots.length} Selected)
-                      </Button>
                     )}
                   </div>
                 </CardContent>
