@@ -1,5 +1,6 @@
 import { ArrowRight, ChevronDown } from 'lucide-react';
 import heroBg from '@/assets/hero-bg.jpg';
+import WebinarFlashcards from './WebinarFlashcards';
 
 const Hero = () => {
   return (
@@ -27,8 +28,11 @@ const Hero = () => {
       <div className="hidden md:block absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full bg-[#3b82f6]/15 blur-[120px] animate-float" style={{ animationDelay: '3s' }} />
 
       {/* Content Container */}
-      <div className="relative z-10 container mx-auto text-center px-4 sm:px-6 pt-10 pb-20 md:pt-48 md:pb-0">
+      <div className="relative z-10 container mx-auto text-center px-4 sm:px-6 pt-10 pb-20 md:pt-36 md:pb-0">
         <div className="max-w-5xl mx-auto">
+          {/* Webinar Flash Cards (Shows above the badge if any upcoming webinars are scheduled) */}
+          <WebinarFlashcards />
+
           {/* Badge */}
           <div className="inline-flex items-center gap-3 px-6 py-3 sm:px-10 sm:py-5 rounded-full glass border border-primary/20 mb-6 sm:mb-8 animate-fade-in text-foreground shadow-2xl">
             <span className="w-4 h-4 rounded-full bg-primary animate-pulse" />
