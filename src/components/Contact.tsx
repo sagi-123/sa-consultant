@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Send, MapPin, Mail, Phone, CheckCircle2 } from 'lucide-react';
+import { Send, MapPin, Mail, Phone, CheckCircle2, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { useToast } from "@/components/ui/use-toast";
 
 const Contact = () => {
+  const { toast } = useToast();
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', message: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -67,12 +69,20 @@ const Contact = () => {
         body: { recipients: adminRecipients, subject, text, html },
       });
 
-      // 3. Reset form and show success
+      // 3. Reset form, trigger toast, and show inline success banner
       setFormData({ name: '', email: '', phone: '', message: '' });
       setIsSuccess(true);
+      toast({
+        title: "Inquiry Submitted Successfully!",
+        description: "Thank you for reaching out. We have happily received your message.",
+      });
     } catch (error: any) {
       console.error('Error sending message:', error);
-      alert('There was an error sending your message. Please try again.');
+      toast({
+        variant: "destructive",
+        title: "Submission Failed",
+        description: "There was an error sending your message. Please try again."
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -122,25 +132,23 @@ const Contact = () => {
             </div>
           </div>
 
-          {/* Form or Success Message */}
-          {isSuccess ? (
-            <div className="scroll-reveal glass rounded-2xl p-4 sm:p-6 md:p-8 flex flex-col items-center justify-center gap-4 text-center">
-              <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center">
-                <CheckCircle2 size={36} className="text-green-500" />
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="scroll-reveal glass rounded-2xl p-4 sm:p-6 md:p-8 space-y-4 lg:space-y-6 w-full max-w-full overflow-hidden box-border relative">
+            {isSuccess && (
+              <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4 text-green-500 text-sm font-semibold flex items-center justify-between gap-2 animate-in fade-in duration-300 mb-2">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 size={18} className="text-green-500 flex-shrink-0 animate-bounce" />
+                  <span>Your message has been successfully submitted! We will connect shortly.</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsSuccess(false)}
+                  className="text-green-500 hover:bg-green-500/20 p-1 rounded-full transition-colors flex-shrink-0"
+                >
+                  <X size={14} />
+                </button>
               </div>
-              <h3 className="text-xl font-display font-black text-green-500">Message Sent!</h3>
-              <p className="text-sm text-foreground font-medium">
-                Thank you for reaching out. We have received your message and will get back to you shortly.
-              </p>
-              <button
-                onClick={() => setIsSuccess(false)}
-                className="gradient-bg px-6 py-2.5 rounded-lg font-bold text-white text-sm transition-all hover:opacity-90"
-              >
-                Send Another Message
-              </button>
-            </div>
-          ) : (
-          <form onSubmit={handleSubmit} className="scroll-reveal glass rounded-2xl p-4 sm:p-6 md:p-8 space-y-4 lg:space-y-6 w-full max-w-full overflow-hidden box-border">
+            )}
             <div className="w-full">
               <label className="text-sm text-foreground font-bold mb-1.5 md:mb-2 block">Full Name</label>
               <input
@@ -193,7 +201,6 @@ const Contact = () => {
               {isSubmitting ? 'Sending...' : 'Send Message'} <Send size={18} />
             </button>
           </form>
-          )}
         </div>
       </div>
     </section>
