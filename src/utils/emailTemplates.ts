@@ -103,12 +103,6 @@ export const getAdminBookingEmailHtml = (
       ${formattedSlots}
     </div>
 
-    <!-- Action Callout -->
-    <div style="background: linear-gradient(135deg, rgba(79, 70, 229, 0.03), rgba(6, 182, 212, 0.03)); border: 1px solid rgba(79, 70, 229, 0.15); border-radius: 20px; padding: 24px; text-align: center; margin-bottom: 8px;">
-      <h4 style="font-size: 15px; font-weight: 700; color: #4f46e5; margin: 0 0 8px 0;">Consultant Confirmation</h4>
-      <p style="font-size: 13px; color: #475569; margin: 0 0 16px 0;">Please connect with the client on WhatsApp or phone to confirm one of their chosen slots.</p>
-      <a href="https://wa.me/${clientPhone.replace(/\D/g, '')}" style="display: inline-block; background-color: #22c55e; color: #ffffff; padding: 12px 24px; border-radius: 12px; font-size: 14px; font-weight: 600; text-decoration: none; box-shadow: 0 4px 6px -1px rgba(34, 197, 94, 0.2);">Contact on WhatsApp</a>
-    </div>
   `;
 
   return getEmailWrapper(content);
@@ -147,12 +141,6 @@ export const getClientBookingEmailHtml = (
       ${formattedSlots}
     </div>
 
-    <!-- Support Block -->
-    <div style="background-color: #f8fafc; border-radius: 20px; padding: 24px; border: 1px solid #e2e8f0; text-align: center;">
-      <h4 style="font-size: 14px; font-weight: 700; color: #0f172a; margin: 0 0 8px 0;">Need immediate assistance?</h4>
-      <p style="font-size: 13px; color: #64748b; margin: 0 0 16px 0;">Feel free to reach out to us on WhatsApp or reply directly to this email.</p>
-      <a href="https://wa.me/16093139192" style="display: inline-block; background-color: #22c55e; color: #ffffff; padding: 10px 20px; border-radius: 10px; font-size: 13px; font-weight: 600; text-decoration: none;">Chat with Advisor</a>
-    </div>
   `;
 
   return getEmailWrapper(content);
