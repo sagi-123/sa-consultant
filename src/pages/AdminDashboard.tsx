@@ -247,11 +247,23 @@ const AdminDashboard = () => {
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
+    // Reset searches when switching tabs so they don't bleed between sections
+    setSearchTerm('');
+    setBookingSearchTerm('');
     if (tab === 'inquiries') {
       markInquiriesAsRead();
     }
     if (tab === 'candidates') {
       markCandidatesAsScreened();
+    }
+    // Debug: log appointments when switching to appointments tab
+    if (tab === 'appointments') {
+      console.log('[Admin] Appointments loaded:', appointments.length, 'rows');
+      if (appointments.length > 0) {
+        console.log('[Admin] Sample slot_1:', appointments[0].slot_1);
+        console.log('[Admin] Sample slot_2:', appointments[0].slot_2);
+        console.log('[Admin] Sample slot_3:', appointments[0].slot_3);
+      }
     }
   };
 
@@ -839,30 +851,34 @@ SA Consultant & Staffing Team`
     const emailMatch = (a.client_email || '').toLowerCase().includes(search);
     const phoneMatch = (a.client_phone || '').toLowerCase().includes(search);
     
-    // Check status
+    // Check status (pending / confirmed / cancelled)
     const statusMatch = (a.status || '').toLowerCase().includes(search);
     
-    // Check slots
+    // Check slot content - slots stored like: "Tuesday, May 27, 2025 at 10:00 AM (EST)"
     const slot1Match = (a.slot_1 || '').toLowerCase().includes(search);
     const slot2Match = (a.slot_2 || '').toLowerCase().includes(search);
     const slot3Match = (a.slot_3 || '').toLowerCase().includes(search);
     const selectedSlotMatch = (a.selected_slot || '').toLowerCase().includes(search);
     
-    // Check booking date (created_at)
+    // Check the request submission date (created_at)
     const createdAtDate = new Date(a.created_at);
-    const dateFormatted = createdAtDate.toLocaleDateString().toLowerCase();
-    const dateString = createdAtDate.toDateString().toLowerCase();
+    const dateLocal = createdAtDate.toLocaleDateString('en-US').toLowerCase();
+    const dateLong = createdAtDate.toLocaleDateString('en-US', {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    }).toLowerCase();
+    const dateShort = createdAtDate.toLocaleDateString('en-US', {
+      weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
+    }).toLowerCase();
+    const dateMonth = createdAtDate.toLocaleDateString('en-US', { month: 'long' }).toLowerCase();
     
-    // Extra verbose date formats
-    const longDate = createdAtDate.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' }).toLowerCase();
-    const shortMonth = createdAtDate.toLocaleDateString(undefined, { month: 'short' }).toLowerCase();
+    const dateMatch = dateLocal.includes(search) ||
+                      dateLong.includes(search) ||
+                      dateShort.includes(search) ||
+                      dateMonth.includes(search);
     
-    const dateMatch = dateFormatted.includes(search) || 
-                      dateString.includes(search) || 
-                      longDate.includes(search) || 
-                      shortMonth.includes(search);
-    
-    return nameMatch || emailMatch || phoneMatch || statusMatch || slot1Match || slot2Match || slot3Match || selectedSlotMatch || dateMatch;
+    return nameMatch || emailMatch || phoneMatch || statusMatch ||
+           slot1Match || slot2Match || slot3Match || selectedSlotMatch ||
+           dateMatch;
   });
 
   const pendingCount = reviews.filter((r: any) => r.status === 'pending').length;
