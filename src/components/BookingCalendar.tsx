@@ -199,21 +199,6 @@ useEffect(() => {
 
       if (error) throw error;
 
-      // 2. Build WhatsApp confirmation text
-      let slotsText = "";
-      preferredSlots.forEach((slot, index) => {
-        slotsText += `${index + 1}️⃣ ${formatSlot(slot)}%0A`;
-      });
-
-      const whatsappText = `🤝 *New Appointment Request from SA CONSULTANT AND STAFFING*%0A%0A` +
-        `*Client:* ${formData.name}%0A` +
-        `*Email:* ${formData.email}%0A` +
-        `*Phone:* ${formData.phone}%0A%0A` +
-        `*Preferred Slots (Please confirm one):*%0A` +
-        slotsText;
-
-
-
       // Send booking details via email using our upgraded Edge Function
       const adminRecipients = ['sajaruthmahjabeen@gmail.com', 'sagina111@gmail.com'];
       const adminSubject = `New Appointment Request - ${formData.name}`;
@@ -273,18 +258,15 @@ useEffect(() => {
         console.error('📧 Email processing error:', emailErr);
       }
 
-      setIsSuccess(true);
-      toast({
-        title: 'Slots Booked Successfully!',
-        description: 'Your slots have been saved and email notifications have been triggered.',
-      });
-
-
-
-      // Reset form
+      // Reset form state first, then show success card
       setFormData({ name: '', email: '', phone: '' });
       setPreferredSlots([]);
       setSelectedDate(undefined);
+      setIsSuccess(true);
+      toast({
+        title: 'Booking Request Placed!',
+        description: 'Your preferred meeting slots have been successfully registered.',
+      });
     } catch (err: any) {
       console.error('Error saving appointment:', err);
       toast({
@@ -376,13 +358,10 @@ useEffect(() => {
                 Booking Request Placed! <Sparkles size={20} className="text-accent" />
               </CardTitle>
               <CardDescription className="text-base text-foreground font-medium mt-2">
-                We have registered your preferred meeting slots. We are redirecting you to WhatsApp to notify our consultant instantly.
+                We are happy to announce that your booking request has been successfully placed! Our consultant will review your preferred slots and get in touch with you shortly to confirm your appointment.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4 p-4">
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                If the WhatsApp tab did not open automatically, please click the button below to complete your booking notification.
-              </p>
+            <CardContent className="p-4">
               <Button
                 onClick={() => {
                   setIsSuccess(false);
