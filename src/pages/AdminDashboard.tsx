@@ -1826,22 +1826,52 @@ SA Consultant & Staffing Team`
 
           <TabsContent value="appointments">
             <Card className="glass animate-in fade-in-50 duration-500">
-              <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                  <CardTitle className="font-display font-bold text-2xl flex items-center gap-2">
-                     <CalendarDays size={24} className="text-orange-500" /> Client Appointment Booking
-                  </CardTitle>
-                  <CardDescription>Review meeting slot requests from clients, select a slot to confirm, or manage bookings.</CardDescription>
+              <CardHeader className="flex flex-col gap-4">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <div>
+                    <CardTitle className="font-display font-bold text-2xl flex items-center gap-2">
+                       <CalendarDays size={24} className="text-orange-500" /> Client Appointment Booking
+                      <span className="text-sm font-normal text-muted-foreground ml-2 hidden sm:inline">
+                        ({appointments.length} total)
+                      </span>
+                    </CardTitle>
+                    <CardDescription>Review meeting slot requests from clients, select a slot to confirm, or manage bookings.</CardDescription>
+                  </div>
+                  <div className="relative w-full sm:w-72">
+                     <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                     <Input 
+                        placeholder="Search by name, email, date, status..." 
+                        className="pl-10 pr-8 h-9"
+                        value={bookingSearchTerm}
+                        onChange={(e) => setBookingSearchTerm(e.target.value)}
+                     />
+                     {bookingSearchTerm && (
+                       <button
+                         onClick={() => setBookingSearchTerm('')}
+                         className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                         title="Clear search"
+                       >
+                         <XCircle size={16} />
+                       </button>
+                     )}
+                  </div>
                 </div>
-                <div className="relative w-full sm:w-64">
-                   <Search size={16} className="absolute left-3 top-3 text-muted-foreground" />
-                   <Input 
-                      placeholder="Search bookings by name, date, slot, status..." 
-                      className="pl-10 h-9"
-                      value={bookingSearchTerm}
-                      onChange={(e) => setBookingSearchTerm(e.target.value)}
-                   />
-                </div>
+                {/* Live search status strip */}
+                {bookingSearchTerm && (
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground bg-secondary/30 rounded-lg px-3 py-2 border border-border/40">
+                    <Search size={12} className="text-primary flex-shrink-0" />
+                    <span>
+                      Searching for <span className="font-bold text-foreground">"{bookingSearchTerm}"</span> across{' '}
+                      <span className="text-primary font-semibold">names, emails, phone, slot dates (e.g. "tuesday", "may"), and status</span>
+                      {' '}—{' '}
+                      {filteredAppointments.length === 0 ? (
+                        <span className="text-red-400 font-bold">0 matches out of {appointments.length} bookings</span>
+                      ) : (
+                        <span className="text-green-500 font-bold">{filteredAppointments.length} of {appointments.length} bookings match</span>
+                      )}
+                    </span>
+                  </div>
+                )}
               </CardHeader>
               <CardContent>
                 {/* Desktop View */}
