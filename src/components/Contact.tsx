@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Send, MapPin, Mail, Phone } from 'lucide-react';
+import { Send, MapPin, Mail, Phone, CheckCircle2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 const Contact = () => {
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', message: '' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
   const [settings, setSettings] = useState({
     contact_email: 'mahjabeensajaruth@gmail.com',
     contact_phone: '+1 (609) 313-9192, 9384797751',
     contact_address: 'New Jersey, USA',
-    whatsapp_number: '9384797751'
   });
 
   useEffect(() => {
@@ -23,7 +24,6 @@ const Contact = () => {
           contact_email: settingsMap.contact_email || settings.contact_email,
           contact_phone: settingsMap.contact_phone || settings.contact_phone,
           contact_address: settingsMap.contact_address || settings.contact_address,
-          whatsapp_number: settingsMap.whatsapp_number || settings.whatsapp_number
         });
       }
     };
@@ -32,39 +32,49 @@ const Contact = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    setIsSubmitting(true);
+
     try {
-      // 1. Store in Supabase first
+      // 1. Store in Supabase
       const { error } = await supabase
         .from('inquiries')
-        .insert([
-          {
-            name: formData.name,
-            email: formData.email,
-            phone: formData.phone,
-            message: formData.message,
-          }
-        ]);
+        .insert([{
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          message: formData.message,
+        }]);
 
       if (error) throw error;
 
-      // 2. Construct WhatsApp message and redirect
-      const whatsappMessage = `*New Inquiry from SA CONSULTANT AND STAFFING Website*%0A%0A` +
-        `*Name:* ${formData.name}%0A` +
-        `*Email:* ${formData.email}%0A` +
-        `*Phone:* ${formData.phone}%0A%0A` +
-        `*Message:*%0A${formData.message}`;
+      // 2. Send email notification to both admins
+      const adminRecipients = ['sajaruthmahjabeen@gmail.com', 'sagina111@gmail.com'];
+      const subject = `New Contact Inquiry from ${formData.name}`;
+      const text = `Name: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone}\n\nMessage:\n${formData.message}`;
+      const html = `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
+          <h2 style="color: #4f46e5;">New Contact Inquiry</h2>
+          <p><strong>Name:</strong> ${formData.name}</p>
+          <p><strong>Email:</strong> <a href="mailto:${formData.email}">${formData.email}</a></p>
+          <p><strong>Phone:</strong> ${formData.phone}</p>
+          <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 16px 0;" />
+          <p><strong>Message:</strong></p>
+          <p style="white-space: pre-wrap;">${formData.message}</p>
+        </div>
+      `;
 
-      const whatsappUrl = `https://wa.me/${settings.whatsapp_number.replace(/\D/g, '')}?text=${whatsappMessage}`;
-      
-      // Redirect to WhatsApp
-      window.open(whatsappUrl, '_blank');
-      
-      // 3. Reset form
+      await supabase.functions.invoke('send-email', {
+        body: { recipients: adminRecipients, subject, text, html },
+      });
+
+      // 3. Reset form and show success
       setFormData({ name: '', email: '', phone: '', message: '' });
+      setIsSuccess(true);
     } catch (error: any) {
       console.error('Error sending message:', error);
       alert('There was an error sending your message. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -112,7 +122,24 @@ const Contact = () => {
             </div>
           </div>
 
-          {/* Form */}
+          {/* Form or Success Message */}
+          {isSuccess ? (
+            <div className="scroll-reveal glass rounded-2xl p-4 sm:p-6 md:p-8 flex flex-col items-center justify-center gap-4 text-center">
+              <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center">
+                <CheckCircle2 size={36} className="text-green-500" />
+              </div>
+              <h3 className="text-xl font-display font-black text-green-500">Message Sent!</h3>
+              <p className="text-sm text-foreground font-medium">
+                Thank you for reaching out. We have received your message and will get back to you shortly.
+              </p>
+              <button
+                onClick={() => setIsSuccess(false)}
+                className="gradient-bg px-6 py-2.5 rounded-lg font-bold text-white text-sm transition-all hover:opacity-90"
+              >
+                Send Another Message
+              </button>
+            </div>
+          ) : (
           <form onSubmit={handleSubmit} className="scroll-reveal glass rounded-2xl p-4 sm:p-6 md:p-8 space-y-4 lg:space-y-6 w-full max-w-full overflow-hidden box-border">
             <div className="w-full">
               <label className="text-sm text-foreground font-bold mb-1.5 md:mb-2 block">Full Name</label>
@@ -160,11 +187,13 @@ const Contact = () => {
             </div>
             <button
               type="submit"
-              className="w-full gradient-bg py-3.5 md:py-4 rounded-lg font-black text-white hover-lift hover-glow flex items-center justify-center gap-2 transition-all duration-300 text-sm md:text-base"
+              disabled={isSubmitting}
+              className="w-full gradient-bg py-3.5 md:py-4 rounded-lg font-black text-white hover-lift hover-glow flex items-center justify-center gap-2 transition-all duration-300 text-sm md:text-base disabled:opacity-60"
             >
-              Send Message <Send size={18} />
+              {isSubmitting ? 'Sending...' : 'Send Message'} <Send size={18} />
             </button>
           </form>
+          )}
         </div>
       </div>
     </section>

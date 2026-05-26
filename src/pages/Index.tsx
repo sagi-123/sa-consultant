@@ -9,7 +9,6 @@ import Testimonials from '@/components/Testimonials';
 import BookingCalendar from '@/components/BookingCalendar';
 import Contact from '@/components/Contact';
 import Footer from '@/components/Footer';
-import WhatsAppButton from '@/components/WhatsAppButton';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 import { Link } from 'react-router-dom';
 
@@ -37,7 +36,6 @@ const Index = () => {
       <BookingCalendar />
       <Contact />
       <Footer />
-      <WhatsAppButton />
     </div>
   );
 };
