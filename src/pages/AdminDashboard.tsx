@@ -111,6 +111,7 @@ const AdminDashboard = () => {
   });
   const [savingSettings, setSavingSettings] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [bookingSearchTerm, setBookingSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
 
@@ -828,6 +829,41 @@ SA Consultant & Staffing Team`
     (u.name || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
     u.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const filteredAppointments = appointments.filter(a => {
+    const search = bookingSearchTerm.toLowerCase().trim();
+    if (!search) return true;
+    
+    // Check contact info
+    const nameMatch = (a.client_name || '').toLowerCase().includes(search);
+    const emailMatch = (a.client_email || '').toLowerCase().includes(search);
+    const phoneMatch = (a.client_phone || '').toLowerCase().includes(search);
+    
+    // Check status
+    const statusMatch = (a.status || '').toLowerCase().includes(search);
+    
+    // Check slots
+    const slot1Match = (a.slot_1 || '').toLowerCase().includes(search);
+    const slot2Match = (a.slot_2 || '').toLowerCase().includes(search);
+    const slot3Match = (a.slot_3 || '').toLowerCase().includes(search);
+    const selectedSlotMatch = (a.selected_slot || '').toLowerCase().includes(search);
+    
+    // Check booking date (created_at)
+    const createdAtDate = new Date(a.created_at);
+    const dateFormatted = createdAtDate.toLocaleDateString().toLowerCase();
+    const dateString = createdAtDate.toDateString().toLowerCase();
+    
+    // Extra verbose date formats
+    const longDate = createdAtDate.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' }).toLowerCase();
+    const shortMonth = createdAtDate.toLocaleDateString(undefined, { month: 'short' }).toLowerCase();
+    
+    const dateMatch = dateFormatted.includes(search) || 
+                      dateString.includes(search) || 
+                      longDate.includes(search) || 
+                      shortMonth.includes(search);
+    
+    return nameMatch || emailMatch || phoneMatch || statusMatch || slot1Match || slot2Match || slot3Match || selectedSlotMatch || dateMatch;
+  });
 
   const pendingCount = reviews.filter((r: any) => r.status === 'pending').length;
 
@@ -1784,10 +1820,10 @@ SA Consultant & Staffing Team`
                 <div className="relative w-full sm:w-64">
                    <Search size={16} className="absolute left-3 top-3 text-muted-foreground" />
                    <Input 
-                      placeholder="Search bookings..." 
+                      placeholder="Search bookings by name, date, slot, status..." 
                       className="pl-10 h-9"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
+                      value={bookingSearchTerm}
+                      onChange={(e) => setBookingSearchTerm(e.target.value)}
                    />
                 </div>
               </CardHeader>
@@ -1811,12 +1847,14 @@ SA Consultant & Staffing Team`
                             No appointment bookings requested yet.
                           </TableCell>
                         </TableRow>
+                      ) : filteredAppointments.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                            No matching bookings found for "{bookingSearchTerm}".
+                          </TableCell>
+                        </TableRow>
                       ) : (
-                        appointments.filter(a => 
-                          (a.client_name || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          (a.client_email || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          (a.client_phone || '').toLowerCase().includes(searchTerm.toLowerCase())
-                        ).map((app) => (
+                        filteredAppointments.map((app) => (
                           <TableRow key={app.id}>
                             <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                               {new Date(app.created_at).toLocaleDateString()}
@@ -1918,12 +1956,10 @@ SA Consultant & Staffing Team`
                 <div className="md:hidden space-y-4">
                   {appointments.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">No appointment bookings requested yet.</div>
+                  ) : filteredAppointments.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">No matching bookings found for "{bookingSearchTerm}".</div>
                   ) : (
-                    appointments.filter(a => 
-                      (a.client_name || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
-                      (a.client_email || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
-                      (a.client_phone || '').toLowerCase().includes(searchTerm.toLowerCase())
-                    ).map((app) => (
+                    filteredAppointments.map((app) => (
                       <div key={app.id} className="glass rounded-xl p-5 border border-primary/10 space-y-4">
                         <div className="flex justify-between items-start">
                           <div>
