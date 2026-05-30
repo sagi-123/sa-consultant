@@ -58,6 +58,8 @@ export const getAdminBookingEmailHtml = (
   clientName: string,
   clientEmail: string,
   clientPhone: string,
+  clientService: string,
+  clientMessage: string,
   slots: { date: Date; time: string }[]
 ) => {
   const formattedSlots = slots.map((slot, index) => `
@@ -83,7 +85,7 @@ export const getAdminBookingEmailHtml = (
       <h3 style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: #4f46e5; margin: 0 0 16px 0; letter-spacing: 0.05em;">Client Details</h3>
       <table style="width: 100%; border-collapse: collapse;">
         <tr>
-          <td style="padding: 6px 0; font-size: 14px; color: #64748b; width: 80px;">Name</td>
+          <td style="padding: 6px 0; font-size: 14px; color: #64748b; width: 100px;">Name</td>
           <td style="padding: 6px 0; font-size: 14px; font-weight: 600; color: #0f172a;">${clientName}</td>
         </tr>
         <tr>
@@ -93,6 +95,14 @@ export const getAdminBookingEmailHtml = (
         <tr>
           <td style="padding: 6px 0; font-size: 14px; color: #64748b;">Phone</td>
           <td style="padding: 6px 0; font-size: 14px; font-weight: 600; color: #0f172a;"><a href="tel:${clientPhone}" style="color: #4f46e5; text-decoration: none;">${clientPhone}</a></td>
+        </tr>
+        <tr>
+          <td style="padding: 6px 0; font-size: 14px; color: #64748b;">Service</td>
+          <td style="padding: 6px 0; font-size: 14px; font-weight: 600; color: #0f172a;">${clientService || 'Not specified'}</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px 0; font-size: 14px; color: #64748b; vertical-align: top;">Message</td>
+          <td style="padding: 6px 0; font-size: 14px; font-weight: 600; color: #0f172a;">${clientMessage ? clientMessage.replace(/\n/g, '<br>') : 'None'}</td>
         </tr>
       </table>
     </div>
@@ -132,7 +142,7 @@ export const getClientBookingEmailHtml = (
     </div>
 
     <div style="background-color: #ecfeff; border: 1px solid #c5f2f7; border-radius: 20px; padding: 20px; text-align: center; margin-bottom: 32px;">
-      <p style="font-size: 14px; font-weight: 550; color: #0891b2; margin: 0;">🤝 We have successfully registered your preferred meeting slots. A consultant will review your request and connect with you shortly to finalize your appointment.</p>
+      <p style="font-size: 14px; font-weight: 550; color: #0891b2; margin: 0;">🤝 We have successfully registered your preferred meeting slots. An SA Consultant and Staffing member will contact you through email to finalize your appointment.</p>
     </div>
 
     <!-- Selected Slots -->

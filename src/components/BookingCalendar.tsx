@@ -5,7 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Calendar as CalendarIcon, Clock, Trash2, User, Mail, Phone, CheckCircle2, Sparkles, Send } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Calendar as CalendarIcon, Clock, Trash2, User, Mail, Phone, CheckCircle2, Sparkles, Send, Briefcase, MessageSquare } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 
 import { getAdminBookingEmailHtml, getClientBookingEmailHtml } from '@/utils/emailTemplates';
@@ -13,7 +15,7 @@ import { getAdminBookingEmailHtml, getClientBookingEmailHtml } from '@/utils/ema
 export default function BookingCalendar() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [preferredSlots, setPreferredSlots] = useState<{ date: Date; time: string }[]>([]);
-  const [formData, setFormData] = useState({ name: '', email: '', phone: '' });
+  const [formData, setFormData] = useState({ name: '', email: '', phone: '', service: '', message: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [callMeBotKey, setCallMeBotKey] = useState('');
@@ -190,6 +192,8 @@ useEffect(() => {
             client_name: formData.name,
             client_email: formData.email,
             client_phone: formData.phone,
+            service: formData.service,
+            message: formData.message,
             slot_1: s1,
             slot_2: s2,
             slot_3: s3,
@@ -205,8 +209,7 @@ useEffect(() => {
       const plainTextFallback = `New consultation request from ${formData.name}.\nEmail: ${formData.email}\nPhone: ${formData.phone}\n\nPreferred slots:\n${preferredSlots
         .map((slot, i) => `${i + 1}. ${slot.date.toLocaleDateString()} at ${slot.time}`)
         .join('\n')}`;
-      
-      const adminHtml = getAdminBookingEmailHtml(formData.name, formData.email, formData.phone, preferredSlots);
+      const adminHtml = getAdminBookingEmailHtml(formData.name, formData.email, formData.phone, formData.service, formData.message, preferredSlots);
       const clientHtml = getClientBookingEmailHtml(formData.name, preferredSlots);
 
       // Trigger both email dispatches concurrently so they do not block each other
@@ -225,7 +228,7 @@ useEffect(() => {
           body: {
             recipients: [formData.email],
             subject: 'Booking Request Placed! - SA Consultant & Staffing',
-            text: `Hi ${formData.name}, thank you for choosing SA Consultant. Your preferred slots are registered and we will connect shortly.`,
+            text: `Hi ${formData.name}, thank you for choosing SA Consultant. Your preferred slots are registered. An SA Consultant and Staffing member will contact you through email to finalize your appointment.`,
             html: clientHtml,
           },
         })
@@ -259,7 +262,7 @@ useEffect(() => {
       }
 
       // Reset form state first, then show success card
-      setFormData({ name: '', email: '', phone: '' });
+      setFormData({ name: '', email: '', phone: '', service: '', message: '' });
       setPreferredSlots([]);
       setSelectedDate(undefined);
       setIsSuccess(true);
@@ -539,6 +542,42 @@ useEffect(() => {
                           onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                           className="pl-10 h-10 sm:h-11 bg-secondary/40 rounded-lg text-sm"
                           placeholder="+1 (123) 456-7890"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-xs font-bold text-foreground">Services Looking For</Label>
+                      <div className="relative">
+                        <Briefcase className="absolute left-3 top-3 sm:top-3.5 text-muted-foreground/60 z-10" size={16} />
+                        <Select
+                          value={formData.service}
+                          onValueChange={(value) => setFormData({ ...formData, service: value })}
+                          required
+                        >
+                          <SelectTrigger className="pl-10 h-10 sm:h-11 bg-secondary/40 rounded-lg text-sm">
+                            <SelectValue placeholder="Select a service" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Digital Marketing">Digital Marketing</SelectItem>
+                            <SelectItem value="Staffing and Recruiting">Staffing and Recruiting</SelectItem>
+                            <SelectItem value="Content Creation">Content Creation</SelectItem>
+                            <SelectItem value="Web and App Development">Web and App Development</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-xs font-bold text-foreground">Message</Label>
+                      <div className="relative">
+                        <MessageSquare className="absolute left-3 top-3 sm:top-3.5 text-muted-foreground/60 z-10" size={16} />
+                        <Textarea
+                          required
+                          value={formData.message}
+                          onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                          className="pl-10 min-h-[100px] bg-secondary/40 rounded-lg text-sm pt-3 sm:pt-3.5"
+                          placeholder="Tell us about the services you are looking for..."
                         />
                       </div>
                     </div>
