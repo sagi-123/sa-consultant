@@ -609,7 +609,15 @@ If you have any questions or need to reschedule, please reply directly to this e
 Warm regards,
 SA Consultant & Staffing Team`
     );
-    return `mailto:${app.client_email}?subject=${subject}&body=${body}`;
+    
+    // Check if the user is on a mobile device
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if (isMobile) {
+      return `mailto:${app.client_email}?subject=${subject}&body=${body}`;
+    } else {
+      // Direct Gmail compose link for desktop
+      return `https://mail.google.com/mail/?view=cm&fs=1&to=${app.client_email}&su=${subject}&body=${body}`;
+    }
   };
 
   const handleConfirmAppointmentSlot = async (id: string, slotText: string) => {
@@ -712,17 +720,19 @@ SA Consultant & Staffing Team`
   const exportInquiriesToCSV = () => {
     if (inquiries.length === 0) return;
     
+    const escapeCSV = (str: any) => `"${String(str || '').replace(/"/g, '""')}"`;
+    
     const headers = ['Date', 'Name', 'Email', 'Phone', 'Message'];
     const rows = inquiries.map(inq => [
-      new Date(inq.created_at).toLocaleString(),
-      inq.name,
-      inq.email,
-      inq.phone,
-      `"${inq.message.replace(/"/g, '""')}"`
+      escapeCSV(new Date(inq.created_at).toLocaleString()),
+      escapeCSV(inq.name),
+      escapeCSV(inq.email),
+      escapeCSV(inq.phone),
+      escapeCSV(inq.message)
     ]);
     
-    const csvContent = [
-      headers.join(','),
+    const csvContent = '\uFEFF' + [
+      headers.map(escapeCSV).join(','),
       ...rows.map(row => row.join(','))
     ].join('\n');
     
@@ -812,9 +822,17 @@ SA Consultant & Staffing Team`
   const exportWebinarRegistrants = (webinar: Webinar) => {
     const regs = webinarRegistrations.filter(r => r.webinar_id === webinar.id);
     if (regs.length === 0) { toast({ title: 'No Registrants', description: 'This webinar has no registrations yet.' }); return; }
+    
+    const escapeCSV = (str: any) => `"${String(str || '').replace(/"/g, '""')}"`;
     const headers = ['Name', 'Email', 'Phone', 'Registered At'];
-    const rows = regs.map(r => [r.name, r.email, r.phone, new Date(r.created_at).toLocaleString()]);
-    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const rows = regs.map(r => [
+      escapeCSV(r.name),
+      escapeCSV(r.email),
+      escapeCSV(r.phone),
+      escapeCSV(new Date(r.created_at).toLocaleString())
+    ]);
+    const csv = '\uFEFF' + [headers.map(escapeCSV).join(','), ...rows.map(r => r.join(','))].join('\n');
+    
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.setAttribute('href', URL.createObjectURL(blob));
@@ -1962,7 +1980,7 @@ SA Consultant & Staffing Team`
                                     className="h-8 border-green-500/30 text-green-500 hover:bg-green-500/10 gap-1 font-bold text-xs"
                                     title="Send Confirmation Email to Client"
                                   >
-                                    <a href={getEmailMailtoUrl(app)}>
+                                    <a href={getEmailMailtoUrl(app)} target="_blank" rel="noopener noreferrer">
                                       <Mail size={12} /> Notify Email
                                     </a>
                                   </Button>
@@ -2064,7 +2082,7 @@ SA Consultant & Staffing Team`
                               asChild
                               className="h-9 border-green-500/30 text-green-500 hover:bg-green-500/10 gap-1 font-bold text-xs"
                             >
-                              <a href={getEmailMailtoUrl(app)}>
+                              <a href={getEmailMailtoUrl(app)} target="_blank" rel="noopener noreferrer">
                                 <Mail size={12} /> Notify Email
                               </a>
                             </Button>
