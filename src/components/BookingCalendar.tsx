@@ -321,9 +321,9 @@ useEffect(() => {
   };
 
   return (
-    <section id="book" className="py-10 md:py-20 lg:py-28 px-4 md:px-8 relative overflow-hidden w-full bg-secondary/20">
+    <section id="book" className="py-10 md:py-20 lg:py-28 relative overflow-hidden w-full bg-secondary/20">
       <div className="absolute top-0 left-0 w-80 h-80 rounded-full bg-accent/10 blur-[120px] pointer-events-none" />
-      <div className="container mx-auto relative z-10 w-full px-4 sm:px-6">
+      <div className="container mx-auto relative z-10 w-full px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-8 sm:mb-10 lg:mb-16 scroll-reveal">
           <span className="text-primary text-sm font-semibold tracking-widest uppercase">Appointment Booking</span>
           <h2 className="fluid-h2 font-display font-black tracking-tight mt-3 mb-4 lg:mb-6">
