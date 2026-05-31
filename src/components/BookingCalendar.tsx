@@ -369,9 +369,9 @@ useEffect(() => {
                   </CardTitle>
                   <CardDescription>Meetings only available on weekdays (9:00 AM - 5:00 PM).</CardDescription>
                 </CardHeader>
-                <CardContent className="p-3 xs:p-4 sm:p-6 flex flex-col md:flex-row gap-4 sm:gap-6 justify-between flex-1 items-stretch">
+                <CardContent className="p-3 sm:p-6 flex flex-col gap-4 sm:gap-6 flex-1">
                   {/* Calendar Widget */}
-                  <div className="flex-1 flex justify-center items-start pt-2 bg-secondary/30 p-4 rounded-xl border border-border/50 overflow-hidden">
+                  <div className="w-full flex justify-center items-start bg-secondary/30 p-3 sm:p-4 rounded-xl border border-border/50 overflow-hidden">
                     <Calendar
                       mode="single"
                       selected={selectedDate}
@@ -384,12 +384,12 @@ useEffect(() => {
                   </div>
 
                   {/* Hours Selector */}
-                  <div className="md:w-60 flex flex-col mt-4 md:mt-0">
+                  <div className="w-full flex flex-col">
                     <Label className="text-sm font-bold text-foreground mb-3 flex items-center gap-1">
                       <Clock size={14} className="text-accent" /> Time Slots ({selectedDate ? selectedDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : 'Choose Date'})
                     </Label>
                     {selectedDate ? (
-                      <div className="grid grid-cols-1 gap-2 max-h-[280px] overflow-y-auto pr-1">
+                      <div className="grid grid-cols-3 sm:grid-cols-3 gap-2">
                         {timeSlots.map((time) => {
                           const isAdded = isSlotAdded(selectedDate, time);
                           return (
@@ -399,7 +399,7 @@ useEffect(() => {
                               variant="outline"
                               disabled={isAdded}
                               onClick={() => selectedDate && handleAddSlot(selectedDate, time)}
-                              className={`h-auto min-h-[40px] py-2 text-xs font-bold rounded-lg ${isAdded
+                              className={`h-auto min-h-[44px] py-2 px-1 text-xs font-bold rounded-lg text-center ${isAdded
                                   ? "bg-muted text-muted-foreground line-through opacity-40 border-muted"
                                   : "hover:bg-primary/5 hover:border-primary/50 text-foreground"
                                 }`}
@@ -410,7 +410,7 @@ useEffect(() => {
                         })}
                       </div>
                     ) : (
-                      <div className="flex flex-col items-center justify-start flex-1 pt-6 text-center text-muted-foreground border border-dashed border-border/80 rounded-xl bg-secondary/10">
+                      <div className="flex flex-col items-center justify-start flex-1 pt-6 pb-6 text-center text-muted-foreground border border-dashed border-border/80 rounded-xl bg-secondary/10">
                         <CalendarIcon size={24} className="opacity-40 mb-2" />
                         <span className="text-xs font-medium px-4">Please select a weekday on the calendar</span>
                       </div>
