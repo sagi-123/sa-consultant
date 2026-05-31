@@ -566,7 +566,7 @@ useEffect(() => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-xs font-bold text-foreground">Anti-Spam Check: What is {captchaQuestion.num1} + {captchaQuestion.num2}?</Label>
+                      <Label className="text-xs font-bold text-foreground">Captcha: What is {captchaQuestion.num1} + {captchaQuestion.num2}?</Label>
                       <Input
                         type="number"
                         required

@@ -8,13 +8,23 @@ const Contact = () => {
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', message: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [captchaQuestion, setCaptchaQuestion] = useState({ num1: 0, num2: 0 });
+  const [captchaAnswer, setCaptchaAnswer] = useState('');
   const [settings, setSettings] = useState({
     contact_email: 'mahjabeensajaruth@gmail.com',
     contact_phone: '+1 (609) 313-9192, 9384797751',
     contact_address: 'New Jersey, USA',
   });
 
+  const generateCaptcha = () => {
+    const num1 = Math.floor(Math.random() * 10) + 1;
+    const num2 = Math.floor(Math.random() * 10) + 1;
+    setCaptchaQuestion({ num1, num2 });
+    setCaptchaAnswer('');
+  };
+
   useEffect(() => {
+    generateCaptcha();
     const fetchSettings = async () => {
       const { data } = await supabase.from('settings').select('*');
       if (data) {
@@ -34,6 +44,17 @@ const Contact = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (parseInt(captchaAnswer) !== captchaQuestion.num1 + captchaQuestion.num2) {
+      toast({
+        variant: "destructive",
+        title: "Incorrect Captcha",
+        description: "Please solve the math problem correctly to prove you are human.",
+      });
+      generateCaptcha();
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -71,6 +92,7 @@ const Contact = () => {
 
       // 3. Reset form, trigger toast, and show inline success banner
       setFormData({ name: '', email: '', phone: '', message: '' });
+      generateCaptcha();
       setIsSuccess(true);
       toast({
         title: "Inquiry Submitted Successfully!",
@@ -89,10 +111,10 @@ const Contact = () => {
   };
 
   return (
-    <section id="contact" className="py-10 md:py-20 lg:py-28 px-4 md:px-8 relative overflow-hidden w-full">
+    <section id="contact" className="py-10 md:py-20 lg:py-28 relative overflow-hidden w-full">
       <div className="absolute bottom-0 right-0 w-80 h-80 rounded-full bg-primary/10 blur-[120px] pointer-events-none" />
 
-      <div className="container mx-auto relative z-10 w-full px-4 sm:px-6">
+      <div className="container mx-auto relative z-10 w-full px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-8 sm:mb-10 lg:mb-16 scroll-reveal">
           <span className="text-accent text-sm font-semibold tracking-widest uppercase">Contact</span>
           <h2 className="fluid-h2 font-display font-black tracking-tight mt-3 mb-4 lg:mb-6">
@@ -193,6 +215,22 @@ const Contact = () => {
                 placeholder="Tell us about your project..."
               />
             </div>
+
+            {/* Captcha */}
+            <div className="w-full">
+              <label className="text-sm text-foreground font-bold mb-1.5 md:mb-2 block">
+                Captcha: What is {captchaQuestion.num1} + {captchaQuestion.num2}?
+              </label>
+              <input
+                type="number"
+                required
+                value={captchaAnswer}
+                onChange={(e) => setCaptchaAnswer(e.target.value)}
+                className="w-full px-4 py-3 rounded-lg bg-secondary border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-foreground text-sm md:text-base box-border"
+                placeholder="Enter the sum"
+              />
+            </div>
+
             <button
               type="submit"
               disabled={isSubmitting}
