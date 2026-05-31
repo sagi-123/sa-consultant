@@ -371,7 +371,7 @@ useEffect(() => {
                 </CardHeader>
                 <CardContent className="p-3 sm:p-6 flex flex-col gap-4 sm:gap-6 flex-1">
                   {/* Calendar Widget */}
-                  <div className="w-full flex justify-center items-start bg-secondary/30 p-3 sm:p-4 rounded-xl border border-border/50 overflow-hidden">
+                  <div className="w-full flex justify-center items-center bg-secondary/30 p-3 sm:p-4 rounded-xl border border-border/50 overflow-hidden">
                     <Calendar
                       mode="single"
                       selected={selectedDate}
@@ -379,13 +379,13 @@ useEffect(() => {
                         setSelectedDate(date);
                       }}
                       disabled={isDateDisabled}
-                      className="rounded-md border-0"
+                      className="rounded-md border-0 mx-auto"
                     />
                   </div>
 
                   {/* Hours Selector */}
                   <div className="w-full flex flex-col">
-                    <Label className="text-sm font-bold text-foreground mb-3 flex items-center gap-1">
+                    <Label className="text-sm font-bold text-foreground mb-3 flex items-center justify-center sm:justify-start gap-1">
                       <Clock size={14} className="text-accent" /> Time Slots ({selectedDate ? selectedDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : 'Choose Date'})
                     </Label>
                     {selectedDate ? (
