@@ -18,6 +18,8 @@ export default function BookingCalendar() {
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', service: '', message: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [captchaQuestion, setCaptchaQuestion] = useState({ num1: 0, num2: 0 });
+  const [captchaAnswer, setCaptchaAnswer] = useState('');
   const [callMeBotKey, setCallMeBotKey] = useState('');
   const [whatsappNumber, setWhatsappNumber] = useState('');
   // whatsappNumber will be loaded from settings
@@ -106,6 +108,17 @@ useEffect(() => {
     fetchSettings();
   }, []);
 
+  const generateCaptcha = () => {
+    const num1 = Math.floor(Math.random() * 10) + 1;
+    const num2 = Math.floor(Math.random() * 10) + 1;
+    setCaptchaQuestion({ num1, num2 });
+    setCaptchaAnswer('');
+  };
+
+  useEffect(() => {
+    generateCaptcha();
+  }, []);
+
   const timeSlots = [
     '10:00 AM (EST)',
     '12:00 PM (EST)',
@@ -159,6 +172,16 @@ useEffect(() => {
         title: "No Slots Selected",
         description: "Please select at least one preferred slot."
       });
+      return;
+    }
+
+    if (parseInt(captchaAnswer) !== captchaQuestion.num1 + captchaQuestion.num2) {
+      toast({
+        variant: "destructive",
+        title: "Incorrect Verification",
+        description: "Please solve the math problem correctly to prove you are human."
+      });
+      generateCaptcha();
       return;
     }
 
@@ -265,6 +288,7 @@ useEffect(() => {
       setFormData({ name: '', email: '', phone: '', service: '', message: '' });
       setPreferredSlots([]);
       setSelectedDate(undefined);
+      generateCaptcha();
       setIsSuccess(true);
       toast({
         title: 'Booking Request Placed!',
@@ -298,47 +322,6 @@ useEffect(() => {
 
   return (
     <section id="book" className="py-10 md:py-20 lg:py-28 px-4 md:px-8 relative overflow-hidden w-full bg-secondary/20">
-      <style>{`
-        /* Responsive DayPicker Custom Styles */
-        .rdp-months {
-          width: 100% !important;
-          justify-content: center !important;
-        }
-        .rdp-month {
-          width: 100% !important;
-          max-width: 100% !important;
-        }
-        .rdp-table {
-          width: 100% !important;
-          max-width: 100% !important;
-        }
-        .rdp-day {
-          width: 100% !important;
-          max-width: 36px !important;
-          height: 36px !important;
-          margin: 0 auto !important;
-        }
-        .rdp-head_cell {
-          width: 100% !important;
-          max-width: 36px !important;
-          font-weight: 600 !important;
-        }
-        
-        @media (max-width: 380px) {
-          .rdp-day {
-            max-width: 30px !important;
-            height: 30px !important;
-            font-size: 11px !important;
-          }
-          .rdp-head_cell {
-            max-width: 30px !important;
-            font-size: 10px !important;
-          }
-          .rdp-caption_label {
-            font-size: 13px !important;
-          }
-        }
-      `}</style>
       <div className="absolute top-0 left-0 w-80 h-80 rounded-full bg-accent/10 blur-[120px] pointer-events-none" />
       <div className="container mx-auto relative z-10 w-full px-4 sm:px-6">
         <div className="text-center mb-8 sm:mb-10 lg:mb-16 scroll-reveal">
@@ -388,7 +371,7 @@ useEffect(() => {
                 </CardHeader>
                 <CardContent className="p-3 xs:p-4 sm:p-6 flex flex-col md:flex-row gap-4 sm:gap-6 justify-between flex-1 items-stretch">
                   {/* Calendar Widget */}
-                  <div className="flex-1 flex justify-center items-center bg-secondary/30 p-1 sm:p-2 rounded-xl border border-border/50 max-w-full overflow-hidden">
+                  <div className="flex-1 flex justify-center items-start pt-2 bg-secondary/30 p-4 rounded-xl border border-border/50 overflow-hidden">
                     <Calendar
                       mode="single"
                       selected={selectedDate}
@@ -396,7 +379,7 @@ useEffect(() => {
                         setSelectedDate(date);
                       }}
                       disabled={isDateDisabled}
-                      className="rounded-md border-0 w-full"
+                      className="rounded-md border-0"
                     />
                   </div>
 
@@ -427,7 +410,7 @@ useEffect(() => {
                         })}
                       </div>
                     ) : (
-                      <div className="flex flex-col items-center justify-center flex-1 py-8 text-center text-muted-foreground border border-dashed border-border/80 rounded-xl bg-secondary/10">
+                      <div className="flex flex-col items-center justify-start flex-1 pt-6 text-center text-muted-foreground border border-dashed border-border/80 rounded-xl bg-secondary/10">
                         <CalendarIcon size={24} className="opacity-40 mb-2" />
                         <span className="text-xs font-medium px-4">Please select a weekday on the calendar</span>
                       </div>
@@ -580,6 +563,18 @@ useEffect(() => {
                           placeholder="Tell us about the services you are looking for..."
                         />
                       </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-xs font-bold text-foreground">Anti-Spam Check: What is {captchaQuestion.num1} + {captchaQuestion.num2}?</Label>
+                      <Input
+                        type="number"
+                        required
+                        value={captchaAnswer}
+                        onChange={(e) => setCaptchaAnswer(e.target.value)}
+                        className="h-10 sm:h-11 bg-secondary/40 rounded-lg text-sm"
+                        placeholder="Enter the sum"
+                      />
                     </div>
 
                     <Button
