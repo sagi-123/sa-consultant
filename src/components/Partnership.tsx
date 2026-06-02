@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Users2, Handshake, Rocket, HeartHandshake, ArrowRight, Loader2, CheckCircle2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/use-toast';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 const programs = [
@@ -33,6 +34,8 @@ const programs = [
 
 const Partnership = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -55,8 +58,137 @@ const Partnership = () => {
     fetchWhatsapp();
   }, []);
 
+  // Automatically submit referral if returning from login auth
+  useEffect(() => {
+    const handlePendingReferral = async () => {
+      const referralPending = searchParams.get('referralPending');
+      const pendingDataStr = sessionStorage.getItem('pending_referral');
+
+      if (referralPending === 'true' && pendingDataStr) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          try {
+            const pending = JSON.parse(pendingDataStr);
+            setLoading(true);
+
+            const messageBody = `[REFERRAL PROGRAM SUBMISSION]
+
+=== REFERRER DETAILS ===
+• Name: ${pending.referrerName}
+• Email: ${pending.referrerEmail}
+• Phone: ${pending.referrerPhone}
+
+=== PURPOSE OF REFERRAL ===
+${pending.purpose}
+
+=== REFERRAL CANDIDATE (WHOM THEY REFER) ===
+• Name: ${pending.referredName}
+• Email: ${pending.referredEmail}
+• Phone: ${pending.referredPhone}`;
+
+            const { error } = await supabase
+              .from('inquiries')
+              .insert([
+                {
+                  name: pending.referrerName,
+                  email: pending.referrerEmail,
+                  phone: pending.referrerPhone,
+                  message: messageBody
+                }
+              ]);
+
+            if (error) throw error;
+
+            // Send email to both admins
+            const adminRecipients = ['sajaruthmahjabeen@gmail.com', 'sagina111@gmail.com'];
+            const emailHtml = `
+              <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#f8fafc;color:#0f172a;border-radius:16px;overflow:hidden;border:1px solid #e2e8f0">
+                <div style="background:linear-gradient(135deg,#4f46e5,#06b6d4);padding:32px;text-align:center">
+                  <h1 style="margin:0;font-size:24px;color:#fff">🤝 New Referral Submission</h1>
+                  <p style="margin:8px 0 0;color:#e0e7ff;font-size:14px">SA Consultant &amp; Staffing</p>
+                </div>
+                <div style="padding:32px">
+                  <div style="background:#fff;border-radius:12px;padding:20px;margin-bottom:16px;border:1px solid #e2e8f0">
+                    <h3 style="margin:0 0 12px;color:#4f46e5;font-size:14px;text-transform:uppercase;letter-spacing:0.05em">Referrer (Who Referred)</h3>
+                    <p style="margin:0 0 6px;font-size:14px"><strong>Name:</strong> ${pending.referrerName}</p>
+                    <p style="margin:0 0 6px;font-size:14px"><strong>Email:</strong> <a href="mailto:${pending.referrerEmail}" style="color:#4f46e5;text-decoration:none">${pending.referrerEmail}</a></p>
+                    <p style="margin:0;font-size:14px"><strong>Phone:</strong> <a href="tel:${pending.referrerPhone}" style="color:#4f46e5;text-decoration:none">${pending.referrerPhone}</a></p>
+                  </div>
+                  <div style="background:#fff;border-radius:12px;padding:20px;margin-bottom:16px;border-left:4px solid #06b6d4;border:1px solid #e2e8f0">
+                    <h3 style="margin:0 0 12px;color:#0f172a;font-size:14px;text-transform:uppercase;letter-spacing:0.05em">Referred Person (Candidate)</h3>
+                    <p style="margin:0 0 6px;font-size:14px"><strong>Name:</strong> ${pending.referredName}</p>
+                    <p style="margin:0 0 6px;font-size:14px"><strong>Email:</strong> <a href="mailto:${pending.referredEmail}" style="color:#4f46e5;text-decoration:none">${pending.referredEmail}</a></p>
+                    <p style="margin:0;font-size:14px"><strong>Phone:</strong> <a href="tel:${pending.referredPhone}" style="color:#4f46e5;text-decoration:none">${pending.referredPhone}</a></p>
+                  </div>
+                  <div style="background:#fff;border-radius:12px;padding:20px;margin-bottom:24px;border:1px solid #e2e8f0">
+                    <h3 style="margin:0 0 8px;color:#0f172a;font-size:14px;text-transform:uppercase;letter-spacing:0.05em">Purpose of Referral</h3>
+                    <p style="margin:0;font-size:14px;line-height:1.6;color:#334155">${pending.purpose}</p>
+                  </div>
+                  <p style="color:#64748b;font-size:12px;text-align:center;margin:0">This is an automated notification from SA Consultant & Staffing Website.</p>
+                </div>
+              </div>`;
+
+            supabase.functions.invoke('send-email', {
+              body: {
+                recipients: adminRecipients,
+                subject: `🤝 New Referral Submitted by ${pending.referrerName}`,
+                text: `New Referral Program Submission:\n\nReferrer:\nName: ${pending.referrerName}\nEmail: ${pending.referrerEmail}\nPhone: ${pending.referrerPhone}\n\nReferred Person:\nName: ${pending.referredName}\nEmail: ${pending.referredEmail}\nPhone: ${pending.referredPhone}\n\nPurpose:\n${pending.purpose}`,
+                html: emailHtml
+              }
+            }).catch(err => console.error('Error sending referral email:', err));
+
+            // Open Dialog and set successful state
+            setFormData(pending);
+            setIsOpen(true);
+            setIsSubmitted(true);
+
+            // Clean up session and search params
+            sessionStorage.removeItem('pending_referral');
+            searchParams.delete('referralPending');
+            setSearchParams(searchParams);
+
+            toast({
+              title: "Referral Confirmed!",
+              description: "Thank you for recommending us. Your referral is now locked in after logging in.",
+            });
+          } catch (err: any) {
+            console.error('Error auto-submitting pending referral:', err);
+            toast({
+              variant: 'destructive',
+              title: 'Auto-Submit Failed',
+              description: err.message || 'Could not finalize your referral automatically.',
+            });
+          } finally {
+            setLoading(false);
+          }
+        }
+      }
+    };
+    handlePendingReferral();
+  }, [searchParams, setSearchParams]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Enforce Login: Check auth session first
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      // Save current referral details in sessionStorage
+      sessionStorage.setItem('pending_referral', JSON.stringify(formData));
+
+      toast({
+        title: "Authentication Required",
+        description: "Redirecting you to login. Your referral will be submitted automatically right after!",
+      });
+
+      // Close referral dialog temporarily
+      setIsOpen(false);
+
+      // Redirect to Auth page
+      navigate('/auth?returnTo=' + encodeURIComponent('/?referralPending=true'));
+      return;
+    }
+
     setLoading(true);
 
     try {

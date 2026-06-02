@@ -9,10 +9,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar as CalendarIcon, Clock, Trash2, User, Mail, Phone, CheckCircle2, Sparkles, Send, Briefcase, MessageSquare } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { getAdminBookingEmailHtml, getClientBookingEmailHtml } from '@/utils/emailTemplates';
 
 export default function BookingCalendar() {
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [preferredSlots, setPreferredSlots] = useState<{ date: Date; time: string }[]>([]);
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', service: '', message: '' });
@@ -119,6 +122,124 @@ useEffect(() => {
     generateCaptcha();
   }, []);
 
+  // Automatically submit booking request if returning from login auth
+  useEffect(() => {
+    const handlePendingBooking = async () => {
+      const bookingPending = searchParams.get('bookingPending');
+      const pendingDataStr = sessionStorage.getItem('pending_booking');
+
+      if (bookingPending === 'true' && pendingDataStr) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          try {
+            const pending = JSON.parse(pendingDataStr);
+            setIsSubmitting(true);
+
+            // Reconstruct Slots
+            const parsedSlots = pending.preferredSlots.map((s: any) => ({
+              date: new Date(s.date),
+              time: s.time,
+            }));
+
+            const formatSlot = (slot: { date: Date; time: string }) => {
+              const formattedDate = slot.date.toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              });
+              return `${formattedDate} at ${slot.time}`;
+            };
+
+            const s1 = parsedSlots[0] ? formatSlot(parsedSlots[0]) : "N/A";
+            const s2 = parsedSlots[1] ? formatSlot(parsedSlots[1]) : "N/A";
+            let s3 = parsedSlots[2] ? formatSlot(parsedSlots[2]) : "N/A";
+
+            if (parsedSlots.length > 3) {
+              s3 = parsedSlots.slice(2).map(formatSlot).join(', ');
+            }
+
+            // Save to database
+            const { error } = await supabase.from('appointments').insert([
+              {
+                client_name: pending.formData.name,
+                client_email: pending.formData.email,
+                client_phone: pending.formData.phone,
+                service: pending.formData.service,
+                message: pending.formData.message,
+                slot_1: s1,
+                slot_2: s2,
+                slot_3: s3,
+                status: 'pending',
+              },
+            ]);
+
+            if (error) throw error;
+
+            // Trigger Emails
+            const adminRecipients = ['sajaruthmahjabeen@gmail.com', 'sagina111@gmail.com'];
+            const adminSubject = `New Appointment Request - ${pending.formData.name}`;
+            const plainTextFallback = `New consultation request from ${pending.formData.name}.\nEmail: ${pending.formData.email}\nPhone: ${pending.formData.phone}\n\nPreferred slots:\n${parsedSlots
+              .map((slot: any, i: number) => `${i + 1}. ${slot.date.toLocaleDateString()} at ${slot.time}`)
+              .join('\n')}`;
+
+            const adminHtml = getAdminBookingEmailHtml(
+              pending.formData.name,
+              pending.formData.email,
+              pending.formData.phone,
+              pending.formData.service,
+              pending.formData.message,
+              parsedSlots
+            );
+            const clientHtml = getClientBookingEmailHtml(pending.formData.name, parsedSlots);
+
+            const emailPromises = [
+              supabase.functions.invoke('send-email', {
+                body: {
+                  recipients: adminRecipients,
+                  subject: adminSubject,
+                  text: plainTextFallback,
+                  html: adminHtml,
+                },
+              }),
+              supabase.functions.invoke('send-email', {
+                body: {
+                  recipients: [pending.formData.email],
+                  subject: 'Booking Request Placed! - SA Consultant & Staffing',
+                  text: `Hi ${pending.formData.name}, thank you for choosing SA Consultant. Your preferred slots are registered. An SA Consultant and Staffing member will contact you through email to finalize your appointment.`,
+                  html: clientHtml,
+                },
+              }),
+            ];
+
+            await Promise.allSettled(emailPromises);
+
+            // Clean up session and search params
+            sessionStorage.removeItem('pending_booking');
+            searchParams.delete('bookingPending');
+            setSearchParams(searchParams);
+
+            setIsSuccess(true);
+            toast({
+              title: 'Booking Confirmed!',
+              description: 'Your booking has been successfully finalized after logging in.',
+            });
+          } catch (err: any) {
+            console.error('Error auto-submitting pending booking:', err);
+            toast({
+              variant: 'destructive',
+              title: 'Auto-Submit Failed',
+              description: err.message || 'Could not finalize your booking automatically.',
+            });
+          } finally {
+            setIsSubmitting(false);
+          }
+        }
+      }
+    };
+    handlePendingBooking();
+  }, [searchParams, setSearchParams]);
+
   const timeSlots = [
     '10:00 AM (EST)',
     '12:00 PM (EST)',
@@ -182,6 +303,29 @@ useEffect(() => {
         description: "Please solve the math problem correctly to prove you are human."
       });
       generateCaptcha();
+      return;
+    }
+
+    // Enforce Login: Check auth session before finalizing booking
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      // Save current booking details in sessionStorage
+      sessionStorage.setItem('pending_booking', JSON.stringify({
+        formData,
+        preferredSlots: preferredSlots.map(slot => ({
+          date: slot.date.toISOString(),
+          time: slot.time
+        })),
+        captchaAnswer
+      }));
+
+      toast({
+        title: "Authentication Required",
+        description: "Redirecting you to login. Your appointment booking will be confirmed automatically right after!",
+      });
+
+      // Redirect to Auth page
+      navigate('/auth?returnTo=' + encodeURIComponent('/?bookingPending=true'));
       return;
     }
 
