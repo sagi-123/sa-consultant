@@ -52,6 +52,54 @@ const getEmailWrapper = (content: string) => `
 `;
 
 /**
+ * Helper to generate a Google Calendar template URL for a given preferred slot.
+ * Assumes EDT timezone (UTC-4) for matching the "(EST)" label on appointments.
+ */
+const getGoogleCalendarUrl = (clientName: string, service: string, slot: { date: Date; time: string }) => {
+  const startDate = new Date(slot.date);
+  
+  // Determine hours (default 10 AM)
+  let hours = 10;
+  if (slot.time.includes('12:00 PM')) {
+    hours = 12;
+  } else if (slot.time.includes('2:00 PM')) {
+    hours = 14;
+  } else if (slot.time.includes('10:00 AM')) {
+    hours = 10;
+  }
+  
+  // Set start hour in UTC. 10:00 AM EDT is 14:00 UTC (EST is 15:00 UTC)
+  // Let's default to standard EDT adjustment of UTC-4 (i.e. add 4 hours to get UTC)
+  const utcHours = hours + 4;
+  startDate.setUTCHours(utcHours, 0, 0, 0);
+  
+  // End date is 1 hour later
+  const endDate = new Date(startDate);
+  endDate.setUTCHours(startDate.getUTCHours() + 1);
+
+  // Helper to format Date to YYYYMMDDTHHMMSSZ format required by Google Calendar
+  const formatGCalDate = (d: Date) => {
+    const pad = (num: number) => num.toString().padStart(2, '0');
+    const year = d.getUTCFullYear();
+    const month = pad(d.getUTCMonth() + 1);
+    const day = pad(d.getUTCDate());
+    const hh = pad(d.getUTCHours());
+    const mm = pad(d.getUTCMinutes());
+    const ss = pad(d.getUTCSeconds());
+    return `${year}${month}${day}T${hh}${mm}${ss}Z`;
+  };
+
+  const startStr = formatGCalDate(startDate);
+  const endStr = formatGCalDate(endDate);
+
+  const eventTitle = encodeURIComponent(`Consultation: ${clientName} - ${service || 'SA Staffing'}`);
+  const eventDates = encodeURIComponent(`${startStr}/${endStr}`);
+  const eventDetails = encodeURIComponent(`Consultation meeting with ${clientName} regarding ${service || 'requested services'}.\n\nClient Details:\n- Name: ${clientName}\n- Booked via SA Consultant & Staffing.`);
+  
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${eventTitle}&dates=${eventDates}&details=${eventDetails}`;
+};
+
+/**
  * Generates HTML for the email sent to the Administrator
  */
 export const getAdminBookingEmailHtml = (
@@ -70,6 +118,9 @@ export const getAdminBookingEmailHtml = (
           <p style="font-size: 14px; font-weight: 600; color: #0f172a; margin: 0;">${slot.date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}</p>
           <p style="font-size: 12px; color: #64748b; margin: 2px 0 0 0; display: flex; align-items: center; gap: 4px;">⏰ ${slot.time}</p>
         </div>
+      </div>
+      <div>
+        <a href="${getGoogleCalendarUrl(clientName, clientService, slot)}" target="_blank" style="display: inline-block; background-color: #4f46e5; color: #ffffff; padding: 8px 16px; font-size: 12px; font-weight: 700; text-decoration: none; border-radius: 10px; box-shadow: 0 2px 4px rgba(79, 70, 229, 0.1);">📅 Add to Calendar</a>
       </div>
     </div>
   `).join('');
