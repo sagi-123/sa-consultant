@@ -53,50 +53,41 @@ const getEmailWrapper = (content: string) => `
 
 /**
  * Helper to generate a Google Calendar template URL for a given preferred slot.
- * Assumes EDT timezone (UTC-4) for matching the "(EST)" label on appointments.
+ * Uses the America/New_York timezone to match the "(EST)" label on appointments,
+ * and extracts local date parameters to prevent timezone shift bugs.
  */
 const getGoogleCalendarUrl = (clientName: string, service: string, slot: { date: Date; time: string }) => {
-  const startDate = new Date(slot.date);
+  const d = new Date(slot.date);
+  const year = d.getFullYear();
+  const month = d.getMonth();
+  const day = d.getDate();
   
   // Determine hours (default 10 AM)
-  let hours = 10;
+  let startHour = 10;
   if (slot.time.includes('12:00 PM')) {
-    hours = 12;
+    startHour = 12;
   } else if (slot.time.includes('2:00 PM')) {
-    hours = 14;
+    startHour = 14;
   } else if (slot.time.includes('10:00 AM')) {
-    hours = 10;
+    startHour = 10;
   }
   
-  // Set start hour in UTC. 10:00 AM EDT is 14:00 UTC (EST is 15:00 UTC)
-  // Let's default to standard EDT adjustment of UTC-4 (i.e. add 4 hours to get UTC)
-  const utcHours = hours + 4;
-  startDate.setUTCHours(utcHours, 0, 0, 0);
-  
-  // End date is 1 hour later
-  const endDate = new Date(startDate);
-  endDate.setUTCHours(startDate.getUTCHours() + 1);
+  const endHour = startHour + 1;
 
-  // Helper to format Date to YYYYMMDDTHHMMSSZ format required by Google Calendar
-  const formatGCalDate = (d: Date) => {
+  // Helper to format Date to YYYYMMDDTHHMMSS format (no Z at the end, so we can specify ctz)
+  const formatLocalGCalDate = (yr: number, mo: number, dy: number, hr: number) => {
     const pad = (num: number) => num.toString().padStart(2, '0');
-    const year = d.getUTCFullYear();
-    const month = pad(d.getUTCMonth() + 1);
-    const day = pad(d.getUTCDate());
-    const hh = pad(d.getUTCHours());
-    const mm = pad(d.getUTCMinutes());
-    const ss = pad(d.getUTCSeconds());
-    return `${year}${month}${day}T${hh}${mm}${ss}Z`;
+    return `${yr}${pad(mo + 1)}${pad(dy)}T${pad(hr)}0000`;
   };
 
-  const startStr = formatGCalDate(startDate);
-  const endStr = formatGCalDate(endDate);
+  const startStr = formatLocalGCalDate(year, month, day, startHour);
+  const endStr = formatLocalGCalDate(year, month, day, endHour);
 
   const eventTitle = encodeURIComponent(`Consultation: ${clientName} - ${service || 'SA Staffing'}`);
   const eventDates = encodeURIComponent(`${startStr}/${endStr}`);
   const eventDetails = encodeURIComponent(`Consultation meeting with ${clientName} regarding ${service || 'requested services'}.\n\nClient Details:\n- Name: ${clientName}\n- Booked via SA Consultant & Staffing.`);
   
-  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${eventTitle}&dates=${eventDates}&details=${eventDetails}`;
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${eventTitle}&dates=${eventDates}&ctz=America/New_York&details=${eventDetails}`;
 };
 
 /**
@@ -111,15 +102,15 @@ export const getAdminBookingEmailHtml = (
   slots: { date: Date; time: string }[]
 ) => {
   const formattedSlots = slots.map((slot, index) => `
-    <div style="display: flex; align-items: center; justify-content: space-between; background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 14px 20px; border-radius: 16px; margin-bottom: 12px;" class="slot-card">
-      <div style="display: flex; align-items: center; gap: 12px;">
+    <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 16px 20px; border-radius: 16px; margin-bottom: 12px;" class="slot-card">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
         <span style="background-color: #e0e7ff; color: #4f46e5; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0;">${index + 1}</span>
         <div>
           <p style="font-size: 14px; font-weight: 600; color: #0f172a; margin: 0;">${slot.date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}</p>
           <p style="font-size: 12px; color: #64748b; margin: 2px 0 0 0; display: flex; align-items: center; gap: 4px;">⏰ ${slot.time}</p>
         </div>
       </div>
-      <div>
+      <div style="margin-left: 40px;">
         <a href="${getGoogleCalendarUrl(clientName, clientService, slot)}" target="_blank" style="display: inline-block; background-color: #4f46e5; color: #ffffff; padding: 8px 16px; font-size: 12px; font-weight: 700; text-decoration: none; border-radius: 10px; box-shadow: 0 2px 4px rgba(79, 70, 229, 0.1);">📅 Add to Calendar</a>
       </div>
     </div>
