@@ -14,7 +14,7 @@ Below is the complete security pipeline designed for your platform:
 
 ---
 
-## 🗣️ The 3 Security Shields
+## 🗣️ The 4 Security Shields
 
 ### 🧩 Shield 1: Math CAPTCHA (The Guard at the Gate)
 *   **Purpose:** Blocks automated spam bots from flooding your calendar with hundreds of fake bookings.
@@ -29,3 +29,9 @@ Below is the complete security pipeline designed for your platform:
 *   **How it works:** 
     *   **AES-256 at Rest:** Data is permanently encrypted on physical database drives.
     *   **Row-Level Security (RLS):** Database policies strictly prevent outside actors from querying, editing, or viewing any other client's booking history. Only authorized admins can see the schedule.
+
+### 🔑 Shield 4: Secure Login Gate & Fraud-Proof Referral Program (Client Verification)
+*   **Purpose:** Shuts out anonymous spam bots entirely and protects your referral rewards from malicious fraud.
+*   **How it works:** 
+    *   **Mandatory Authentication:** Before a user can finalize an appointment booking or access the referral program, the system securely redirects them to log in. This acts as a digital checkpoint—ensuring only registered, authenticated clients can interact with the calendar.
+    *   **Fraud Prevention:** By linking bookings and referral actions to real, verified logged-in user profiles, we eliminate the risk of users claiming fraudulent rewards using fake names or temporary email accounts.
