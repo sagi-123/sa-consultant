@@ -144,8 +144,16 @@ useEffect(() => {
             setFormData(pending.formData);
             setPreferredSlots(parsedSlots);
 
+            // Scroll to the booking section so the user sees their pre-filled form
+            setTimeout(() => {
+              const bookingSection = document.getElementById('book');
+              if (bookingSection) {
+                bookingSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }
+            }, 100);
+
             // Give React a tick to render, then auto-submit
-            await new Promise(resolve => setTimeout(resolve, 300));
+            await new Promise(resolve => setTimeout(resolve, 500));
 
             setIsSubmitting(true);
 
@@ -336,8 +344,8 @@ useEffect(() => {
         description: "Redirecting you to login. Your appointment booking will be confirmed automatically right after!",
       });
 
-      // Redirect to Auth page
-      navigate('/auth?returnTo=' + encodeURIComponent('/?bookingPending=true'));
+      // Redirect to Auth page — return directly to the booking section
+      navigate('/auth?returnTo=' + encodeURIComponent('/?bookingPending=true#book'));
       return;
     }
 
