@@ -7,121 +7,201 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 import { Mail, Lock, User, ArrowLeft, KeyRound, CheckCircle2, Eye, EyeOff,
   Megaphone, Users, Pencil, Code2, Briefcase, HeartHandshake,
-  TrendingUp, Search, BarChart3, Globe, FileText, Award } from 'lucide-react';
+  TrendingUp, Search, BarChart3, Globe, FileText, Award,
+  Smartphone, ShoppingCart, Palette, Plug, Zap, Cloud, Headphones, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
 // ─── Service cards data for mosaic background ───────────────────────────────
 const SERVICE_CARDS = [
-  { icon: Megaphone,      label: 'Digital Marketing',      sub: 'SEO · PPC · Social Ads',          gradient: 'linear-gradient(135deg, #ff5757 0%, #ff8c3a 100%)', glow: 'rgba(255, 87, 87, 0.4)' },
-  { icon: Users,          label: 'Staffing & Recruiting',  sub: 'Top talent, fast placements',      gradient: 'linear-gradient(135deg, #536ef6 0%, #8c52ff 100%)', glow: 'rgba(140, 82, 255, 0.4)' },
-  { icon: Pencil,         label: 'Content Creation',       sub: 'Blogs · Videos · Copywriting',     gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', glow: 'rgba(16, 185, 129, 0.4)' },
-  { icon: Code2,          label: 'Web & App Dev',          sub: 'React · Node · Mobile',            gradient: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)', glow: 'rgba(37, 99, 235, 0.4)' },
-  { icon: Briefcase,      label: 'Business Consulting',    sub: 'Strategy · Growth · Advisory',     gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', glow: 'rgba(245, 158, 11, 0.4)' },
-  { icon: HeartHandshake, label: 'HR Solutions',           sub: 'Payroll · Compliance · Culture',   gradient: 'linear-gradient(135deg, #ec4899 0%, #be185d 100%)', glow: 'rgba(236, 72, 153, 0.4)' },
-  { icon: TrendingUp,     label: 'Brand Strategy',         sub: 'Identity · Positioning · Voice',   gradient: 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)', glow: 'rgba(6, 182, 212, 0.4)' },
-  { icon: Search,         label: 'Executive Search',       sub: 'C-Suite · Directors · VPs',        gradient: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)', glow: 'rgba(139, 92, 246, 0.4)' },
-  { icon: BarChart3,      label: 'Social Media Mgmt',      sub: 'Instagram · LinkedIn · X',         gradient: 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)', glow: 'rgba(244, 63, 94, 0.4)' },
-  { icon: Globe,          label: 'IT Staffing',            sub: 'Developers · QA · DevOps',         gradient: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)', glow: 'rgba(59, 130, 246, 0.4)' },
-  { icon: FileText,       label: 'Resume & Career',        sub: 'CV Writing · Interview Prep',      gradient: 'linear-gradient(135deg, #84cc16 0%, #65a30d 100%)', glow: 'rgba(132, 204, 22, 0.4)' },
-  { icon: Award,          label: 'Training & Development', sub: 'Workshops · Certifications',       gradient: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)', glow: 'rgba(249, 115, 22, 0.4)' },
+  { 
+    icon: Globe,      
+    label: 'Website Development',      
+    sub: 'Beautiful, responsive websites built for performance and modern user experience.',          
+    image: '/images/auth/web_dev.png', 
+    accent: '#ef4444' 
+  },
+  { 
+    icon: Smartphone, 
+    label: 'Mobile App Development',  
+    sub: 'Custom mobile apps for iOS and Android that engage users and grow your business.',      
+    image: '/images/auth/mobile_dev.png', 
+    accent: '#ec4899' 
+  },
+  { 
+    icon: ShoppingCart, 
+    label: 'E-commerce Solutions',   
+    sub: 'Secure and scalable online stores with seamless payment integration.',     
+    image: '/images/auth/ecommerce.png', 
+    accent: '#10b981' 
+  },
+  { 
+    icon: Palette,    
+    label: 'UI/UX Design',           
+    sub: 'User-centered design that is intuitive, engaging and focused on your users.',   
+    image: '/images/auth/ui_ux.png', 
+    accent: '#8b5cf6' 
+  },
+  { 
+    icon: Code2,      
+    label: 'Web Application Dev',    
+    sub: 'Powerful web applications built with modern frameworks and clean architecture.',     
+    image: '/images/auth/web_app.png', 
+    accent: '#3b82f6' 
+  },
+  { 
+    icon: FileText,   
+    label: 'CMS Development',        
+    sub: 'Easy to manage CMS websites using WordPress, Strapi and custom solutions.',   
+    image: '/images/auth/web_dev.png', 
+    accent: '#2563eb' 
+  },
+  { 
+    icon: Zap,        
+    label: 'API Development',        
+    sub: 'Robust APIs and third-party integrations to extend your platform capabilities.',        
+    image: '/images/auth/ui_ux.png', 
+    accent: '#10b981' 
+  },
+  { 
+    icon: Cloud,      
+    label: 'Cloud & DevOps',         
+    sub: 'Scalable cloud solutions with CI/CD, automation and infrastructure management.',       
+    image: '/images/auth/cloud_devops.png', 
+    accent: '#3b82f6' 
+  },
+  { 
+    icon: Headphones, 
+    label: 'Maintenance & Support',  
+    sub: 'Ongoing support and maintenance to keep your website or app running fast.',       
+    image: '/images/auth/ecommerce.png', 
+    accent: '#84cc16' 
+  },
+  { 
+    icon: TrendingUp, 
+    label: 'SEO & Performance',      
+    sub: 'Improve your visibility, speed and performance for better rankings and conversions.',       
+    image: '/images/auth/mobile_dev.png', 
+    accent: '#f97316' 
+  },
 ];
 
 // Duplicate for seamless infinite scroll
 const COL_CARDS = [...SERVICE_CARDS, ...SERVICE_CARDS];
 
-function ServiceCard({ icon: Icon, label, sub, gradient, glow }: typeof SERVICE_CARDS[0]) {
+function ServiceCard({ icon: Icon, label, sub, image, accent }: typeof SERVICE_CARDS[0]) {
   return (
     <div style={{
-      background: gradient,
+      width: '100%',
+      background: '#ffffff',
       borderRadius: '24px',
-      padding: '18px',
-      minHeight: '210px',
+      overflow: 'hidden',
+      boxShadow: '0 10px 30px rgba(0,0,0,0.18)',
       display: 'flex',
       flexDirection: 'column',
-      justifyContent: 'space-between',
       flexShrink: 0,
-      boxShadow: `0 12px 32px -4px ${glow || 'rgba(0,0,0,0.2)'}, inset 0 1px 1px rgba(255,255,255,0.3)`,
+      border: '1px solid rgba(0, 0, 0, 0.05)',
       position: 'relative',
-      overflow: 'hidden',
-      border: '1.5px solid rgba(255,255,255,0.2)',
     }}>
-      {/* Decorative large glass circle top-right */}
+      {/* Top half: Illustration Image */}
       <div style={{
-        position: 'absolute', top: '-40px', right: '-40px',
-        width: '140px', height: '140px', borderRadius: '50%',
-        background: 'rgba(255,255,255,0.15)',
-        filter: 'blur(8px)',
-      }} />
-
-      {/* Decorative inner corner glow bottom-left */}
-      <div style={{
-        position: 'absolute', bottom: '-20px', left: '-20px',
-        width: '90px', height: '90px', borderRadius: '50%',
-        background: 'rgba(255,255,255,0.1)',
-        filter: 'blur(12px)',
-      }} />
-
-      {/* Top: Icon Badge */}
-      <div style={{
-        width: '50px', height: '50px', borderRadius: '16px',
-        background: 'rgba(255,255,255,0.25)',
-        display: 'flex', alignItems: 'center', justifycontent: 'center',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backdropFilter: 'blur(4px)',
-        border: '1px solid rgba(255,255,255,0.3)',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+        width: '100%',
+        height: '135px',
+        overflow: 'hidden',
+        position: 'relative',
       }}>
-        <Icon size={26} style={{ color: '#fff' }} />
+        <img 
+          src={image} 
+          alt={label}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            display: 'block',
+          }}
+        />
       </div>
 
-      {/* Bottom: Modern Glass Text Box for Absolute Readability */}
+      {/* Intersecting Badge for Icon */}
       <div style={{
-        background: 'rgba(15, 23, 42, 0.45)',
-        backdropFilter: 'blur(10px)',
-        WebkitBackdropFilter: 'blur(10px)',
-        borderRadius: '16px',
-        padding: '12px 14px',
-        border: '1px solid rgba(255,255,255,0.15)',
-        width: '100%',
-        boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+        position: 'absolute',
+        top: '115px',
+        left: '20px',
+        width: '40px',
+        height: '40px',
+        borderRadius: '50%',
+        background: '#ffffff',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
+        zIndex: 2,
+        border: `2px solid ${accent}`,
       }}>
-        {/* Sub tag pill */}
+        <Icon size={18} style={{ color: accent }} />
+      </div>
+
+      {/* Text Section */}
+      <div style={{
+        padding: '26px 20px 20px',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        flex: 1,
+        minHeight: '155px',
+        background: '#ffffff',
+      }}>
+        <div>
+          <h3 style={{
+            fontSize: '17px',
+            fontWeight: 800,
+            color: '#0f172a',
+            margin: '0 0 6px',
+            fontFamily: 'Inter, sans-serif',
+            lineHeight: 1.35,
+            letterSpacing: '-0.02em',
+          }}>{label}</h3>
+          
+          <p style={{
+            fontSize: '12px',
+            color: '#64748b',
+            margin: 0,
+            lineHeight: 1.45,
+            fontWeight: 400,
+            fontFamily: 'Inter, sans-serif',
+          }}>{sub}</p>
+        </div>
+
+        {/* Accent Arrow Circle Button */}
         <div style={{
-          display: 'inline-block',
-          background: 'rgba(255,255,255,0.15)',
-          borderRadius: '8px',
-          padding: '2px 8px',
-          fontSize: '9.5px',
-          fontWeight: 800,
-          color: '#ffffff',
-          letterSpacing: '0.05em',
-          textTransform: 'uppercase',
-          marginBottom: '6px',
-          border: '1px solid rgba(255,255,255,0.2)',
-        }}>{sub}</div>
-        
-        {/* Label */}
-        <p style={{
-          color: '#ffffff',
-          fontWeight: 900,
-          fontSize: '15.5px',
-          lineHeight: 1.25,
-          margin: 0,
-          letterSpacing: '-0.02em',
-          textShadow: '0 1px 3px rgba(0,0,0,0.5)',
-        }}>{label}</p>
+          display: 'flex',
+          justifyContent: 'flex-end',
+          marginTop: '10px',
+        }}>
+          <div style={{
+            width: '32px',
+            height: '32px',
+            borderRadius: '50%',
+            background: `${accent}18`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: accent,
+            cursor: 'pointer',
+          }}>
+            <ArrowRight size={16} />
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
 function ScrollColumn({ cards, direction }: { cards: typeof COL_CARDS; direction: 'up' | 'down' }) {
-  const duration = direction === 'up' ? 30 : 38;
+  const duration = direction === 'up' ? 32 : 40;
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', overflow: 'hidden', flex: 1 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', overflow: 'hidden', flex: 1 }}>
       <div style={{
-        display: 'flex', flexDirection: 'column', gap: '16px',
+        display: 'flex', flexDirection: 'column', gap: '18px',
         animation: `scroll-${direction} ${duration}s linear infinite`,
       }}>
         {cards.map((c, i) => <ServiceCard key={i} {...c} />)}
@@ -301,6 +381,21 @@ const Auth = () => {
           color: #1d4ed8;
           border-bottom-color: #1d4ed8;
         }
+        @media (max-width: 1024px) {
+          .bg-col-4 {
+            display: none !important;
+          }
+        }
+        @media (max-width: 800px) {
+          .bg-col-3 {
+            display: none !important;
+          }
+        }
+        @media (max-width: 500px) {
+          .bg-col-2 {
+            display: none !important;
+          }
+        }
       `}</style>
 
       <div style={{ position: 'relative', width: '100vw', height: '100vh', overflow: 'hidden', fontFamily: 'Inter, sans-serif' }}>
@@ -308,20 +403,29 @@ const Auth = () => {
         {/* ── Mosaic Background ──────────────────────────────────────── */}
         <div style={{
           position: 'absolute', inset: 0,
-          display: 'flex', gap: '14px', padding: '14px',
+          display: 'flex', gap: '18px', padding: '18px',
           overflow: 'hidden',
+          background: '#f8fafc',
         }}>
-          <ScrollColumn cards={col1} direction="up" />
-          <ScrollColumn cards={col2} direction="down" />
-          <ScrollColumn cards={col3} direction="up" />
-          <ScrollColumn cards={col4} direction="down" />
+          <div className="bg-col-1" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <ScrollColumn cards={col1} direction="up" />
+          </div>
+          <div className="bg-col-2" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <ScrollColumn cards={col2} direction="down" />
+          </div>
+          <div className="bg-col-3" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <ScrollColumn cards={col3} direction="up" />
+          </div>
+          <div className="bg-col-4" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <ScrollColumn cards={col4} direction="down" />
+          </div>
         </div>
 
         {/* ── Dark overlay ──────────────────────────────────────────── */}
         <div style={{
           position: 'absolute', inset: 0,
-          background: 'radial-gradient(circle, rgba(10, 20, 50, 0.2) 0%, rgba(10, 20, 50, 0.65) 100%)',
-          backdropFilter: 'blur(1px)',
+          background: 'radial-gradient(circle, rgba(15, 23, 42, 0.4) 0%, rgba(15, 23, 42, 0.75) 100%)',
+          backdropFilter: 'blur(2px)',
         }} />
 
         {/* ── Back Button ───────────────────────────────────────────── */}
