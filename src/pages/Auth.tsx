@@ -116,7 +116,8 @@ const Auth = () => {
         title: "Welcome back!",
         description: "You have successfully logged in.",
       });
-      navigate('/');
+      // Do NOT navigate here — the useEffect below handles redirection
+      // so that returnTo (e.g. '/?bookingPending=true') is respected.
     } catch (error: any) {
       toast({
         variant: "destructive",

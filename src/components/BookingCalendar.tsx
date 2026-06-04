@@ -122,7 +122,7 @@ useEffect(() => {
     generateCaptcha();
   }, []);
 
-  // Automatically submit booking request if returning from login auth
+  // Restore form data and auto-submit booking request if returning from login
   useEffect(() => {
     const handlePendingBooking = async () => {
       const bookingPending = searchParams.get('bookingPending');
@@ -133,13 +133,21 @@ useEffect(() => {
         if (session) {
           try {
             const pending = JSON.parse(pendingDataStr);
-            setIsSubmitting(true);
 
             // Reconstruct Slots
             const parsedSlots = pending.preferredSlots.map((s: any) => ({
               date: new Date(s.date),
               time: s.time,
             }));
+
+            // --- Restore form fields so the user sees their data ---
+            setFormData(pending.formData);
+            setPreferredSlots(parsedSlots);
+
+            // Give React a tick to render, then auto-submit
+            await new Promise(resolve => setTimeout(resolve, 300));
+
+            setIsSubmitting(true);
 
             const formatSlot = (slot: { date: Date; time: string }) => {
               const formattedDate = slot.date.toLocaleDateString('en-US', {
@@ -226,10 +234,14 @@ useEffect(() => {
             });
           } catch (err: any) {
             console.error('Error auto-submitting pending booking:', err);
+            // On error: keep the form pre-filled so the user can try manually
+            sessionStorage.removeItem('pending_booking');
+            searchParams.delete('bookingPending');
+            setSearchParams(searchParams);
             toast({
               variant: 'destructive',
-              title: 'Auto-Submit Failed',
-              description: err.message || 'Could not finalize your booking automatically.',
+              title: 'Booking Submission Failed',
+              description: err.message || 'Your details have been kept — please try submitting again.',
             });
           } finally {
             setIsSubmitting(false);
