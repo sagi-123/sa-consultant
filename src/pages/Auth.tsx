@@ -424,8 +424,7 @@ const Auth = () => {
         {/* ── Dark overlay ──────────────────────────────────────────── */}
         <div style={{
           position: 'absolute', inset: 0,
-          background: 'radial-gradient(circle, rgba(15, 23, 42, 0.4) 0%, rgba(15, 23, 42, 0.75) 100%)',
-          backdropFilter: 'blur(2px)',
+          background: 'radial-gradient(circle, rgba(15, 23, 42, 0.1) 0%, rgba(15, 23, 42, 0.4) 100%)',
         }} />
 
         {/* ── Back Button ───────────────────────────────────────────── */}
