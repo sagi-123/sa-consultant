@@ -679,7 +679,7 @@ const CandidatePortal = () => {
           <Card className="glass border-primary/20">
             <CardHeader>
               <CardTitle className="text-2xl font-display flex items-center gap-2">
-                <UserCircle2 size={20} className="text-primary" /> Partner & Vendor Submissions
+                <UserCircle2 size={20} className="text-primary" /> Supplier Submissions
               </CardTitle>
               <CardDescription>Submit a candidate resume directly to the admin team.</CardDescription>
             </CardHeader>
