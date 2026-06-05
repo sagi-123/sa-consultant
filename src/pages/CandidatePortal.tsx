@@ -685,14 +685,14 @@ const CandidatePortal = () => {
             </CardHeader>
             <CardContent className="pt-4">
               <div className="mb-4">
-                <h3 className="text-xl font-bold">Vendor Details</h3>
+                <h3 className="text-xl font-bold">Supplier Details</h3>
               </div>
               <form onSubmit={handleVendorSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Input placeholder="Company Name" name="companyName" value={vendorForm.companyName} onChange={e => setVendorForm({ ...vendorForm, companyName: e.target.value })} required />
-                  <Input placeholder="Vendor Name" name="vendorName" value={vendorForm.vendorName} onChange={e => setVendorForm({ ...vendorForm, vendorName: e.target.value })} required />
-                  <Input type="email" placeholder="Vendor Email" name="vendorEmail" value={vendorForm.vendorEmail} onChange={e => setVendorForm({ ...vendorForm, vendorEmail: e.target.value })} required />
-                  <Input placeholder="Vendor Phone" name="vendorPhone" value={vendorForm.vendorPhone} onChange={e => setVendorForm({ ...vendorForm, vendorPhone: e.target.value })} required />
+                  <Input placeholder="Supplier Name" name="vendorName" value={vendorForm.vendorName} onChange={e => setVendorForm({ ...vendorForm, vendorName: e.target.value })} required />
+                  <Input type="email" placeholder="Supplier Email" name="vendorEmail" value={vendorForm.vendorEmail} onChange={e => setVendorForm({ ...vendorForm, vendorEmail: e.target.value })} required />
+                  <Input placeholder="Supplier Phone" name="vendorPhone" value={vendorForm.vendorPhone} onChange={e => setVendorForm({ ...vendorForm, vendorPhone: e.target.value })} required />
                   <Input placeholder="Candidate Name" name="candidateName" value={vendorForm.candidateName} onChange={e => setVendorForm({ ...vendorForm, candidateName: e.target.value })} required />
                   <Input type="email" placeholder="Candidate Email" name="candidateEmail" value={vendorForm.candidateEmail} onChange={e => setVendorForm({ ...vendorForm, candidateEmail: e.target.value })} required />
                   <Input placeholder="Phone Number" name="candidatePhone" value={vendorForm.candidatePhone} onChange={e => setVendorForm({ ...vendorForm, candidatePhone: e.target.value })} required />
