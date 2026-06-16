@@ -54,7 +54,7 @@ type Review = Database['public']['Tables']['reviews']['Row'];
 type Project = Database['public']['Tables']['projects']['Row'];
 type Inquiry = Database['public']['Tables']['inquiries']['Row'];
 type Candidate = Database['public']['Tables']['candidates']['Row'];
-type Appointment = Database['public']['Tables']['appointments']['Row'];
+type Appointment = Database['public']['Tables']['sa_appointments']['Row'];
 
 type Webinar = {
   id: string;
@@ -166,7 +166,7 @@ const AdminDashboard = () => {
         supabase.from('projects').select('*').order('created_at', { ascending: false }),
         supabase.from('inquiries').select('*').order('created_at', { ascending: false }),
         supabase.from('candidates').select('*').order('created_at', { ascending: false }),
-        supabase.from('appointments').select('*').order('created_at', { ascending: false }),
+        supabase.from('sa_appointments').select('*').order('created_at', { ascending: false }),
         supabase.from('job_openings').select('*').order('created_at', { ascending: false }),
         supabase.from('webinars').select('*').order('date', { ascending: true }),
         supabase.from('webinar_registrations').select('*').order('created_at', { ascending: false }),
@@ -623,7 +623,7 @@ SA Consultant & Staffing Team`
   const handleConfirmAppointmentSlot = async (id: string, slotText: string) => {
     try {
       const { error } = await supabase
-        .from('appointments')
+        .from('sa_appointments')
         .update({ status: 'confirmed', selected_slot: slotText } as any)
         .eq('id', id);
 
@@ -646,7 +646,7 @@ SA Consultant & Staffing Team`
   const handleCancelAppointment = async (id: string) => {
     try {
       const { error } = await supabase
-        .from('appointments')
+        .from('sa_appointments')
         .update({ status: 'cancelled', selected_slot: null } as any)
         .eq('id', id);
 
@@ -670,7 +670,7 @@ SA Consultant & Staffing Team`
     if (!confirm('Are you sure you want to delete this appointment booking permanently?')) return;
     try {
       const { error } = await supabase
-        .from('appointments')
+        .from('sa_appointments')
         .delete()
         .eq('id', id);
 

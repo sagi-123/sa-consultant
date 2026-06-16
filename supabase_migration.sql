@@ -1,15 +1,20 @@
 -- ==========================================================
--- SQL MIGRATION FOR APPOINTMENT BOOKING TABLE
+-- SQL MIGRATION FOR APPOINTMENT BOOKING TABLE (SA ELEVATE)
 -- Copy and paste this script into the Supabase SQL Editor:
 -- https://supabase.com/dashboard/project/hqonpbkoutnkffjtshxw/sql/new
 -- ==========================================================
 
--- 1. Create the appointments table
-CREATE TABLE IF NOT EXISTS public.appointments (
+-- Drop the table if it exists (recreates it clean with new columns)
+DROP TABLE IF EXISTS public.sa_appointments CASCADE;
+
+-- 1. Create the sa_appointments table
+CREATE TABLE public.sa_appointments (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   client_name TEXT NOT NULL,
   client_email TEXT NOT NULL,
   client_phone TEXT NOT NULL,
+  service TEXT,
+  message TEXT,
   slot_1 TEXT NOT NULL,
   slot_2 TEXT NOT NULL,
   slot_3 TEXT NOT NULL,
@@ -19,14 +24,14 @@ CREATE TABLE IF NOT EXISTS public.appointments (
 );
 
 -- 2. Enable Row Level Security (RLS)
-ALTER TABLE public.appointments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.sa_appointments ENABLE ROW LEVEL SECURITY;
 
 -- 3. Policy: Allow anyone (clients) to insert/book appointments
-CREATE POLICY "Anyone can book appointments" ON public.appointments
+CREATE POLICY "Anyone can book appointments" ON public.sa_appointments
   FOR INSERT WITH CHECK (true);
 
 -- 4. Policy: Allow admins to do everything (select, insert, update, delete)
-CREATE POLICY "Admins can manage appointments" ON public.appointments
+CREATE POLICY "Admins can manage appointments" ON public.sa_appointments
   FOR ALL USING (
     EXISTS (
       SELECT 1 FROM public.profiles
@@ -35,7 +40,7 @@ CREATE POLICY "Admins can manage appointments" ON public.appointments
   );
 
 -- 5. Grant permissions (just to ensure schema accessibility)
-GRANT ALL ON TABLE public.appointments TO postgres;
-GRANT ALL ON TABLE public.appointments TO service_role;
-GRANT ALL ON TABLE public.appointments TO authenticated;
-GRANT ALL ON TABLE public.appointments TO anon;
+GRANT ALL ON TABLE public.sa_appointments TO postgres;
+GRANT ALL ON TABLE public.sa_appointments TO service_role;
+GRANT ALL ON TABLE public.sa_appointments TO authenticated;
+GRANT ALL ON TABLE public.sa_appointments TO anon;

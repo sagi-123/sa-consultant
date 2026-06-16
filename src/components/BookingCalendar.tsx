@@ -176,7 +176,7 @@ useEffect(() => {
             }
 
             // Save to database
-            const { error } = await supabase.from('appointments').insert([
+            const { error } = await supabase.from('sa_appointments').insert([
               {
                 client_name: pending.formData.name,
                 client_email: pending.formData.email,
@@ -371,9 +371,9 @@ useEffect(() => {
         s3 = preferredSlots.slice(2).map(formatSlot).join(', ');
       }
 
-      // 1. Save to Supabase appointments table
+      // 1. Save to Supabase sa_appointments table
       const { error } = await supabase
-        .from('appointments')
+        .from('sa_appointments')
         .insert([
           {
             client_name: formData.name,

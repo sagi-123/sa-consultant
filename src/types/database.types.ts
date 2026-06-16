@@ -450,6 +450,50 @@ export interface Database {
           created_at?: string
         }
       }
+      sa_appointments: {
+        Row: {
+          id: string
+          client_name: string
+          client_email: string
+          client_phone: string
+          service: string | null
+          message: string | null
+          slot_1: string
+          slot_2: string
+          slot_3: string
+          status: 'pending' | 'confirmed' | 'cancelled'
+          selected_slot: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          client_name: string
+          client_email: string
+          client_phone: string
+          service?: string | null
+          message?: string | null
+          slot_1: string
+          slot_2: string
+          slot_3: string
+          status?: 'pending' | 'confirmed' | 'cancelled'
+          selected_slot?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          client_name?: string
+          client_email?: string
+          client_phone?: string
+          service?: string | null
+          message?: string | null
+          slot_1?: string
+          slot_2?: string
+          slot_3?: string
+          status?: 'pending' | 'confirmed' | 'cancelled'
+          selected_slot?: string | null
+          created_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
