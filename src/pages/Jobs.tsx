@@ -8,8 +8,15 @@ import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/lib/supabase';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { useSEO } from '@/hooks/useSEO';
 
 const Jobs = () => {
+  useSEO({
+    title: "Careers & Remote IT Staffing Openings in USA | SA Consultant & Staffing",
+    description: "Explore elite remote job openings and career opportunities in software development, design, and tech consulting across the United States.",
+    keywords: "best IT staffing consultants in USA, hire remote developers, remote IT staffing, IT recruitment agency, software developer recruitment, jobs in USA",
+    canonical: "https://www.saconsultantandstaffing.com/jobs"
+  });
   const { profile } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();

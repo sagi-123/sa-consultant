@@ -17,6 +17,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { extractTextFromPDF } from '@/lib/pdfExtractor';
 import { parseResumeWithAI, ParsedResume } from '@/lib/resumeParser';
+import { useSEO } from '@/hooks/useSEO';
 
 // Mock data for the candidate
 const mockCandidate = {
@@ -44,6 +45,11 @@ const mockCandidate = {
 };
 
 const CandidatePortal = () => {
+  useSEO({
+    title: "Candidate Portal | SA Consultant & Staffing",
+    description: "Manage your professional profile, upload resumes, track your job applications, and update your skills.",
+    canonical: "https://www.saconsultantandstaffing.com/candidate-portal"
+  });
   const { profile, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();

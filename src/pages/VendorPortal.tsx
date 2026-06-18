@@ -18,8 +18,14 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { extractTextFromPDF } from '@/lib/pdfExtractor';
 import { parseResumeWithAI } from '@/lib/resumeParser';
+import { useSEO } from '@/hooks/useSEO';
 
 export default function VendorPortal() {
+  useSEO({
+    title: "Talent Partner Portal | SA Consultant & Staffing",
+    description: "Submit bench candidates, review matches, track placements, and manage commissions on our exclusive partner portal.",
+    canonical: "https://www.saconsultantandstaffing.com/vendor-portal"
+  });
   const { profile, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();

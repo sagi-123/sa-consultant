@@ -11,10 +11,16 @@ import { useToast } from '@/components/ui/use-toast';
 import { Star, MessageSquare, LogOut, LayoutDashboard, User, Users, ArrowUpRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Database } from '@/types/database.types';
+import { useSEO } from '@/hooks/useSEO';
 
 type Review = Database['public']['Tables']['reviews']['Row'];
 
 const UserDashboard = () => {
+  useSEO({
+    title: "User Dashboard | SA Consultant & Staffing",
+    description: "Manage your client account, view details, and submit reviews for SA Consultant & Staffing.",
+    canonical: "https://www.saconsultantandstaffing.com/dashboard"
+  });
   const { profile, signOut } = useAuth();
   const [rating, setRating] = useState(5);
   const [message, setMessage] = useState('');

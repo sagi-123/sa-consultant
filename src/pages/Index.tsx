@@ -10,10 +10,17 @@ import BookingCalendar from '@/components/BookingCalendar';
 import Contact from '@/components/Contact';
 import Footer from '@/components/Footer';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
+import { useSEO } from '@/hooks/useSEO';
 import { Link } from 'react-router-dom';
 
 const Index = () => {
   useScrollReveal();
+  useSEO({
+    title: "Best Consultants in USA | IT Staffing & Digital Agency | SA Consultant",
+    description: "SA Consultant & Staffing is recognized among the best consultants in USA, offering top-tier IT staffing, recruitment solutions, custom website development, and mobile app development services for businesses nationwide.",
+    keywords: "best consultants in usa, top consulting firms in usa, best IT staffing consultants in USA, best business consultants in USA, IT staffing services, IT recruitment agency, tech staffing company",
+    canonical: "https://www.saconsultantandstaffing.com/"
+  });
 
   return (
     <div className="min-h-screen bg-background text-foreground">

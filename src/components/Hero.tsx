@@ -49,8 +49,8 @@ const Hero = () => {
           </p>
 
           <p className="text-sm sm:text-lg text-foreground font-semibold max-w-2xl mx-auto mb-10 sm:mb-12 px-2 leading-relaxed">
-            We deliver world-class consulting and staffing services that drive growth,
-            innovation, and lasting success for businesses worldwide.
+            Partner with one of the best consultants in USA to drive growth,
+            innovation, and lasting success with our premier digital and staffing services.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center px-4 sm:px-0">

@@ -10,6 +10,7 @@ import { Mail, Lock, User, ArrowLeft, KeyRound, CheckCircle2, Eye, EyeOff,
   TrendingUp, Search, BarChart3, Globe, FileText, Award,
   Smartphone, ShoppingCart, Palette, Plug, Zap, Cloud, Headphones, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useSEO } from '@/hooks/useSEO';
 
 // ─── Service cards data for mosaic background ───────────────────────────────
 const SERVICE_CARDS = [
@@ -212,6 +213,11 @@ function ScrollColumn({ cards, direction }: { cards: typeof COL_CARDS; direction
 
 // ─── Main Auth Component ─────────────────────────────────────────────────────
 const Auth = () => {
+  useSEO({
+    title: "Access Portal | SA Consultant & Staffing",
+    description: "Secure login and registration portal for candidates, vendors, and clients of SA Consultant & Staffing.",
+    canonical: "https://www.saconsultantandstaffing.com/auth"
+  });
   const { user, isAdmin, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');

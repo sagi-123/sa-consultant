@@ -48,6 +48,7 @@ import { Label } from '@/components/ui/label';
 import { CandidateProfileDialog } from '@/components/CandidateProfileDialog';
 import { AdminPartnerCRM } from '@/components/AdminPartnerCRM';
 import { AdminMasterBrain } from '@/components/AdminMasterBrain';
+import { useSEO } from '@/hooks/useSEO';
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
 type Review = Database['public']['Tables']['reviews']['Row'];
@@ -91,6 +92,11 @@ type JobOpening = {
 };
 
 const AdminDashboard = () => {
+  useSEO({
+    title: "Admin Control Center | SA Consultant & Staffing",
+    description: "Manage client registrations, candidate profiles, service inquiries, and settings for SA Consultant & Staffing.",
+    canonical: "https://www.saconsultantandstaffing.com/admin"
+  });
   const { profile, signOut } = useAuth();
   const [users, setUsers] = useState<Profile[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
