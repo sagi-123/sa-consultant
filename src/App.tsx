@@ -12,6 +12,10 @@ import UserDashboard from "./pages/UserDashboard.tsx";
 import CandidatePortal from "./pages/CandidatePortal.tsx";
 import VendorPortal from "./pages/VendorPortal.tsx";
 import Jobs from "./pages/Jobs.tsx";
+import ServicesPage from "./pages/ServicesPage.tsx";
+import ContactPage from "./pages/ContactPage.tsx";
+import PartnershipPage from "./pages/PartnershipPage.tsx";
+import BookingPage from "./pages/BookingPage.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -76,6 +80,10 @@ const App = () => (
                 } 
               />
               <Route path="/jobs" element={<Jobs />} />
+              <Route path="/services" element={<ServicesPage />} />
+              <Route path="/contact" element={<ContactPage />} />
+              <Route path="/partnership" element={<PartnershipPage />} />
+              <Route path="/book" element={<BookingPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

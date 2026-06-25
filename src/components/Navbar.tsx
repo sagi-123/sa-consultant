@@ -8,16 +8,16 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import logo from '@/assets/logo.png';
 
 type NavItem =
-  | { label: string; href: string; children?: undefined }
+  | { label: string; href: string; isRoute?: boolean; children?: undefined }
   | { label: string; href?: undefined; children: { label: string; href: string; isRoute?: boolean }[] };
 
 const navItems: NavItem[] = [
-  { label: 'Home', href: '/#home' },
+  { label: 'Home', href: '/', isRoute: true },
   {
     label: 'About',
     children: [
-      { label: 'Services', href: '/#services' },
-      { label: 'Contact', href: '/#contact' },
+      { label: 'Services', href: '/services', isRoute: true },
+      { label: 'Contact', href: '/contact', isRoute: true },
     ],
   },
   {
@@ -31,8 +31,8 @@ const navItems: NavItem[] = [
   {
     label: 'Appointment',
     children: [
-      { label: 'Appointment Booking', href: '/#book' },
-      { label: 'Partnership', href: '/#partnership' },
+      { label: 'Appointment Booking', href: '/book', isRoute: true },
+      { label: 'Partnership', href: '/partnership', isRoute: true },
     ],
   },
 ];
@@ -62,7 +62,14 @@ const DropdownMenu = ({ item }: { item: NavItem }) => {
   }, []);
 
   if (!item.children) {
-    return (
+    return item.isRoute ? (
+      <Link
+        to={item.href}
+        className="text-sm font-bold text-muted-foreground hover:text-foreground transition-colors duration-300 relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:gradient-bg after:transition-all after:duration-300 hover:after:w-full"
+      >
+        {item.label}
+      </Link>
+    ) : (
       <a
         href={item.href}
         className="text-sm font-bold text-muted-foreground hover:text-foreground transition-colors duration-300 relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:gradient-bg after:transition-all after:duration-300 hover:after:w-full"
@@ -119,7 +126,15 @@ const MobileNavItem = ({ item, onClose }: { item: NavItem; onClose: () => void }
   const [open, setOpen] = useState(false);
 
   if (!item.children) {
-    return (
+    return item.isRoute ? (
+      <Link
+        to={item.href}
+        onClick={onClose}
+        className="text-muted-foreground hover:text-foreground transition-all duration-300 font-medium py-2 border-b border-white/5 block"
+      >
+        {item.label}
+      </Link>
+    ) : (
       <a
         href={item.href}
         onClick={onClose}
