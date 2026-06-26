@@ -83,7 +83,7 @@ const Footer = () => {
             <div className="space-y-4 text-sm text-foreground font-bold">
               <a
                 href="#contact"
-                className="gradient-bg-animated text-white px-6 py-3 rounded-xl font-black hover:scale-105 inline-flex items-center justify-center transition-all duration-300 text-base shadow-lg shadow-primary/20 w-full"
+                className="gradient-bg text-white px-6 py-3 rounded-xl font-black hover:scale-105 inline-flex items-center justify-center transition-all duration-300 text-base shadow-lg shadow-primary/20 w-full"
               >
                 Contact Us
               </a>

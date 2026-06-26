@@ -13,6 +13,7 @@ import CandidatePortal from "./pages/CandidatePortal.tsx";
 import VendorPortal from "./pages/VendorPortal.tsx";
 import Jobs from "./pages/Jobs.tsx";
 import ServicesPage from "./pages/ServicesPage.tsx";
+import AboutPage from "./pages/AboutPage.tsx";
 import ContactPage from "./pages/ContactPage.tsx";
 import PartnershipPage from "./pages/PartnershipPage.tsx";
 import BookingPage from "./pages/BookingPage.tsx";
@@ -81,6 +82,7 @@ const App = () => (
               />
               <Route path="/jobs" element={<Jobs />} />
               <Route path="/services" element={<ServicesPage />} />
+              <Route path="/about" element={<AboutPage />} />
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/partnership" element={<PartnershipPage />} />
               <Route path="/book" element={<BookingPage />} />

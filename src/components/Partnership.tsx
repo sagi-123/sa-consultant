@@ -195,10 +195,21 @@ ${formData.purpose}
               >
                 {/* Subtle accent line */}
                 <div className="absolute top-0 left-0 right-0 h-1 gradient-bg opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                {/* Background Morphing Blob */}
+                <div 
+                  className="absolute -right-10 -bottom-10 w-44 h-44 bg-gradient-to-br from-primary/10 to-accent/5 rounded-full blur-xl animate-morph-blob pointer-events-none group-hover:scale-125 transition-transform duration-700"
+                  style={{ animationDelay: `${i * 2}s` }}
+                />
                 
-                <div className="flex flex-col md:flex-row gap-8 items-start h-full justify-between">
-                  <div className="w-16 h-16 rounded-2xl gradient-bg flex items-center justify-center flex-shrink-0 shadow-lg shadow-primary/20">
-                    <program.icon size={32} className="text-white" />
+                <div className="flex flex-col md:flex-row gap-8 items-start h-full justify-between relative z-10">
+                  {/* Morphing Blob Icon Container */}
+                  <div className="w-16 h-16 relative flex items-center justify-center flex-shrink-0">
+                    <div 
+                      className="absolute inset-0 bg-gradient-to-tr from-primary to-accent animate-morph-blob shadow-lg shadow-primary/25 group-hover:scale-110 transition-transform duration-500"
+                      style={{ animationDelay: `${i * 1.5}s` }}
+                    />
+                    <program.icon size={28} className="text-white relative z-10" />
                   </div>
                   
                   <div className="flex-1 flex flex-col h-full justify-between">

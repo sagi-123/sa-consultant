@@ -179,6 +179,22 @@
     box-shadow: 0 0 24px rgba(37, 99, 235, 0.18), 0 4px 20px rgba(37, 99, 235, 0.08);
   }
 
+  .hover-card-lift {
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .hover-card-lift:hover {
+    transform: translateY(-8px) rotate(1deg);
+    box-shadow: 0 20px 40px rgba(37, 99, 235, 0.15);
+  }
+
+  .hover-card-lift-alt {
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .hover-card-lift-alt:hover {
+    transform: translateY(-8px) rotate(-1deg);
+    box-shadow: 0 20px 40px rgba(37, 99, 235, 0.15);
+  }
+
   .section-padding {
     @apply py-10 md:py-20 lg:py-28 px-4 md:px-8;
   }
@@ -241,6 +257,24 @@
     100% { background-position: 200% 0; }
   }
 
+  @keyframes morph-blob {
+    0% {
+      border-radius: 42% 58% 70% 30% / 45% 45% 55% 55%;
+    }
+    25% {
+      border-radius: 70% 30% 52% 48% / 60% 40% 60% 40%;
+    }
+    50% {
+      border-radius: 30% 70% 60% 40% / 50% 60% 40% 50%;
+    }
+    75% {
+      border-radius: 60% 40% 30% 70% / 40% 50% 50% 60%;
+    }
+    100% {
+      border-radius: 42% 58% 70% 30% / 45% 45% 55% 55%;
+    }
+  }
+
   .animate-float {
     animation: float 6s ease-in-out infinite;
   }
@@ -253,5 +287,9 @@
     background: linear-gradient(90deg, transparent, rgba(37, 99, 235, 0.07), transparent);
     background-size: 200% 100%;
     animation: shimmer 3s infinite;
+  }
+
+  .animate-morph-blob {
+    animation: morph-blob 8s ease-in-out infinite;
   }
 }

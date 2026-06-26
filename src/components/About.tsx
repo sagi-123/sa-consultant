@@ -6,16 +6,19 @@ const cards = [
     icon: Target,
     title: 'Our Mission',
     description: 'To empower businesses with innovative digital solutions and exceptional staffing services that drive measurable growth and lasting success.',
+    image: '/images/about-mission.png',
   },
   {
     icon: Eye,
     title: 'Our Vision',
     description: 'To be the most trusted global partner for businesses seeking transformation through technology, talent, and strategic consulting.',
+    image: '/images/about-vision.png',
   },
   {
     icon: Zap,
     title: 'Our Values',
     description: 'Excellence, integrity, and innovation guide everything we do. We believe in building partnerships that create real, sustainable impact.',
+    image: '/images/about-values.png',
   },
 ];
 
@@ -41,14 +44,35 @@ const About = () => (
         {cards.map((card, i) => (
           <div
             key={card.title}
-            className="scroll-reveal glass rounded-2xl p-8 hover-lift hover-glow group"
+            className={`scroll-reveal glass rounded-2xl p-6 hover-glow group flex flex-col justify-between h-full cursor-pointer ${
+              i % 2 === 0 ? 'hover-card-lift' : 'hover-card-lift-alt'
+            }`}
             style={{ transitionDelay: `${i * 150}ms` }}
           >
-            <div className="w-14 h-14 rounded-xl gradient-bg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-              <card.icon size={24} className="text-foreground" />
+            <div>
+              {/* Beautiful Card Image */}
+              <div className="relative w-full aspect-video rounded-xl overflow-hidden mb-6 border border-white/10 group-hover:border-primary/30 transition-all duration-500 ease-out shadow-md">
+                <img
+                  src={card.image}
+                  alt={card.title}
+                  className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700 ease-out"
+                />
+                {/* Subtle overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-60" />
+
+                {/* Floating icon badge */}
+                <div className="absolute bottom-3 left-3 w-10 h-10 rounded-lg bg-background/90 backdrop-blur-md flex items-center justify-center border border-white/20 shadow-lg">
+                  <card.icon size={18} className="text-primary" />
+                </div>
+              </div>
+
+              <h3 className="text-xl font-display font-bold mb-3 text-foreground group-hover:text-primary transition-colors duration-300">
+                {card.title}
+              </h3>
+              <p className="text-foreground/80 font-medium leading-relaxed">
+                {card.description}
+              </p>
             </div>
-            <h3 className="text-xl font-display font-bold mb-3">{card.title}</h3>
-            <p className="text-foreground font-medium leading-relaxed">{card.description}</p>
           </div>
         ))}
       </div>
