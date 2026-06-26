@@ -24,16 +24,21 @@ const navItems: NavItem[] = [
   {
     label: 'Jobs',
     children: [
-      { label: 'Talent Partner', href: '/vendor-portal', isRoute: true },
       { label: 'Candidate Portal', href: '/candidate-portal', isRoute: true },
       { label: 'Job Posting', href: '/jobs', isRoute: true },
+    ],
+  },
+  {
+    label: 'Partnership',
+    children: [
+      { label: 'Partnership', href: '/partnership', isRoute: true },
+      { label: 'Talent Partner', href: '/vendor-portal', isRoute: true },
     ],
   },
   {
     label: 'Appointment',
     children: [
       { label: 'Appointment Booking', href: '/book', isRoute: true },
-      { label: 'Partnership', href: '/partnership', isRoute: true },
     ],
   },
 ];
