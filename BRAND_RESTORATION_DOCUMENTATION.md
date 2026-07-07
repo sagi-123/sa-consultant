@@ -38,6 +38,16 @@ The core elements in the homepage Hero section were upgraded for maximum visual 
 *   Fixed a crash in the React animation frame render loop by bounding the elapsed time variables.
 *   Implemented preloading for all 100 sequence frames with a safety timeout, ensuring a smooth transition to active canvas rendering without blocking the user.
 
+## 📂 6. Separate Pages & Routing Architecture
+The platform has been migrated to a fully modular routing architecture with dedicated, separate pages for the core sections. This replaces single-page sections with rich, self-contained views for a professional corporate structure:
+*   **Home Page (`/`)**: Main entry portal featuring the cinematic background, services list, custom cards, and testbed tools.
+*   **About Us Page (`/about`)**: Full detailed profile of the company, mission, values, and client testimonials.
+*   **Contact Page (`/contact`)**: Premium inquiry forms, map location integration, and direct communication options.
+*   **Partnership Page (`/partnership`)**: Dedicated partner referral system, forms, and validation.
+*   **Jobs Portal (`/jobs`)**: Dynamic career listings, search filters, and application tracking.
+*   **Appointment Booking (`/book`)**: Automated calendaring for scheduling consultations and calls.
+*   **Client & Talent Portals (`/candidate-portal`, `/vendor-portal`)**: Secure dashboards for candidates and recruitment partners.
+
 ---
 
 ### Verification
