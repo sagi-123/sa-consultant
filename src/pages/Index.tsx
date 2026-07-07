@@ -1,13 +1,5 @@
 import Navbar from '@/components/Navbar';
 import Hero from '@/components/Hero';
-import About from '@/components/About';
-import Partnership from '@/components/Partnership';
-import Services from '@/components/Services';
-import Portfolio from '@/components/Portfolio';
-import Webinars from '@/components/Webinars';
-import Testimonials from '@/components/Testimonials';
-import BookingCalendar from '@/components/BookingCalendar';
-import Contact from '@/components/Contact';
 import Footer from '@/components/Footer';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 import { useSEO } from '@/hooks/useSEO';
@@ -34,14 +26,6 @@ const Index = () => {
           Browse Jobs
         </Link>
       </section>
-      <About />
-      <Partnership />
-      <Services />
-      <Portfolio />
-      <Webinars />
-      <Testimonials />
-      <BookingCalendar />
-      <Contact />
       <Footer />
     </div>
   );

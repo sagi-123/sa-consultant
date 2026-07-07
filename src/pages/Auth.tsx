@@ -354,13 +354,13 @@ const Auth = () => {
           color: #1a202c;
         }
         .auth-input:focus {
-          border-color: #2563eb;
-          box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+          border-color: #7B4E2F;
+          box-shadow: 0 0 0 3px rgba(123,78,47,0.12);
         }
         .auth-btn {
           width: 100%;
           padding: 13px;
-          background: linear-gradient(135deg,#1e3a8a,#1d4ed8,#2563eb);
+          background: linear-gradient(135deg, #7B4E2F, #5C3924);
           color: #fff;
           border: none;
           border-radius: 10px;
@@ -384,8 +384,8 @@ const Auth = () => {
           transition: color 0.2s, border-color 0.2s;
         }
         .tab-btn.active {
-          color: #1d4ed8;
-          border-bottom-color: #1d4ed8;
+          color: #7B4E2F;
+          border-bottom-color: #7B4E2F;
         }
         @media (max-width: 1024px) {
           .bg-col-4 {
@@ -411,7 +411,7 @@ const Auth = () => {
           position: 'absolute', inset: 0,
           display: 'flex', gap: '18px', padding: '18px',
           overflow: 'hidden',
-          background: '#f8fafc',
+          background: '#F8F3EE',
         }}>
           <div className="bg-col-1" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
             <ScrollColumn cards={col1} direction="up" />
@@ -473,7 +473,7 @@ const Auth = () => {
             <div style={{
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
               width: '52px', height: '52px', borderRadius: '16px',
-              background: 'linear-gradient(135deg,#1e3a8a,#2563eb)',
+              background: 'linear-gradient(135deg,#7B4E2F,#5C3924)',
               marginBottom: '12px',
             }}>
               <Briefcase size={26} style={{ color: '#fff' }} />
@@ -491,9 +491,9 @@ const Auth = () => {
           {/* ── Forgot Password View ── */}
           {view === 'forgot_password' && (
             <div>
-              <div style={{ background: '#eff6ff', borderRadius: '10px', padding: '12px 14px', marginBottom: '20px', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
-                <KeyRound size={18} style={{ color: '#2563eb', marginTop: '1px', flexShrink: 0 }} />
-                <p style={{ margin: 0, fontSize: '13px', color: '#1e40af', lineHeight: 1.5 }}>
+              <div style={{ background: '#F2E8DE', borderRadius: '10px', padding: '12px 14px', marginBottom: '20px', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                <KeyRound size={18} style={{ color: '#7B4E2F', marginTop: '1px', flexShrink: 0 }} />
+                <p style={{ margin: 0, fontSize: '13px', color: '#5C3924', lineHeight: 1.5 }}>
                   Enter your email and we'll send you a secure link to reset your password.
                 </p>
               </div>
@@ -506,7 +506,7 @@ const Auth = () => {
                   {loading ? 'Sending...' : 'Send Reset Link'}
                 </button>
                 <button type="button" onClick={() => setView('login')}
-                  style={{ background: 'none', border: 'none', color: '#2563eb', fontWeight: 600, fontSize: '14px', cursor: 'pointer', textAlign: 'center', textDecoration: 'underline', textUnderlineOffset: '3px' }}>
+                  style={{ background: 'none', border: 'none', color: '#7B4E2F', fontWeight: 600, fontSize: '14px', cursor: 'pointer', textAlign: 'center', textDecoration: 'underline', textUnderlineOffset: '3px' }}>
                   Back to Login
                 </button>
               </form>
@@ -561,7 +561,7 @@ const Auth = () => {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                       <label style={{ fontSize: '12px', fontWeight: 600, color: '#374151' }}>Password</label>
                       <button type="button" onClick={() => setView('forgot_password')}
-                        style={{ background: 'none', border: 'none', color: '#2563eb', fontSize: '12px', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: '3px' }}>
+                        style={{ background: 'none', border: 'none', color: '#7B4E2F', fontSize: '12px', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: '3px' }}>
                         Forgot password?
                       </button>
                     </div>

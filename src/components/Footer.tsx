@@ -51,7 +51,7 @@ const Footer = () => {
             <div className="flex items-center gap-3 mb-6">
               <img src={logo} alt="SA Consultant & Staffing" className="h-24 md:h-32 w-auto object-contain" />
             </div>
-            <h3 className="text-2xl md:text-4xl font-display font-black tracking-tight gradient-text mb-4">SA Consultant & Staffing</h3>
+            <h3 className="text-2xl md:text-4xl font-display font-black tracking-tight logo-text-blue mb-4">SA Consultant & Staffing</h3>
             <p className="text-foreground font-semibold text-sm leading-relaxed">
               Empowering businesses with smart digital and staffing solutions worldwide.
             </p>

@@ -18,7 +18,6 @@ const navItems: NavItem[] = [
     children: [
       { label: 'About Us', href: '/about', isRoute: true },
       { label: 'Services', href: '/services', isRoute: true },
-      { label: 'Contact', href: '/contact', isRoute: true },
     ],
   },
   {
@@ -41,6 +40,7 @@ const navItems: NavItem[] = [
       { label: 'Appointment Booking', href: '/book', isRoute: true },
     ],
   },
+  { label: 'Contact', href: '/contact', isRoute: true },
 ];
 
 const SocialIcon = ({ href, children }: { href: string; children: React.ReactNode }) => (
@@ -233,7 +233,7 @@ const Navbar = () => {
       <div className="container mx-auto flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2 sm:gap-4">
           <img src={logo} alt="SA Consultant logo" className="h-8 sm:h-10 md:h-12 w-auto object-contain transition-transform duration-300 hover:scale-105" />
-          <span className="text-xs sm:text-sm md:text-lg font-display font-black tracking-widest gradient-text leading-tight uppercase">
+          <span className="text-xs sm:text-sm md:text-lg font-display font-black tracking-widest logo-text-blue leading-tight uppercase">
             SA Consultant & Staffing
           </span>
         </Link>

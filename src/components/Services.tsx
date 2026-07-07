@@ -101,10 +101,10 @@ const ServiceCard = ({ service, index }: ServiceCardProps) => {
         {/* Content Section */}
         <div style={{ transform: 'translateZ(30px)' }} className="flex-grow flex flex-col justify-between">
           <div>
-            <h3 className="text-lg font-display font-bold mb-3 text-foreground group-hover:text-primary transition-colors duration-300">
+            <h3 className="text-lg font-display font-extrabold mb-3 text-primary transition-colors duration-300">
               {service.title}
             </h3>
-            <p className="text-foreground/80 font-medium text-sm leading-relaxed mb-5">
+            <p className="text-primary/90 font-bold text-sm leading-relaxed mb-5">
               {service.description}
             </p>
           </div>
@@ -112,7 +112,7 @@ const ServiceCard = ({ service, index }: ServiceCardProps) => {
             {service.features.map((f) => (
               <span 
                 key={f} 
-                className="text-xs px-3 py-1 rounded-full bg-secondary text-foreground font-bold border border-primary/20"
+                className="text-xs px-3 py-1 rounded-full bg-secondary text-primary font-extrabold border border-primary/40 shadow-sm"
                 style={{ transform: 'translateZ(10px)' }}
               >
                 {f}
@@ -127,15 +127,15 @@ const ServiceCard = ({ service, index }: ServiceCardProps) => {
 
 const Services = () => (
   <section id="services" className="section-padding relative">
-    <div className="absolute bottom-0 left-0 w-96 h-96 rounded-full bg-[#3b82f6]/10 blur-[120px]" />
+    <div className="absolute bottom-0 left-0 w-96 h-96 rounded-full bg-primary/10 blur-[120px]" />
 
     <div className="container mx-auto relative z-10">
       <div className="text-center mb-16 scroll-reveal">
-        <span className="text-accent text-sm font-semibold tracking-widest uppercase">Our Services</span>
+        <span className="text-accent text-sm font-extrabold tracking-widest uppercase">Our Services</span>
         <h2 className="fluid-h2 font-display font-black tracking-tight mt-3 mb-6">
           What We <span className="gradient-text">Offer</span>
         </h2>
-        <p className="text-foreground font-semibold max-w-2xl mx-auto text-lg leading-relaxed">
+        <p className="text-primary/95 font-extrabold max-w-2xl mx-auto text-lg leading-relaxed">
           Comprehensive solutions designed to elevate your business to new heights.
         </p>
       </div>
