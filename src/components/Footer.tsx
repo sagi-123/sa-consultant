@@ -17,7 +17,6 @@ const SocialLink = ({ href, children, label }: { href: string; children: React.R
 const Footer = () => {
   const [settings, setSettings] = useState({
     contact_email: 'mahjabeensajaruth@gmail.com',
-    contact_phone: '+1 (609) 313-9192, 9384797751',
     whatsapp_number: '9384797751',
     linkedin_url: 'https://www.linkedin.com/company/112648936/',
     instagram_url: 'https://instagram.com'
@@ -33,7 +32,6 @@ const Footer = () => {
         }, {});
         setSettings({
           contact_email: settingsMap.contact_email || settings.contact_email,
-          contact_phone: settingsMap.contact_phone || settings.contact_phone,
           whatsapp_number: settingsMap.whatsapp_number || settings.whatsapp_number,
           linkedin_url: settingsMap.linkedin_url || settings.linkedin_url,
           instagram_url: settingsMap.instagram_url || settings.instagram_url
@@ -90,10 +88,6 @@ const Footer = () => {
               <div>
                 <p className="text-accent uppercase text-[10px] tracking-widest mb-1">Email Us</p>
                 <p>{settings.contact_email}</p>
-              </div>
-              <div>
-                <p className="text-accent uppercase text-[10px] tracking-widest mb-1">Call Us</p>
-                <p>{settings.contact_phone}</p>
               </div>
             </div>
             <div className="flex gap-3 mt-4">

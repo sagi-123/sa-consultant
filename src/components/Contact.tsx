@@ -1,18 +1,17 @@
 import { useState, useEffect } from 'react';
-import { Send, MapPin, Mail, Phone, CheckCircle2, X } from 'lucide-react';
+import { Send, MapPin, Mail, CheckCircle2, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from "@/components/ui/use-toast";
 
 const Contact = () => {
   const { toast } = useToast();
-  const [formData, setFormData] = useState({ name: '', email: '', phone: '', message: '' });
+  const [formData, setFormData] = useState({ name: '', email: '', message: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [captchaQuestion, setCaptchaQuestion] = useState({ num1: 0, num2: 0 });
   const [captchaAnswer, setCaptchaAnswer] = useState('');
   const [settings, setSettings] = useState({
     contact_email: 'mahjabeensajaruth@gmail.com',
-    contact_phone: '+1 (609) 313-9192, 9384797751',
     contact_address: 'New Jersey, USA',
   });
 
@@ -34,7 +33,6 @@ const Contact = () => {
         }, {});
         setSettings({
           contact_email: settingsMap.contact_email || settings.contact_email,
-          contact_phone: settingsMap.contact_phone || settings.contact_phone,
           contact_address: settingsMap.contact_address || settings.contact_address,
         });
       }
@@ -64,7 +62,6 @@ const Contact = () => {
         .insert([{
           name: formData.name,
           email: formData.email,
-          phone: formData.phone,
           message: formData.message,
         }]);
 
@@ -73,13 +70,12 @@ const Contact = () => {
       // 2. Send email notification to both admins
       const adminRecipients = ['sajaruthmahjabeen@gmail.com', 'sagina111@gmail.com'];
       const subject = `New Contact Inquiry from ${formData.name}`;
-      const text = `Name: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone}\n\nMessage:\n${formData.message}`;
+      const text = `Name: ${formData.name}\nEmail: ${formData.email}\n\nMessage:\n${formData.message}`;
       const html = `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
           <h2 style="color: #4f46e5;">New Contact Inquiry</h2>
           <p><strong>Name:</strong> ${formData.name}</p>
           <p><strong>Email:</strong> <a href="mailto:${formData.email}">${formData.email}</a></p>
-          <p><strong>Phone:</strong> ${formData.phone}</p>
           <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 16px 0;" />
           <p><strong>Message:</strong></p>
           <p style="white-space: pre-wrap;">${formData.message}</p>
@@ -91,7 +87,7 @@ const Contact = () => {
       });
 
       // 3. Reset form, trigger toast, and show inline success banner
-      setFormData({ name: '', email: '', phone: '', message: '' });
+      setFormData({ name: '', email: '', message: '' });
       generateCaptcha();
       setIsSuccess(true);
       toast({
@@ -139,7 +135,6 @@ const Contact = () => {
               {[
                 { icon: MapPin, label: 'Address', value: settings.contact_address },
                 { icon: Mail, label: 'Email', value: settings.contact_email },
-                { icon: Phone, label: 'Phone', value: settings.contact_phone },
               ].map((item) => (
                 <div key={item.label} className="flex items-start gap-4 overflow-hidden w-full">
                   <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl gradient-bg flex items-center justify-center flex-shrink-0">
