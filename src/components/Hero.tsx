@@ -142,16 +142,16 @@ const Hero = () => {
       const nextFrame = (baseFrame + 1) % 100;
       const alpha = frameProgress % 1;
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
       const baseImg = loadedImagesRef.current[baseFrame];
       const nextImg = loadedImagesRef.current[nextFrame];
 
+      // Draw base image fully opaque to prevent any black background bleed-through
       if (baseImg) {
-        ctx.globalAlpha = 1 - alpha;
+        ctx.globalAlpha = 1.0;
         drawImageCover(baseImg);
       }
-      if (nextImg && alpha > 0.01) {
+      // Cross-fade the next image smoothly on top
+      if (nextImg && alpha > 0.001) {
         ctx.globalAlpha = alpha;
         drawImageCover(nextImg);
       }
@@ -220,7 +220,7 @@ const Hero = () => {
 
       {/* Content Container */}
       <div className="relative z-10 container mx-auto text-center px-4 sm:px-6 pt-10 pb-20 md:pt-36 md:pb-0">
-        <div key={activeScene} className="max-w-5xl mx-auto hero-scene-active">
+        <div className="max-w-5xl mx-auto transition-all duration-500">
           {/* Webinar Flash Cards */}
           <WebinarFlashcards />
 
