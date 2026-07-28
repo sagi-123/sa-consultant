@@ -5,7 +5,7 @@ import { useToast } from "@/components/ui/use-toast";
 
 const Contact = () => {
   const { toast } = useToast();
-  const [formData, setFormData] = useState({ name: '', email: '', message: '' });
+  const [formData, setFormData] = useState({ name: '', email: '', phone: '', message: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [captchaQuestion, setCaptchaQuestion] = useState({ num1: 0, num2: 0 });
@@ -57,37 +57,54 @@ const Contact = () => {
 
     try {
       // 1. Store in Supabase
-      const { error } = await supabase
+      const { error: dbError } = await supabase
         .from('inquiries')
         .insert([{
           name: formData.name,
           email: formData.email,
+          phone: formData.phone,
           message: formData.message,
         }]);
 
-      if (error) throw error;
+      if (dbError) {
+        console.error('Database insert error:', dbError);
+        // Fallback: try inserting without phone if column doesn't exist
+        const { error: fallbackError } = await supabase
+          .from('inquiries')
+          .insert([{
+            name: formData.name,
+            email: formData.email,
+            message: formData.message,
+          }]);
+        if (fallbackError) throw fallbackError;
+      }
 
-      // 2. Send email notification to both admins
-      const adminRecipients = ['sajaruthmahjabeen@gmail.com', 'sagina111@gmail.com'];
-      const subject = `New Contact Inquiry from ${formData.name}`;
-      const text = `Name: ${formData.name}\nEmail: ${formData.email}\n\nMessage:\n${formData.message}`;
-      const html = `
-        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
-          <h2 style="color: #4f46e5;">New Contact Inquiry</h2>
-          <p><strong>Name:</strong> ${formData.name}</p>
-          <p><strong>Email:</strong> <a href="mailto:${formData.email}">${formData.email}</a></p>
-          <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 16px 0;" />
-          <p><strong>Message:</strong></p>
-          <p style="white-space: pre-wrap;">${formData.message}</p>
-        </div>
-      `;
+      // 2. Send email notification to admins (graceful fallback if Edge Function or SMTP fails)
+      try {
+        const adminRecipients = ['sajaruthmahjabeen@gmail.com', 'sagina111@gmail.com'];
+        const subject = `New Contact Inquiry from ${formData.name}`;
+        const text = `Name: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone}\n\nMessage:\n${formData.message}`;
+        const html = `
+          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
+            <h2 style="color: #4f46e5;">New Contact Inquiry</h2>
+            <p><strong>Name:</strong> ${formData.name}</p>
+            <p><strong>Email:</strong> <a href="mailto:${formData.email}">${formData.email}</a></p>
+            <p><strong>Phone:</strong> ${formData.phone || 'N/A'}</p>
+            <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 16px 0;" />
+            <p><strong>Message:</strong></p>
+            <p style="white-space: pre-wrap;">${formData.message}</p>
+          </div>
+        `;
 
-      await supabase.functions.invoke('send-email', {
-        body: { recipients: adminRecipients, subject, text, html },
-      });
+        await supabase.functions.invoke('send-email', {
+          body: { recipients: adminRecipients, subject, text, html },
+        });
+      } catch (emailErr) {
+        console.warn('Email notification sending failed, but inquiry was saved in database:', emailErr);
+      }
 
       // 3. Reset form, trigger toast, and show inline success banner
-      setFormData({ name: '', email: '', message: '' });
+      setFormData({ name: '', email: '', phone: '', message: '' });
       generateCaptcha();
       setIsSuccess(true);
       toast({
