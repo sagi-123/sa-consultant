@@ -129,6 +129,22 @@ export function AdminMasterBrain() {
     };
 
     fetchMasterData();
+
+    // Realtime channel for instant sync with Talent Partner Portal
+    const channel = supabase.channel('admin_master_brain_realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'job_matches' }, () => {
+        supabase.from('job_matches').select('*, vendor_candidates(name, email, phone, skills, resume_url)').order('created_at', { ascending: false })
+          .then(({ data }) => data && setMatches(data));
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'vendor_candidates' }, () => {
+        supabase.from('vendor_candidates').select('*').order('created_at', { ascending: false })
+          .then(({ data }) => data && setPartnerCandidates(data));
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [selectedPartnerForChat]);
 
   // Helper function to safely extract skills as an array of strings
@@ -504,6 +520,27 @@ export function AdminMasterBrain() {
       setJobForm({ title: '', department: 'Engineering', location: 'Remote', employment_type: 'Full-time C2C', salary_range: '$130,000 - $150,000 / $65-$75/hr', description: '' });
     } catch (err: any) {
       toast({ variant: "destructive", title: "Error creating job", description: err.message });
+    }
+  };
+
+  // Handle direct Partner Match Approval/Rejection by Admin
+  const handleApprovePartnerMatch = async (matchId: string, approved: boolean) => {
+    try {
+      const newStatus = approved ? 'Approved / Submitted' : 'Rejected';
+      const { error } = await supabase.from('job_matches').update({
+        partner_approved: approved,
+        status: newStatus
+      } as any).eq('id', matchId);
+
+      if (error) throw error;
+
+      setMatches(prev => prev.map(m => m.id === matchId ? { ...m, partner_approved: approved, status: newStatus } : m));
+      toast({
+        title: approved ? "Match Approved & Submitted" : "Match Rejected",
+        description: approved ? "Match approved and moved to Submission Tracker." : "Match rejected."
+      });
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Action Failed", description: err.message });
     }
   };
 
@@ -1421,8 +1458,14 @@ export function AdminMasterBrain() {
                               </Badge>
                             </td>
                             <td className="py-4 px-4 text-right space-x-2">
+                              <Button onClick={() => handleApprovePartnerMatch(match.id, true)} size="sm" className="h-8 bg-green-600 hover:bg-green-700 text-white font-bold gap-1 shadow-sm">
+                                <CheckCircle2 size={14} /> Approve & Submit
+                              </Button>
+                              <Button onClick={() => handleApprovePartnerMatch(match.id, false)} size="sm" variant="outline" className="h-8 border-red-500/30 text-red-500 hover:bg-red-500/10 font-bold gap-1">
+                                <X size={14} /> Reject
+                              </Button>
                               <Button onClick={() => openUpdateModal(match)} variant="outline" size="sm" className="h-8 font-bold border-primary/20 hover:bg-primary/10">
-                                Override / Manage Stage
+                                Override Stage
                               </Button>
                               <Button onClick={() => handleDeleteItem('job_matches', match.id)} size="sm" variant="outline" className="h-8 border-red-500/30 text-red-500 hover:bg-red-500/10 font-bold px-2.5">
                                 <Trash2 size={14} />
