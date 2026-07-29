@@ -720,6 +720,32 @@ const AdminDashboard = () => {
     }
   };
 
+  const exportInquiriesToCSV = () => {
+    if (!inquiries || inquiries.length === 0) {
+      toast({ title: "No messages to export" });
+      return;
+    }
+    const headers = ['ID', 'Date', 'Name', 'Email', 'Phone', 'Message', 'Status'];
+    const rows = inquiries.map(inq => [
+      inq.id,
+      inq.created_at ? new Date(inq.created_at).toISOString() : '',
+      `"${(inq.name || '').replace(/"/g, '""')}"`,
+      `"${(inq.email || '').replace(/"/g, '""')}"`,
+      `"${(inq.phone || '').replace(/"/g, '""')}"`,
+      `"${(inq.message || '').replace(/"/g, '""')}"`,
+      inq.status || 'new'
+    ]);
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `sa_consultant_messages_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   // ── Careers / Job Openings CRUD ──────────────────────────────────────
   const handleSaveJob = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -881,63 +907,7 @@ SA Consultant & Staffing Team`
     }
   };
 
-  const handleMarkAllAsRead = useCallback(async () => {
-    const newInquiries = inquiries.filter(i => i.status === 'new');
-    if (newInquiries.length === 0) return;
 
-    try {
-      const { error } = await supabase
-        .from('inquiries')
-        .update({ status: 'read' } as any)
-        .eq('status', 'new');
-
-      if (error) throw error;
-
-      // Update local state to reflect changes immediately
-      setInquiries(prev => prev.map(inq => 
-        inq.status === 'new' ? { ...inq, status: 'read' as any } : inq
-      ));
-    } catch (error) {
-      console.error('Error marking messages as read:', error);
-    }
-  }, [inquiries]);
-
-  useEffect(() => {
-    if (activeTab === 'inquiries') {
-      handleMarkAllAsRead();
-    }
-  }, [activeTab, handleMarkAllAsRead]);
-
-  const exportInquiriesToCSV = () => {
-    if (inquiries.length === 0) return;
-    
-    const escapeCSV = (str: any) => `"${String(str || '').replace(/"/g, '""')}"`;
-    
-    const headers = ['Date', 'Name', 'Email', 'Phone', 'Message'];
-    const rows = inquiries.map(inq => [
-      escapeCSV(new Date(inq.created_at).toLocaleString()),
-      escapeCSV(inq.name),
-      escapeCSV(inq.email),
-      escapeCSV(inq.phone),
-      escapeCSV(inq.message)
-    ]);
-    
-    const csvContent = '\uFEFF' + [
-      headers.map(escapeCSV).join(','),
-      ...rows.map(row => row.join(','))
-    ].join('\n');
-    
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    
-    link.setAttribute('href', url);
-    link.setAttribute('download', `sa_elevate_inquiries_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
 
   // ── Webinar Handlers ──────────────────────────────────────
   const handleSaveWebinar = async () => {
