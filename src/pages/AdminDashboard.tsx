@@ -91,8 +91,8 @@ type JobOpening = {
   created_at: string;
 };
 
-const FormattedInquiryMessage = ({ message }: { message: string }) => {
-  if (!message) return <span className="italic text-muted-foreground">No message content</span>;
+const FormattedInquiryMessage = ({ message }: { message?: string | null }) => {
+  if (!message || typeof message !== 'string') return <span className="italic text-muted-foreground">No message content</span>;
 
   // 1. Partnership Application
   if (message.startsWith('[PARTNERSHIP APPLICATION:')) {
@@ -1339,11 +1339,13 @@ SA Consultant & Staffing Team`
                           </TableCell>
                         </TableRow>
                       ) : (
-                        inquiries.filter(i => 
-                          i.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          i.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          i.email.toLowerCase().includes(searchTerm.toLowerCase())
-                        ).map((inquiry) => (
+                        inquiries.filter(i => {
+                          const search = (searchTerm || '').toLowerCase().trim();
+                          if (!search) return true;
+                          return (i.name || '').toLowerCase().includes(search) ||
+                                 (i.message || '').toLowerCase().includes(search) ||
+                                 (i.email || '').toLowerCase().includes(search);
+                        }).map((inquiry) => (
                           <TableRow key={inquiry.id}>
                             <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                               {new Date(inquiry.created_at).toLocaleDateString()}
@@ -1388,11 +1390,13 @@ SA Consultant & Staffing Team`
                   {inquiries.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">No inquiries yet.</div>
                   ) : (
-                    inquiries.filter(i => 
-                      i.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                      i.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                      i.email.toLowerCase().includes(searchTerm.toLowerCase())
-                    ).map((inquiry) => (
+                    inquiries.filter(i => {
+                      const search = (searchTerm || '').toLowerCase().trim();
+                      if (!search) return true;
+                      return (i.name || '').toLowerCase().includes(search) ||
+                             (i.message || '').toLowerCase().includes(search) ||
+                             (i.email || '').toLowerCase().includes(search);
+                    }).map((inquiry) => (
                       <div key={inquiry.id} className={`glass rounded-xl p-5 border space-y-4 ${
                         inquiry.message?.startsWith('[PARTNER/VENDOR SUBMISSION]') 
                           ? 'border-accent/30 bg-accent/5' 

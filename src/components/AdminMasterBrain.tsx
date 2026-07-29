@@ -17,8 +17,8 @@ import {
   FileText, User, Building2, MapPin, Award, Trash2
 } from 'lucide-react';
 
-const FormattedInquiryMessage = ({ message }: { message: string }) => {
-  if (!message) return <span className="italic text-muted-foreground">No message content</span>;
+const FormattedInquiryMessage = ({ message }: { message?: string | null }) => {
+  if (!message || typeof message !== 'string') return <span className="italic text-muted-foreground">No message content</span>;
 
   // 1. Partnership Application
   if (message.startsWith('[PARTNERSHIP APPLICATION:')) {
