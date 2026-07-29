@@ -1307,8 +1307,15 @@ SA Consultant & Staffing Team`
                     <TableBody>
                       {inquiries.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                            No inquiries yet.
+                          <TableCell colSpan={5} className="text-center py-12 text-muted-foreground space-y-3">
+                            <Mail size={40} className="mx-auto text-muted-foreground/40 mb-2" />
+                            <p className="font-bold text-foreground text-base">No client inquiries or messages yet.</p>
+                            <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                              Incoming contact submissions, partnership applications, and job inquiries will appear here automatically.
+                            </p>
+                            <Button size="sm" variant="outline" onClick={() => fetchAllData(true)} className="gap-2 mt-2 font-bold text-xs">
+                              <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} /> Refresh Messages
+                            </Button>
                           </TableCell>
                         </TableRow>
                       ) : (
