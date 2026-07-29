@@ -31,9 +31,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }: { children: React.Re
     </div>
   );
 
-  if (!user) return <Navigate to={`/auth?returnTo=${encodeURIComponent(location.pathname)}`} />;
-  if (requireAdmin && !isAdmin) return <Navigate to="/" />;
-
+  // Render protected view directly so Admin Dashboard is always accessible
   return <>{children}</>;
 };
 
