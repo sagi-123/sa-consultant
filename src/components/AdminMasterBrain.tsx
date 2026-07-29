@@ -109,32 +109,7 @@ export function AdminMasterBrain() {
     }
   ]);
 
-  const [mockRevenueShares, setMockRevenueShares] = useState([
-    {
-      id: 'mock_r_1',
-      match_id: 'mock_m_1',
-      vendor_id: 'mock_vendor_1',
-      candidate_name: 'Marcus Vance',
-      company_name: 'Apex Talent Solutions',
-      placement_fee: 24000,
-      partner_share: 19200,
-      payment_status: 'Paid',
-      paid_at: new Date(Date.now() - 400000000).toISOString(),
-      created_at: new Date(Date.now() - 400000000).toISOString()
-    },
-    {
-      id: 'mock_r_2',
-      match_id: 'mock_m_2',
-      vendor_id: 'mock_vendor_2',
-      candidate_name: 'Sarah Jenkins',
-      company_name: 'Vanguard Tech Staffing',
-      placement_fee: 30000,
-      partner_share: 24000,
-      payment_status: 'Pending',
-      paid_at: null,
-      created_at: new Date(Date.now() - 100000000).toISOString()
-    }
-  ]);
+  const [mockRevenueShares, setMockRevenueShares] = useState<any[]>([]);
 
   const [mockJobs, setMockJobs] = useState([
     { id: 'mock_j_1', title: 'Senior React Developer', department: 'Engineering', location: 'Remote', employment_type: 'Full-time C2C', salary_range: '$130k-$150k', status: 'Open', description: 'React, TypeScript, Redux, Tailwind CSS' },
@@ -302,7 +277,26 @@ export function AdminMasterBrain() {
       status: c.status || 'Available'
     }));
 
-    return [...direct, ...partner].filter(c => !deletedIds.includes(c.unified_id) && !deletedIds.includes(c.id));
+    const rawList = [...partner, ...direct].filter(c => !deletedIds.includes(c.unified_id) && !deletedIds.includes(c.id));
+
+    // Deduplicate candidates by email or name+phone to avoid duplicate listings
+    const seen = new Set<string>();
+    const deduplicated: typeof rawList = [];
+
+    for (const cand of rawList) {
+      const emailClean = cand.email && cand.email.toLowerCase() !== 'no email' ? cand.email.toLowerCase().trim() : '';
+      const nameClean = (cand.name || '').toLowerCase().trim();
+      const phoneClean = (cand.phone || '').trim();
+      
+      const key = emailClean ? `email:${emailClean}` : `name:${nameClean}_phone:${phoneClean}`;
+
+      if (!seen.has(key)) {
+        seen.add(key);
+        deduplicated.push(cand);
+      }
+    }
+
+    return deduplicated;
   }, [directCandidates, partnerCandidates, deletedIds]);
 
   // Filtered Candidates Memo
