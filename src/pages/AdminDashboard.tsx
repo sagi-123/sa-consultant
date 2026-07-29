@@ -91,6 +91,188 @@ type JobOpening = {
   created_at: string;
 };
 
+const FormattedInquiryMessage = ({ message }: { message: string }) => {
+  if (!message) return <span className="italic text-muted-foreground">No message content</span>;
+
+  // 1. Partnership Application
+  if (message.startsWith('[PARTNERSHIP APPLICATION:')) {
+    const headerMatch = message.match(/\[PARTNERSHIP APPLICATION:\s*(.*?)\]/i);
+    const programName = headerMatch ? headerMatch[1].trim() : 'Partnership';
+
+    const lines = message.split('\n');
+    const getBullet = (key: string) => {
+      const line = lines.find(l => l.includes(key));
+      return line ? line.split(key)[1]?.trim() : '';
+    };
+
+    const applicantName = getBullet('• Name:') || getBullet('Name:');
+    const company = getBullet('• Company / Agency:') || getBullet('Company / Agency:');
+    const email = getBullet('• Email:') || getBullet('Email:');
+    const phone = getBullet('• Phone:') || getBullet('Phone:');
+
+    const proposalHeaderIndex = lines.findIndex(l => l.includes('=== PARTNERSHIP PROPOSAL / GOALS ==='));
+    const proposal = proposalHeaderIndex !== -1 ? lines.slice(proposalHeaderIndex + 1).join('\n').trim() : '';
+
+    return (
+      <div className="space-y-2 bg-primary/5 p-3 rounded-xl border border-primary/20 text-left w-full">
+        <div className="flex items-center justify-between gap-2 flex-wrap border-b border-primary/10 pb-1.5">
+          <Badge className="gradient-bg text-white font-extrabold text-[10px] px-2.5 py-0.5 shadow-sm">
+            🤝 {programName} Application
+          </Badge>
+        </div>
+        <div className="grid grid-cols-1 gap-1 text-xs">
+          <div><span className="font-bold text-foreground">Applicant Name:</span> {applicantName || 'N/A'}</div>
+          {company && company !== 'N/A' && <div><span className="font-bold text-foreground">Company/Agency:</span> {company}</div>}
+          <div><span className="font-bold text-foreground">Email:</span> {email ? <a href={`mailto:${email}`} className="text-primary hover:underline font-semibold">{email}</a> : 'N/A'}</div>
+          <div><span className="font-bold text-foreground">Phone:</span> {phone ? <a href={`tel:${phone}`} className="text-primary hover:underline font-semibold">{phone}</a> : 'N/A'}</div>
+        </div>
+        {proposal && (
+          <div className="mt-1.5 bg-background/80 p-2.5 rounded-lg border border-primary/10 space-y-0.5">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-primary">Partnership Proposal / Goals:</div>
+            <p className="text-xs text-muted-foreground whitespace-pre-line leading-relaxed">{proposal}</p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // 2. Referral Program Submission
+  if (message.startsWith('[REFERRAL PROGRAM SUBMISSION]')) {
+    const lines = message.split('\n');
+    const getBullet = (key: string, startIdx = 0) => {
+      const line = lines.slice(startIdx).find(l => l.includes(key));
+      return line ? line.split(key)[1]?.trim() : '';
+    };
+
+    const referrerIdx = lines.findIndex(l => l.includes('=== REFERRER DETAILS ==='));
+    const candidateIdx = lines.findIndex(l => l.includes('=== REFERRAL CANDIDATE'));
+    const purposeIdx = lines.findIndex(l => l.includes('=== PURPOSE OF REFERRAL ==='));
+
+    const referrerName = getBullet('• Name:', referrerIdx >= 0 ? referrerIdx : 0);
+    const referrerEmail = getBullet('• Email:', referrerIdx >= 0 ? referrerIdx : 0);
+    const referrerPhone = getBullet('• Phone:', referrerIdx >= 0 ? referrerIdx : 0);
+
+    const candName = getBullet('• Name:', candidateIdx >= 0 ? candidateIdx : 0);
+    const candEmail = getBullet('• Email:', candidateIdx >= 0 ? candidateIdx : 0);
+    const candPhone = getBullet('• Phone:', candidateIdx >= 0 ? candidateIdx : 0);
+
+    let purposeText = '';
+    if (purposeIdx !== -1) {
+      const endIdx = candidateIdx > purposeIdx ? candidateIdx : lines.length;
+      purposeText = lines.slice(purposeIdx + 1, endIdx).join('\n').trim();
+    }
+
+    return (
+      <div className="space-y-2 bg-emerald-500/5 p-3 rounded-xl border border-emerald-500/20 text-left w-full">
+        <div className="flex items-center justify-between gap-2 border-b border-emerald-500/10 pb-1.5">
+          <Badge className="bg-emerald-600 text-white font-extrabold text-[10px] px-2.5 py-0.5 shadow-sm">
+            👥 Referral Program Submission
+          </Badge>
+        </div>
+        <div className="grid grid-cols-1 gap-2 text-xs">
+          <div className="space-y-1 bg-background/60 p-2 rounded-lg border border-emerald-500/10">
+            <div className="font-extrabold text-emerald-600 uppercase text-[9px] tracking-wider mb-0.5">Referrer Details</div>
+            <div><span className="font-bold text-foreground">Name:</span> {referrerName || 'N/A'}</div>
+            <div><span className="font-bold text-foreground">Email:</span> {referrerEmail || 'N/A'}</div>
+            <div><span className="font-bold text-foreground">Phone:</span> {referrerPhone || 'N/A'}</div>
+          </div>
+          <div className="space-y-1 bg-background/60 p-2 rounded-lg border border-emerald-500/10">
+            <div className="font-extrabold text-emerald-600 uppercase text-[9px] tracking-wider mb-0.5">Referred Candidate</div>
+            <div><span className="font-bold text-foreground">Name:</span> {candName || 'N/A'}</div>
+            <div><span className="font-bold text-foreground">Email:</span> {candEmail || 'N/A'}</div>
+            <div><span className="font-bold text-foreground">Phone:</span> {candPhone || 'N/A'}</div>
+          </div>
+        </div>
+        {purposeText && (
+          <div className="bg-background/80 p-2 rounded-lg border border-emerald-500/10 space-y-0.5">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-600">Purpose of Referral:</div>
+            <p className="text-xs text-muted-foreground whitespace-pre-line leading-relaxed">{purposeText}</p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // 3. Partner / Vendor Submission
+  if (message.startsWith('[PARTNER/VENDOR SUBMISSION]')) {
+    const lines = message.split('\n').filter(Boolean);
+    const get = (key: string) => lines.find(l => l.startsWith(key))?.replace(key, '').trim() ?? '';
+    const resumeUrl = get('Resume URL:') || get('Resume Link:');
+    return (
+      <div className="space-y-1.5 bg-accent/5 p-3 rounded-xl border border-accent/20 text-left w-full">
+        <Badge className="bg-accent text-white font-extrabold text-[10px] px-2.5 py-0.5 shadow-sm mb-1">
+          🏢 Talent Partner Submission
+        </Badge>
+        <div className="grid grid-cols-1 gap-1 text-xs">
+          <div><span className="font-bold text-foreground">Company:</span> {get('Vendor Company:')}</div>
+          <div><span className="font-bold text-foreground">Candidate:</span> {get('Candidate Name:')}</div>
+          <div><span className="font-bold text-foreground">Email:</span> {get('Candidate Email:')}</div>
+          <div><span className="font-bold text-foreground">Phone:</span> {get('Candidate Phone:')}</div>
+        </div>
+        {resumeUrl && (
+          <a href={resumeUrl} target="_blank" rel="noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-accent hover:bg-accent/80 px-3 py-1.5 rounded-lg transition-colors mt-1">
+            📄 View / Download Resume
+          </a>
+        )}
+      </div>
+    );
+  }
+
+  // 4. Job Application
+  if (message.startsWith('[JOB APPLICATION]')) {
+    const lines = message.split('\n').filter(Boolean);
+    const get = (key: string) => lines.find(l => l.startsWith(key))?.replace(key, '').trim() ?? '';
+    const resumeUrl = get('Resume Link:');
+    
+    const clHeader = 'Cover Letter:';
+    const coverLineIndex = lines.findIndex(l => l.startsWith(clHeader));
+    let coverLetterText = '';
+    if (coverLineIndex !== -1) {
+      const rawText = lines[coverLineIndex].replace(clHeader, '').trim();
+      const textAfter = [];
+      if (rawText) textAfter.push(rawText);
+      for (let i = coverLineIndex + 1; i < lines.length; i++) {
+        if (lines[i].startsWith('Resume Link:')) break;
+        textAfter.push(lines[i]);
+      }
+      coverLetterText = textAfter.join('\n');
+    }
+
+    return (
+      <div className="space-y-1.5 bg-blue-500/5 p-3 rounded-xl border border-blue-500/20 text-left w-full">
+        <Badge className="bg-blue-600 text-white font-extrabold text-[10px] px-2.5 py-0.5 shadow-sm mb-1">
+          💼 Direct Job Application
+        </Badge>
+        <div className="grid grid-cols-1 gap-1 text-xs">
+          <div><span className="font-bold text-foreground">Position:</span> {get('Applied Position:')} ({get('Department:')})</div>
+          <div><span className="font-bold text-foreground">Candidate:</span> {get('Candidate Name:')}</div>
+          <div><span className="font-bold text-foreground">Email:</span> {get('Candidate Email:')}</div>
+          <div><span className="font-bold text-foreground">Phone:</span> {get('Candidate Phone:')}</div>
+        </div>
+        {coverLetterText && (
+          <div className="text-xs text-muted-foreground bg-background/80 p-2 rounded-lg border border-blue-500/10 italic whitespace-pre-line mt-1">
+            "{coverLetterText}"
+          </div>
+        )}
+        {resumeUrl && resumeUrl !== 'No resume uploaded yet.' && (
+          <a href={resumeUrl} target="_blank" rel="noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-lg transition-colors mt-1">
+            📄 View / Download Resume
+          </a>
+        )}
+      </div>
+    );
+  }
+
+  // Standard message fallback
+  return (
+    <div className="bg-background/80 p-2.5 rounded-lg border border-primary/10 text-xs text-foreground leading-relaxed whitespace-pre-line text-left w-full">
+      {message}
+    </div>
+  );
+};
+
 const AdminDashboard = () => {
   useSEO({
     title: "Admin Control Center | SA Consultant & Staffing",
@@ -1180,68 +1362,8 @@ SA Consultant & Staffing Team`
                                 <span className="flex items-center gap-1"><Phone size={12} className="text-accent" /> {inquiry.phone}</span>
                               </div>
                             </TableCell>
-                            <TableCell className="min-w-[260px] text-sm">
-                              {inquiry.message?.startsWith('[PARTNER/VENDOR SUBMISSION]') ? (() => {
-                                const lines = inquiry.message.split('\n').filter(Boolean);
-                                const get = (key: string) => lines.find(l => l.startsWith(key))?.replace(key, '').trim() ?? '';
-                                const resumeUrl = get('Resume URL:') || get('Resume Link:');
-                                return (
-                                  <div className="space-y-1.5">
-                                    <div className="text-xs text-muted-foreground"><span className="font-bold text-foreground">Company:</span> {get('Vendor Company:')}</div>
-                                    <div className="text-xs text-muted-foreground"><span className="font-bold text-foreground">Candidate:</span> {get('Candidate Name:')}</div>
-                                    <div className="text-xs text-muted-foreground"><span className="font-bold text-foreground">Email:</span> {get('Candidate Email:')}</div>
-                                    <div className="text-xs text-muted-foreground"><span className="font-bold text-foreground">Phone:</span> {get('Candidate Phone:')}</div>
-                                    {resumeUrl && (
-                                      <a href={resumeUrl} target="_blank" rel="noreferrer"
-                                        className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-accent hover:bg-accent/80 px-3 py-1.5 rounded-lg transition-colors mt-1">
-                                        📄 View / Download Resume
-                                      </a>
-                                    )}
-                                  </div>
-                                );
-                              })() : inquiry.message?.startsWith('[JOB APPLICATION]') ? (() => {
-                                const lines = inquiry.message.split('\n').filter(Boolean);
-                                const get = (key: string) => lines.find(l => l.startsWith(key))?.replace(key, '').trim() ?? '';
-                                const resumeUrl = get('Resume Link:');
-                                
-                                // Extract Cover Letter safely
-                                const clHeader = 'Cover Letter:';
-                                const coverLineIndex = lines.findIndex(l => l.startsWith(clHeader));
-                                let coverLetterText = '';
-                                if (coverLineIndex !== -1) {
-                                  const rawText = lines[coverLineIndex].replace(clHeader, '').trim();
-                                  // If there are lines below that aren't "Resume Link:", they could be part of the cover letter
-                                  const textAfter = [];
-                                  if (rawText) textAfter.push(rawText);
-                                  for (let i = coverLineIndex + 1; i < lines.length; i++) {
-                                    if (lines[i].startsWith('Resume Link:')) break;
-                                    textAfter.push(lines[i]);
-                                  }
-                                  coverLetterText = textAfter.join('\n');
-                                }
-
-                                return (
-                                  <div className="space-y-1.5">
-                                    <div className="text-xs text-muted-foreground"><span className="font-bold text-foreground">Position:</span> {get('Applied Position:')} ({get('Department:')})</div>
-                                    <div className="text-xs text-muted-foreground"><span className="font-bold text-foreground">Candidate:</span> {get('Candidate Name:')}</div>
-                                    <div className="text-xs text-muted-foreground"><span className="font-bold text-foreground">Email:</span> {get('Candidate Email:')}</div>
-                                    <div className="text-xs text-muted-foreground"><span className="font-bold text-foreground">Phone:</span> {get('Candidate Phone:')}</div>
-                                    {coverLetterText && (
-                                      <div className="text-xs text-muted-foreground bg-secondary/30 p-2 rounded-lg mt-1 italic whitespace-pre-line border border-border/20">
-                                        "{coverLetterText}"
-                                      </div>
-                                    )}
-                                    {resumeUrl && resumeUrl !== 'No resume uploaded yet.' && (
-                                      <a href={resumeUrl} target="_blank" rel="noreferrer"
-                                        className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-blue-500 hover:bg-blue-600 px-3 py-1.5 rounded-lg transition-colors mt-1">
-                                        📄 View / Download Resume
-                                      </a>
-                                    )}
-                                  </div>
-                                );
-                              })() : (
-                                <span className="italic text-muted-foreground">"{inquiry.message}"</span>
-                              )}
+                            <TableCell className="min-w-[320px] text-sm">
+                              <FormattedInquiryMessage message={inquiry.message} />
                             </TableCell>
                             <TableCell className="text-right">
                               <Button 
@@ -1307,72 +1429,7 @@ SA Consultant & Staffing Team`
                           </div>
                         </div>
 
-                        {inquiry.message?.startsWith('[PARTNER/VENDOR SUBMISSION]') ? (() => {
-                          const lines = inquiry.message.split('\n').filter(Boolean);
-                          const get = (key: string) => lines.find(l => l.startsWith(key))?.replace(key, '').trim() ?? '';
-                          const resumeUrl = get('Resume Link:');
-                          return (
-                            <div className="bg-accent/10 border border-accent/20 rounded-xl p-4 space-y-2">
-                              <p className="text-xs font-black text-accent uppercase tracking-wider mb-3">Candidate Details</p>
-                              <div className="text-sm"><span className="font-bold">Company:</span> {get('Vendor Company:')}</div>
-                              <div className="text-sm"><span className="font-bold">Candidate:</span> {get('Candidate Name:')}</div>
-                              <div className="text-sm"><span className="font-bold">Email:</span> {get('Candidate Email:')}</div>
-                              <div className="text-sm"><span className="font-bold">Phone:</span> {get('Candidate Phone:')}</div>
-                              {resumeUrl && (
-                                <a href={resumeUrl} target="_blank" rel="noreferrer"
-                                  className="mt-3 flex items-center gap-2 text-sm font-bold text-white bg-accent hover:bg-accent/80 px-4 py-2 rounded-lg transition-colors w-fit">
-                                  📄 View / Download Resume
-                                </a>
-                              )}
-                            </div>
-                          );
-                        })() : inquiry.message?.startsWith('[JOB APPLICATION]') ? (() => {
-                          const lines = inquiry.message.split('\n').filter(Boolean);
-                          const get = (key: string) => lines.find(l => l.startsWith(key))?.replace(key, '').trim() ?? '';
-                          const resumeUrl = get('Resume Link:');
-                          
-                          // Extract Cover Letter safely
-                          const clHeader = 'Cover Letter:';
-                          const coverLineIndex = lines.findIndex(l => l.startsWith(clHeader));
-                          let coverLetterText = '';
-                          if (coverLineIndex !== -1) {
-                            const rawText = lines[coverLineIndex].replace(clHeader, '').trim();
-                            const textAfter = [];
-                            if (rawText) textAfter.push(rawText);
-                            for (let i = coverLineIndex + 1; i < lines.length; i++) {
-                              if (lines[i].startsWith('Resume Link:')) break;
-                              textAfter.push(lines[i]);
-                            }
-                            coverLetterText = textAfter.join('\n');
-                          }
-
-                          return (
-                            <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 space-y-2">
-                              <p className="text-xs font-black text-blue-500 uppercase tracking-wider mb-3">Application Details</p>
-                              <div className="text-sm"><span className="font-bold">Position:</span> {get('Applied Position:')} ({get('Department:')})</div>
-                              <div className="text-sm"><span className="font-bold">Candidate:</span> {get('Candidate Name:')}</div>
-                              <div className="text-sm"><span className="font-bold">Email:</span> {get('Candidate Email:')}</div>
-                              <div className="text-sm"><span className="font-bold">Phone:</span> {get('Candidate Phone:')}</div>
-                              {coverLetterText && (
-                                <div className="text-xs text-muted-foreground bg-secondary/30 p-2.5 rounded-lg mt-2 italic whitespace-pre-line border border-border/20">
-                                  "{coverLetterText}"
-                                </div>
-                              )}
-                              {resumeUrl && resumeUrl !== 'No resume uploaded yet.' && (
-                                <a href={resumeUrl} target="_blank" rel="noreferrer"
-                                  className="mt-3 flex items-center gap-2 text-sm font-bold text-white bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-lg transition-colors w-fit">
-                                  📄 View / Download Resume
-                                </a>
-                              )}
-                            </div>
-                          );
-                        })() : (
-                          <div className="bg-secondary/30 p-3 rounded-lg border border-border/50">
-                            <p className="text-sm italic text-foreground leading-relaxed">
-                              "{inquiry.message}"
-                            </p>
-                          </div>
-                        )}
+                        <FormattedInquiryMessage message={inquiry.message} />
                       </div>
                     ))
                   )}

@@ -17,6 +17,188 @@ import {
   FileText, User, Building2, MapPin, Award, Trash2
 } from 'lucide-react';
 
+const FormattedInquiryMessage = ({ message }: { message: string }) => {
+  if (!message) return <span className="italic text-muted-foreground">No message content</span>;
+
+  // 1. Partnership Application
+  if (message.startsWith('[PARTNERSHIP APPLICATION:')) {
+    const headerMatch = message.match(/\[PARTNERSHIP APPLICATION:\s*(.*?)\]/i);
+    const programName = headerMatch ? headerMatch[1].trim() : 'Partnership';
+
+    const lines = message.split('\n');
+    const getBullet = (key: string) => {
+      const line = lines.find(l => l.includes(key));
+      return line ? line.split(key)[1]?.trim() : '';
+    };
+
+    const applicantName = getBullet('• Name:') || getBullet('Name:');
+    const company = getBullet('• Company / Agency:') || getBullet('Company / Agency:');
+    const email = getBullet('• Email:') || getBullet('Email:');
+    const phone = getBullet('• Phone:') || getBullet('Phone:');
+
+    const proposalHeaderIndex = lines.findIndex(l => l.includes('=== PARTNERSHIP PROPOSAL / GOALS ==='));
+    const proposal = proposalHeaderIndex !== -1 ? lines.slice(proposalHeaderIndex + 1).join('\n').trim() : '';
+
+    return (
+      <div className="space-y-3 bg-primary/5 p-4 rounded-2xl border border-primary/20 text-left w-full">
+        <div className="flex items-center justify-between gap-2 flex-wrap border-b border-primary/10 pb-2">
+          <Badge className="gradient-bg text-white font-extrabold text-xs px-3 py-1 shadow-sm">
+            🤝 {programName} Application
+          </Badge>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+          <div><span className="font-bold text-foreground">Applicant Name:</span> {applicantName || 'N/A'}</div>
+          {company && company !== 'N/A' && <div><span className="font-bold text-foreground">Company/Agency:</span> {company}</div>}
+          <div><span className="font-bold text-foreground">Email:</span> {email ? <a href={`mailto:${email}`} className="text-primary hover:underline font-semibold">{email}</a> : 'N/A'}</div>
+          <div><span className="font-bold text-foreground">Phone:</span> {phone ? <a href={`tel:${phone}`} className="text-primary hover:underline font-semibold">{phone}</a> : 'N/A'}</div>
+        </div>
+        {proposal && (
+          <div className="mt-2 bg-background/80 p-3 rounded-xl border border-primary/10 space-y-1">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-primary">Partnership Proposal / Goals:</div>
+            <p className="text-xs text-muted-foreground whitespace-pre-line leading-relaxed">{proposal}</p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // 2. Referral Program Submission
+  if (message.startsWith('[REFERRAL PROGRAM SUBMISSION]')) {
+    const lines = message.split('\n');
+    const getBullet = (key: string, startIdx = 0) => {
+      const line = lines.slice(startIdx).find(l => l.includes(key));
+      return line ? line.split(key)[1]?.trim() : '';
+    };
+
+    const referrerIdx = lines.findIndex(l => l.includes('=== REFERRER DETAILS ==='));
+    const candidateIdx = lines.findIndex(l => l.includes('=== REFERRAL CANDIDATE'));
+    const purposeIdx = lines.findIndex(l => l.includes('=== PURPOSE OF REFERRAL ==='));
+
+    const referrerName = getBullet('• Name:', referrerIdx >= 0 ? referrerIdx : 0);
+    const referrerEmail = getBullet('• Email:', referrerIdx >= 0 ? referrerIdx : 0);
+    const referrerPhone = getBullet('• Phone:', referrerIdx >= 0 ? referrerIdx : 0);
+
+    const candName = getBullet('• Name:', candidateIdx >= 0 ? candidateIdx : 0);
+    const candEmail = getBullet('• Email:', candidateIdx >= 0 ? candidateIdx : 0);
+    const candPhone = getBullet('• Phone:', candidateIdx >= 0 ? candidateIdx : 0);
+
+    let purposeText = '';
+    if (purposeIdx !== -1) {
+      const endIdx = candidateIdx > purposeIdx ? candidateIdx : lines.length;
+      purposeText = lines.slice(purposeIdx + 1, endIdx).join('\n').trim();
+    }
+
+    return (
+      <div className="space-y-3 bg-emerald-500/5 p-4 rounded-2xl border border-emerald-500/20 text-left w-full">
+        <div className="flex items-center justify-between gap-2 border-b border-emerald-500/10 pb-2">
+          <Badge className="bg-emerald-600 text-white font-extrabold text-xs px-3 py-1 shadow-sm">
+            👥 Referral Program Submission
+          </Badge>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+          <div className="space-y-1 bg-background/60 p-3 rounded-xl border border-emerald-500/10">
+            <div className="font-extrabold text-emerald-600 uppercase text-[10px] tracking-wider mb-1">Referrer Details</div>
+            <div><span className="font-bold text-foreground">Name:</span> {referrerName || 'N/A'}</div>
+            <div><span className="font-bold text-foreground">Email:</span> {referrerEmail || 'N/A'}</div>
+            <div><span className="font-bold text-foreground">Phone:</span> {referrerPhone || 'N/A'}</div>
+          </div>
+          <div className="space-y-1 bg-background/60 p-3 rounded-xl border border-emerald-500/10">
+            <div className="font-extrabold text-emerald-600 uppercase text-[10px] tracking-wider mb-1">Referred Candidate</div>
+            <div><span className="font-bold text-foreground">Name:</span> {candName || 'N/A'}</div>
+            <div><span className="font-bold text-foreground">Email:</span> {candEmail || 'N/A'}</div>
+            <div><span className="font-bold text-foreground">Phone:</span> {candPhone || 'N/A'}</div>
+          </div>
+        </div>
+        {purposeText && (
+          <div className="bg-background/80 p-3 rounded-xl border border-emerald-500/10 space-y-1">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-600">Purpose of Referral:</div>
+            <p className="text-xs text-muted-foreground whitespace-pre-line leading-relaxed">{purposeText}</p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // 3. Partner / Vendor Submission
+  if (message.startsWith('[PARTNER/VENDOR SUBMISSION]')) {
+    const lines = message.split('\n').filter(Boolean);
+    const get = (key: string) => lines.find(l => l.startsWith(key))?.replace(key, '').trim() ?? '';
+    const resumeUrl = get('Resume URL:') || get('Resume Link:');
+    return (
+      <div className="space-y-2 bg-accent/5 p-4 rounded-2xl border border-accent/20 text-left w-full">
+        <Badge className="bg-accent text-white font-extrabold text-xs px-3 py-1 shadow-sm mb-1">
+          🏢 Talent Partner Submission
+        </Badge>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+          <div><span className="font-bold text-foreground">Company:</span> {get('Vendor Company:')}</div>
+          <div><span className="font-bold text-foreground">Candidate:</span> {get('Candidate Name:')}</div>
+          <div><span className="font-bold text-foreground">Email:</span> {get('Candidate Email:')}</div>
+          <div><span className="font-bold text-foreground">Phone:</span> {get('Candidate Phone:')}</div>
+        </div>
+        {resumeUrl && (
+          <a href={resumeUrl} target="_blank" rel="noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-accent hover:bg-accent/80 px-3 py-1.5 rounded-lg transition-colors mt-2">
+            📄 View / Download Resume
+          </a>
+        )}
+      </div>
+    );
+  }
+
+  // 4. Job Application
+  if (message.startsWith('[JOB APPLICATION]')) {
+    const lines = message.split('\n').filter(Boolean);
+    const get = (key: string) => lines.find(l => l.startsWith(key))?.replace(key, '').trim() ?? '';
+    const resumeUrl = get('Resume Link:');
+    
+    const clHeader = 'Cover Letter:';
+    const coverLineIndex = lines.findIndex(l => l.startsWith(clHeader));
+    let coverLetterText = '';
+    if (coverLineIndex !== -1) {
+      const rawText = lines[coverLineIndex].replace(clHeader, '').trim();
+      const textAfter = [];
+      if (rawText) textAfter.push(rawText);
+      for (let i = coverLineIndex + 1; i < lines.length; i++) {
+        if (lines[i].startsWith('Resume Link:')) break;
+        textAfter.push(lines[i]);
+      }
+      coverLetterText = textAfter.join('\n');
+    }
+
+    return (
+      <div className="space-y-2 bg-blue-500/5 p-4 rounded-2xl border border-blue-500/20 text-left w-full">
+        <Badge className="bg-blue-600 text-white font-extrabold text-xs px-3 py-1 shadow-sm mb-1">
+          💼 Direct Job Application
+        </Badge>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+          <div><span className="font-bold text-foreground">Position:</span> {get('Applied Position:')} ({get('Department:')})</div>
+          <div><span className="font-bold text-foreground">Candidate:</span> {get('Candidate Name:')}</div>
+          <div><span className="font-bold text-foreground">Email:</span> {get('Candidate Email:')}</div>
+          <div><span className="font-bold text-foreground">Phone:</span> {get('Candidate Phone:')}</div>
+        </div>
+        {coverLetterText && (
+          <div className="text-xs text-muted-foreground bg-background/80 p-3 rounded-xl border border-blue-500/10 italic whitespace-pre-line mt-2">
+            "{coverLetterText}"
+          </div>
+        )}
+        {resumeUrl && resumeUrl !== 'No resume uploaded yet.' && (
+          <a href={resumeUrl} target="_blank" rel="noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-lg transition-colors mt-2">
+            📄 View / Download Resume
+          </a>
+        )}
+      </div>
+    );
+  }
+
+  // Standard message fallback
+  return (
+    <div className="bg-background/80 p-3 rounded-xl border border-primary/10 text-xs text-foreground leading-relaxed whitespace-pre-line text-left w-full">
+      {message}
+    </div>
+  );
+};
+
 export function AdminMasterBrain() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -1801,7 +1983,7 @@ export function AdminMasterBrain() {
                           </Button>
                         </div>
                       </div>
-                      <p className="text-xs text-foreground leading-relaxed bg-background/80 p-3 rounded-xl border border-primary/10">{inq.message}</p>
+                      <FormattedInquiryMessage message={inq.message} />
                       <div className="text-[10px] text-muted-foreground pt-1">{new Date(inq.created_at).toLocaleString()}</div>
                     </div>
                   ))}
