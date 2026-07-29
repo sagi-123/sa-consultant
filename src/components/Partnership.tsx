@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Users2, Handshake, Rocket, HeartHandshake, ArrowRight, Loader2, CheckCircle2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/use-toast';
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 const programs = [
@@ -37,8 +36,14 @@ const Partnership = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [whatsappNumber, setWhatsappNumber] = useState('9384797751');
+  const [selectedProgram, setSelectedProgram] = useState('Referral Program');
   const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    company: '',
+    proposal: '',
+    // Referral specific fields
     referrerName: '',
     referrerEmail: '',
     referrerPhone: '',
@@ -48,22 +53,22 @@ const Partnership = () => {
     referredPhone: ''
   });
 
-  useEffect(() => {
-    const fetchWhatsapp = async () => {
-      const { data } = await supabase.from('settings').select('id, value').eq('id', 'whatsapp_number').single();
-      if (data?.value) setWhatsappNumber(data.value);
-    };
-    fetchWhatsapp();
-  }, []);
-
-
+  const openPartnershipModal = (programTitle: string) => {
+    setSelectedProgram(programTitle);
+    setIsOpen(true);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const messageBody = `[REFERRAL PROGRAM SUBMISSION]
+      const isReferral = selectedProgram === 'Referral Program';
+      const applicantName = isReferral ? formData.referrerName : formData.name;
+      const applicantEmail = isReferral ? formData.referrerEmail : formData.email;
+      const applicantPhone = isReferral ? formData.referrerPhone : formData.phone;
+
+      const messageBody = isReferral ? `[REFERRAL PROGRAM SUBMISSION]
 
 === REFERRER DETAILS ===
 • Name: ${formData.referrerName}
@@ -76,70 +81,74 @@ ${formData.purpose}
 === REFERRAL CANDIDATE (WHOM THEY REFER) ===
 • Name: ${formData.referredName}
 • Email: ${formData.referredEmail}
-• Phone: ${formData.referredPhone}`;
+• Phone: ${formData.referredPhone}` : `[PARTNERSHIP APPLICATION: ${selectedProgram.toUpperCase()}]
+
+=== APPLICANT DETAILS ===
+• Name: ${formData.name}
+• Company / Agency: ${formData.company || 'N/A'}
+• Email: ${formData.email}
+• Phone: ${formData.phone}
+
+=== PARTNERSHIP PROPOSAL / GOALS ===
+${formData.proposal}`;
 
       const { error } = await supabase
         .from('inquiries')
         .insert([
           {
-            name: formData.referrerName,
-            email: formData.referrerEmail,
-            phone: formData.referrerPhone,
+            name: applicantName,
+            email: applicantEmail,
+            phone: applicantPhone,
             message: messageBody
           }
         ]);
 
       if (error) throw error;
 
-      // Send email to both admins
+      // Send email notification to admins
       const adminRecipients = ['sajaruthmahjabeen@gmail.com', 'sagina111@gmail.com'];
       const emailHtml = `
         <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#f8fafc;color:#0f172a;border-radius:16px;overflow:hidden;border:1px solid #e2e8f0">
           <div style="background:linear-gradient(135deg,#4f46e5,#06b6d4);padding:32px;text-align:center">
-            <h1 style="margin:0;font-size:24px;color:#fff">🤝 New Referral Submission</h1>
+            <h1 style="margin:0;font-size:24px;color:#fff">🤝 New ${selectedProgram} Application</h1>
             <p style="margin:8px 0 0;color:#e0e7ff;font-size:14px">SA Consultant &amp; Staffing</p>
           </div>
           <div style="padding:32px">
             <div style="background:#fff;border-radius:12px;padding:20px;margin-bottom:16px;border:1px solid #e2e8f0">
-              <h3 style="margin:0 0 12px;color:#4f46e5;font-size:14px;text-transform:uppercase;letter-spacing:0.05em">Referrer (Who Referred)</h3>
-              <p style="margin:0 0 6px;font-size:14px"><strong>Name:</strong> ${formData.referrerName}</p>
-              <p style="margin:0 0 6px;font-size:14px"><strong>Email:</strong> <a href="mailto:${formData.referrerEmail}" style="color:#4f46e5;text-decoration:none">${formData.referrerEmail}</a></p>
-              <p style="margin:0;font-size:14px"><strong>Phone:</strong> <a href="tel:${formData.referrerPhone}" style="color:#4f46e5;text-decoration:none">${formData.referrerPhone}</a></p>
-            </div>
-            <div style="background:#fff;border-radius:12px;padding:20px;margin-bottom:16px;border-left:4px solid #06b6d4;border:1px solid #e2e8f0">
-              <h3 style="margin:0 0 12px;color:#0f172a;font-size:14px;text-transform:uppercase;letter-spacing:0.05em">Referred Person (Candidate)</h3>
-              <p style="margin:0 0 6px;font-size:14px"><strong>Name:</strong> ${formData.referredName}</p>
-              <p style="margin:0 0 6px;font-size:14px"><strong>Email:</strong> <a href="mailto:${formData.referredEmail}" style="color:#4f46e5;text-decoration:none">${formData.referredEmail}</a></p>
-              <p style="margin:0;font-size:14px"><strong>Phone:</strong> <a href="tel:${formData.referredPhone}" style="color:#4f46e5;text-decoration:none">${formData.referredPhone}</a></p>
+              <h3 style="margin:0 0 12px;color:#4f46e5;font-size:14px;text-transform:uppercase;letter-spacing:0.05em">Applicant Information</h3>
+              <p style="margin:0 0 6px;font-size:14px"><strong>Name:</strong> ${applicantName}</p>
+              ${!isReferral && formData.company ? `<p style="margin:0 0 6px;font-size:14px"><strong>Company:</strong> ${formData.company}</p>` : ''}
+              <p style="margin:0 0 6px;font-size:14px"><strong>Email:</strong> <a href="mailto:${applicantEmail}" style="color:#4f46e5;text-decoration:none">${applicantEmail}</a></p>
+              <p style="margin:0;font-size:14px"><strong>Phone:</strong> <a href="tel:${applicantPhone}" style="color:#4f46e5;text-decoration:none">${applicantPhone}</a></p>
             </div>
             <div style="background:#fff;border-radius:12px;padding:20px;margin-bottom:24px;border:1px solid #e2e8f0">
-              <h3 style="margin:0 0 8px;color:#0f172a;font-size:14px;text-transform:uppercase;letter-spacing:0.05em">Purpose of Referral</h3>
-              <p style="margin:0;font-size:14px;line-height:1.6;color:#334155">${formData.purpose}</p>
+              <h3 style="margin:0 0 8px;color:#0f172a;font-size:14px;text-transform:uppercase;letter-spacing:0.05em">Application Details</h3>
+              <pre style="margin:0;font-size:13px;line-height:1.6;color:#334155;white-space:pre-wrap;font-family:sans-serif">${messageBody}</pre>
             </div>
-            <p style="color:#64748b;font-size:12px;text-align:center;margin:0">This is an automated notification from SA Consultant & Staffing Website.</p>
+            <p style="color:#64748b;font-size:12px;text-align:center;margin:0">Automated notification from SA Consultant & Staffing Website.</p>
           </div>
         </div>`;
 
       supabase.functions.invoke('send-email', {
         body: {
           recipients: adminRecipients,
-          subject: `🤝 New Referral Submitted by ${formData.referrerName}`,
-          text: `New Referral Program Submission:\n\nReferrer:\nName: ${formData.referrerName}\nEmail: ${formData.referrerEmail}\nPhone: ${formData.referrerPhone}\n\nReferred Person:\nName: ${formData.referredName}\nEmail: ${formData.referredEmail}\nPhone: ${formData.referredPhone}\n\nPurpose:\n${formData.purpose}`,
+          subject: `🤝 New ${selectedProgram} Application from ${applicantName}`,
+          text: messageBody,
           html: emailHtml
         }
-      }).catch(err => console.error('Error sending referral email:', err));
+      }).catch(err => console.error('Error sending partnership email:', err));
 
       setIsSubmitted(true);
       toast({
-        title: "Referral Submitted!",
-        description: "Thank you for recommending us. We'll be in touch soon.",
+        title: "Application Submitted!",
+        description: `Thank you for applying for our ${selectedProgram}. We will contact you shortly.`,
       });
     } catch (err: any) {
-      console.error('Error submitting referral:', err);
+      console.error('Error submitting application:', err);
       toast({
         variant: 'destructive',
         title: 'Submission Failed',
-        description: 'There was an error submitting your referral. Please try again.',
+        description: 'There was an error submitting your application. Please try again.',
       });
     } finally {
       setLoading(false);
@@ -148,17 +157,12 @@ ${formData.purpose}
 
   const handleClose = () => {
     setIsOpen(false);
-    // Reset state after transition finishes
     setTimeout(() => {
       setIsSubmitted(false);
       setFormData({
-        referrerName: '',
-        referrerEmail: '',
-        referrerPhone: '',
-        purpose: '',
-        referredName: '',
-        referredEmail: '',
-        referredPhone: ''
+        name: '', email: '', phone: '', company: '', proposal: '',
+        referrerName: '', referrerEmail: '', referrerPhone: '', purpose: '',
+        referredName: '', referredEmail: '', referredPhone: ''
       });
     }, 300);
   };
@@ -181,17 +185,12 @@ ${formData.purpose}
 
         <div className="grid md:grid-cols-2 gap-8 mb-16">
           {programs.map((program, i) => {
-            const isReferral = program.title === 'Referral Program';
             return (
               <div 
                 key={program.title}
-                className={`scroll-reveal glass p-8 md:p-10 rounded-[2.5rem] hover-lift hover-glow transition-all duration-500 border border-border group relative overflow-hidden ${isReferral ? 'cursor-pointer hover:border-primary/45' : ''}`}
+                className="scroll-reveal glass p-8 md:p-10 rounded-[2.5rem] hover-lift hover-glow transition-all duration-500 border border-border group relative overflow-hidden cursor-pointer hover:border-primary/45"
                 style={{ transitionDelay: `${i * 150}ms` }}
-                onClick={() => {
-                  if (isReferral) {
-                    setIsOpen(true);
-                  }
-                }}
+                onClick={() => openPartnershipModal(program.title)}
               >
                 {/* Subtle accent line */}
                 <div className="absolute top-0 left-0 right-0 h-1 gradient-bg opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -216,11 +215,9 @@ ${formData.purpose}
                     <div>
                       <h3 className="text-2xl font-display font-black mb-4 group-hover:text-primary transition-colors flex items-center gap-2">
                         {program.title}
-                        {isReferral && (
-                          <span className="text-[9px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/25 font-bold uppercase tracking-widest group-hover:animate-pulse">
-                            Apply Now
-                          </span>
-                        )}
+                        <span className="text-[9px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/25 font-bold uppercase tracking-widest group-hover:animate-pulse">
+                          Apply Now
+                        </span>
                       </h3>
                       <p className="text-muted-foreground font-medium mb-6 leading-relaxed text-sm md:text-base">
                         {program.description}
@@ -235,11 +232,9 @@ ${formData.purpose}
                       ))}
                     </div>
 
-                    {isReferral && (
-                      <div className="mt-6 flex items-center gap-2 text-primary font-black text-xs md:text-sm group-hover:translate-x-1 transition-transform">
-                        Open Referral Form <ArrowRight size={16} />
-                      </div>
-                    )}
+                    <div className="mt-6 flex items-center gap-2 text-primary font-black text-xs md:text-sm group-hover:translate-x-1 transition-transform">
+                      Apply for {program.title} <ArrowRight size={16} />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -257,17 +252,17 @@ ${formData.purpose}
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center relative z-10">
-            <a 
-              href="#contact" 
-              className="px-10 py-5 gradient-bg rounded-2xl font-black text-white hover-lift hover-glow transition-all duration-300 flex items-center justify-center gap-2"
+            <button 
+              onClick={() => openPartnershipModal('Strategic Alliances')}
+              className="px-10 py-5 gradient-bg rounded-2xl font-black text-white hover-lift hover-glow transition-all duration-300 flex items-center justify-center gap-2 shadow-lg cursor-pointer"
             >
               Apply to Partner <ArrowRight size={20} />
-            </a>
+            </button>
           </div>
         </div>
       </div>
 
-      {/* REFERRAL FORM DIALOG */}
+      {/* PARTNERSHIP FORM DIALOG */}
       <Dialog open={isOpen} onOpenChange={(open) => { if (!open) handleClose(); }}>
         <DialogContent className="glass-strong border border-primary/20 max-w-3xl max-h-[90vh] overflow-y-auto p-6 md:p-8 pt-10 md:pt-12 rounded-3xl shadow-2xl">
           {!isSubmitted ? (
@@ -275,73 +270,161 @@ ${formData.purpose}
               <DialogHeader className="mb-6 pr-8">
                 <DialogTitle className="text-xl md:text-2xl font-display font-black tracking-tight flex items-center gap-2">
                   <Users2 className="text-primary" size={24} />
-                  SA Consultant <span className="gradient-text">Referral Program</span>
+                  SA Consultant <span className="gradient-text">Partnership Application</span>
                 </DialogTitle>
                 <DialogDescription className="text-muted-foreground text-sm mt-2 leading-relaxed">
-                  Recommend a client to SA Consultant and earn rewards for every successful partnership!
+                  Join our network of strategic partners and explore new growth opportunities together.
                 </DialogDescription>
               </DialogHeader>
 
               <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid md:grid-cols-2 gap-6">
-                  {/* Section 1: Referrer Information */}
-                  <div className="p-5 rounded-2xl bg-secondary/35 border border-primary/5 space-y-4">
-                    <h4 className="text-xs font-black text-primary uppercase tracking-wider flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full gradient-bg" />
-                      Your Details (Referrer)
-                    </h4>
-                    <div className="space-y-4">
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-black uppercase tracking-wider text-muted-foreground">Name *</label>
-                        <input
-                          type="text"
-                          required
-                          value={formData.referrerName}
-                          onChange={(e) => setFormData({ ...formData, referrerName: e.target.value })}
-                          placeholder="John Doe"
-                          className="w-full px-4 py-3 rounded-xl bg-background/50 border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-foreground text-sm font-medium"
-                        />
+                {/* Program Selector */}
+                <div className="space-y-2">
+                  <label className="text-xs font-black uppercase tracking-wider text-primary flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full gradient-bg" />
+                    Select Partnership Program *
+                  </label>
+                  <select
+                    value={selectedProgram}
+                    onChange={(e) => setSelectedProgram(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl bg-background/80 border border-primary/30 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-foreground font-bold text-sm"
+                  >
+                    {programs.map(p => (
+                      <option key={p.title} value={p.title} className="bg-background text-foreground font-medium">
+                        {p.title} — {p.description.substring(0, 60)}...
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {selectedProgram === 'Referral Program' ? (
+                  <div className="space-y-6">
+                    <div className="grid md:grid-cols-2 gap-6">
+                      {/* Referrer Details */}
+                      <div className="p-5 rounded-2xl bg-secondary/35 border border-primary/5 space-y-4">
+                        <h4 className="text-xs font-black text-primary uppercase tracking-wider flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full gradient-bg" />
+                          Your Details (Referrer)
+                        </h4>
+                        <div className="space-y-4">
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-black uppercase tracking-wider text-muted-foreground">Name *</label>
+                            <input
+                              type="text"
+                              required
+                              value={formData.referrerName}
+                              onChange={(e) => setFormData({ ...formData, referrerName: e.target.value })}
+                              placeholder="John Doe"
+                              className="w-full px-4 py-3 rounded-xl bg-background/50 border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-foreground text-sm font-medium"
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-black uppercase tracking-wider text-muted-foreground">Email *</label>
+                            <input
+                              type="email"
+                              required
+                              value={formData.referrerEmail}
+                              onChange={(e) => setFormData({ ...formData, referrerEmail: e.target.value })}
+                              placeholder="john@example.com"
+                              className="w-full px-4 py-3 rounded-xl bg-background/50 border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-foreground text-sm font-medium"
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-black uppercase tracking-wider text-muted-foreground">Phone Number *</label>
+                            <input
+                              type="tel"
+                              required
+                              value={formData.referrerPhone}
+                              onChange={(e) => setFormData({ ...formData, referrerPhone: e.target.value })}
+                              placeholder="+1 (123) 456-7890"
+                              className="w-full px-4 py-3 rounded-xl bg-background/50 border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-foreground text-sm font-medium"
+                            />
+                          </div>
+                        </div>
                       </div>
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-black uppercase tracking-wider text-muted-foreground">Email *</label>
-                        <input
-                          type="email"
-                          required
-                          value={formData.referrerEmail}
-                          onChange={(e) => setFormData({ ...formData, referrerEmail: e.target.value })}
-                          placeholder="john@example.com"
-                          className="w-full px-4 py-3 rounded-xl bg-background/50 border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-foreground text-sm font-medium"
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-black uppercase tracking-wider text-muted-foreground">Phone Number *</label>
-                        <input
-                          type="tel"
-                          required
-                          value={formData.referrerPhone}
-                          onChange={(e) => setFormData({ ...formData, referrerPhone: e.target.value })}
-                          placeholder="+1 (123) 456-7890"
-                          className="w-full px-4 py-3 rounded-xl bg-background/50 border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-foreground text-sm font-medium"
-                        />
+
+                      {/* Referred Candidate Details */}
+                      <div className="p-5 rounded-2xl bg-secondary/35 border border-primary/5 space-y-4">
+                        <h4 className="text-xs font-black text-accent uppercase tracking-wider flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-accent" />
+                          Referred Candidate Details
+                        </h4>
+                        <div className="space-y-4">
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-black uppercase tracking-wider text-muted-foreground">Full Name *</label>
+                            <input
+                              type="text"
+                              required
+                              value={formData.referredName}
+                              onChange={(e) => setFormData({ ...formData, referredName: e.target.value })}
+                              placeholder="Jane Smith"
+                              className="w-full px-4 py-3 rounded-xl bg-background/50 border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-foreground text-sm font-medium"
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-black uppercase tracking-wider text-muted-foreground">Email Address *</label>
+                            <input
+                              type="email"
+                              required
+                              value={formData.referredEmail}
+                              onChange={(e) => setFormData({ ...formData, referredEmail: e.target.value })}
+                              placeholder="jane@example.com"
+                              className="w-full px-4 py-3 rounded-xl bg-background/50 border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-foreground text-sm font-medium"
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-black uppercase tracking-wider text-muted-foreground">Phone Number *</label>
+                            <input
+                              type="tel"
+                              required
+                              value={formData.referredPhone}
+                              onChange={(e) => setFormData({ ...formData, referredPhone: e.target.value })}
+                              placeholder="+1 (987) 654-3210"
+                              className="w-full px-4 py-3 rounded-xl bg-background/50 border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-foreground text-sm font-medium"
+                            />
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Section 2: Referral Candidate Details */}
-                  <div className="p-5 rounded-2xl bg-secondary/35 border border-primary/5 space-y-4">
-                    <h4 className="text-xs font-black text-accent uppercase tracking-wider flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-accent" />
-                      Candidate Details
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-black uppercase tracking-wider text-muted-foreground">Purpose of Referral / Referral Details *</label>
+                      <textarea
+                        required
+                        rows={3}
+                        value={formData.purpose}
+                        onChange={(e) => setFormData({ ...formData, purpose: e.target.value })}
+                        placeholder="Describe their project scope, staffing or consulting needs..."
+                        className="w-full px-4 py-3 rounded-xl bg-background/50 border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all resize-none text-foreground text-sm font-medium"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4 p-5 rounded-2xl bg-secondary/35 border border-primary/5">
+                    <h4 className="text-xs font-black text-primary uppercase tracking-wider flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full gradient-bg" />
+                      Partner Application Details
                     </h4>
-                    <div className="space-y-4">
+                    <div className="grid md:grid-cols-2 gap-4">
                       <div className="space-y-1.5">
                         <label className="text-xs font-black uppercase tracking-wider text-muted-foreground">Full Name *</label>
                         <input
                           type="text"
                           required
-                          value={formData.referredName}
-                          onChange={(e) => setFormData({ ...formData, referredName: e.target.value })}
-                          placeholder="Jane Smith"
+                          value={formData.name}
+                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                          placeholder="John Smith"
+                          className="w-full px-4 py-3 rounded-xl bg-background/50 border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-foreground text-sm font-medium"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-black uppercase tracking-wider text-muted-foreground">Company / Organization *</label>
+                        <input
+                          type="text"
+                          required
+                          value={formData.company}
+                          onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                          placeholder="Acme Solutions LLC"
                           className="w-full px-4 py-3 rounded-xl bg-background/50 border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-foreground text-sm font-medium"
                         />
                       </div>
@@ -350,9 +433,9 @@ ${formData.purpose}
                         <input
                           type="email"
                           required
-                          value={formData.referredEmail}
-                          onChange={(e) => setFormData({ ...formData, referredEmail: e.target.value })}
-                          placeholder="jane@example.com"
+                          value={formData.email}
+                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          placeholder="john@acme.com"
                           className="w-full px-4 py-3 rounded-xl bg-background/50 border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-foreground text-sm font-medium"
                         />
                       </div>
@@ -361,42 +444,40 @@ ${formData.purpose}
                         <input
                           type="tel"
                           required
-                          value={formData.referredPhone}
-                          onChange={(e) => setFormData({ ...formData, referredPhone: e.target.value })}
-                          placeholder="+1 (987) 654-3210"
+                          value={formData.phone}
+                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                          placeholder="+1 (555) 000-0000"
                           className="w-full px-4 py-3 rounded-xl bg-background/50 border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-foreground text-sm font-medium"
                         />
                       </div>
                     </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-black uppercase tracking-wider text-muted-foreground">Partnership Goals & Proposal *</label>
+                      <textarea
+                        required
+                        rows={3}
+                        value={formData.proposal}
+                        onChange={(e) => setFormData({ ...formData, proposal: e.target.value })}
+                        placeholder="Tell us about your organization and how you'd like to partner with SA Consultant..."
+                        className="w-full px-4 py-3 rounded-xl bg-background/50 border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all resize-none text-foreground text-sm font-medium"
+                      />
+                    </div>
                   </div>
-                </div>
-
-                {/* Section 3: Referral Purpose */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-black uppercase tracking-wider text-muted-foreground">For which purpose do you refer them? *</label>
-                  <textarea
-                    required
-                    rows={2}
-                    value={formData.purpose}
-                    onChange={(e) => setFormData({ ...formData, purpose: e.target.value })}
-                    placeholder="Describe their project scope, staffing or consulting needs..."
-                    className="w-full px-4 py-3 rounded-xl bg-background/50 border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all resize-none text-foreground text-sm font-medium"
-                  />
-                </div>
+                )}
 
                 {/* Submit Button */}
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full gradient-bg py-4 rounded-2xl font-black text-white hover-lift hover-glow flex items-center justify-center gap-2 transition-all duration-300 disabled:opacity-75 disabled:cursor-not-allowed shadow-lg shadow-primary/20 text-base"
+                  className="w-full gradient-bg py-4 rounded-2xl font-black text-white hover-lift hover-glow flex items-center justify-center gap-2 transition-all duration-300 disabled:opacity-75 disabled:cursor-not-allowed shadow-lg shadow-primary/20 text-base cursor-pointer"
                 >
                   {loading ? (
                     <>
-                      Submitting Referral... <Loader2 className="animate-spin" size={20} />
+                      Submitting Application... <Loader2 className="animate-spin" size={20} />
                     </>
                   ) : (
                     <>
-                      Submit Referral <ArrowRight size={20} />
+                      Submit {selectedProgram} Application <ArrowRight size={20} />
                     </>
                   )}
                 </button>
@@ -408,17 +489,17 @@ ${formData.purpose}
                 <CheckCircle2 size={48} className="animate-bounce" style={{ animationDuration: '2s' }} />
               </div>
               <div className="space-y-3">
-                <h3 className="text-3xl font-display font-black gradient-text">Referral Received!</h3>
+                <h3 className="text-3xl font-display font-black gradient-text">Application Received!</h3>
                 <p className="text-foreground font-black text-xl max-w-md mx-auto leading-relaxed">
                   SA Consultant members will reach you soon!
                 </p>
                 <p className="text-muted-foreground text-sm font-medium max-w-sm mx-auto leading-relaxed">
-                  We appreciate your recommendation. An advisor will contact both you and the referred candidate shortly to coordinate and explain our competitive rewards.
+                  Thank you for applying to partner with us under the <strong>{selectedProgram}</strong>. Our partnership team will review your application and get back to you shortly.
                 </p>
               </div>
               <button
                 onClick={handleClose}
-                className="px-8 py-3.5 bg-foreground text-background font-black rounded-xl hover-lift transition-all duration-300 text-sm shadow-md"
+                className="px-8 py-3.5 bg-foreground text-background font-black rounded-xl hover-lift transition-all duration-300 text-sm shadow-md cursor-pointer"
               >
                 Back to Partnerships
               </button>
@@ -431,4 +512,3 @@ ${formData.purpose}
 };
 
 export default Partnership;
-
