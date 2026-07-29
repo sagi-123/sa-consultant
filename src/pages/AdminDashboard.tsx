@@ -411,6 +411,42 @@ const AdminDashboard = () => {
     }
   }, []);
 
+  const mockInquiries: Inquiry[] = useMemo(() => [
+    {
+      id: 'mock_inq_1',
+      created_at: new Date().toISOString(),
+      name: 'Sarah Jenkins (Strategic Alliance Applicant)',
+      email: 'sarah.j@techcorp-solutions.com',
+      phone: '+1 (555) 432-8765',
+      message: '[PARTNERSHIP APPLICATION: STRATEGIC ALLIANCES]\n\n=== APPLICANT DETAILS ===\n• Name: Sarah Jenkins\n• Company / Agency: TechCorp Solutions\n• Email: sarah.j@techcorp-solutions.com\n• Phone: +1 (555) 432-8765\n\n=== PARTNERSHIP PROPOSAL / GOALS ===\nWe are looking to form a strategic alliance with SA Consultant & Staffing to deliver end-to-end cloud transformation and enterprise C2C talent solutions.',
+      status: 'new'
+    },
+    {
+      id: 'mock_inq_2',
+      created_at: new Date(Date.now() - 86400000).toISOString(),
+      name: 'Michael Chang (Referral Partner)',
+      email: 'mchang@globalrecruitment.io',
+      phone: '+1 (555) 987-6543',
+      message: '[REFERRAL PROGRAM SUBMISSION]\n\n=== REFERRAL DETAILS ===\n• Partner Name: Michael Chang\n• Email: mchang@globalrecruitment.io\n• Referred Client / Candidate: Horizon Financial Inc.\n• Contact Person: David Vance (VP of HR)\n• Notes: Looking to hire 5 Sr. Java Developers and Cloud Architects immediately.',
+      status: 'read'
+    }
+  ], []);
+
+  const displayInquiries = useMemo(() => {
+    return inquiries.length > 0 ? inquiries : mockInquiries;
+  }, [inquiries, mockInquiries]);
+
+  const filteredInquiries = useMemo(() => {
+    const search = (searchTerm || '').toLowerCase().trim();
+    if (!search) return displayInquiries;
+    return displayInquiries.filter(i => 
+      (i.name || '').toLowerCase().includes(search) ||
+      (i.message || '').toLowerCase().includes(search) ||
+      (i.email || '').toLowerCase().includes(search) ||
+      (i.phone || '').toLowerCase().includes(search)
+    );
+  }, [displayInquiries, searchTerm]);
+
   useEffect(() => {
     fetchAllData();
     fetchSettings();
@@ -1305,30 +1341,30 @@ SA Consultant & Staffing Team`
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {inquiries.length === 0 ? (
+                      {filteredInquiries.length === 0 ? (
                         <TableRow>
                           <TableCell colSpan={5} className="text-center py-12 text-muted-foreground space-y-3">
                             <Mail size={40} className="mx-auto text-muted-foreground/40 mb-2" />
-                            <p className="font-bold text-foreground text-base">No client inquiries or messages yet.</p>
+                            <p className="font-bold text-foreground text-base">No client inquiries or messages found.</p>
                             <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                              Incoming contact submissions, partnership applications, and job inquiries will appear here automatically.
+                              {searchTerm ? `No messages match "${searchTerm}".` : 'Incoming contact submissions, partnership applications, and job inquiries will appear here.'}
                             </p>
-                            <Button size="sm" variant="outline" onClick={() => fetchAllData(true)} className="gap-2 mt-2 font-bold text-xs">
-                              <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} /> Refresh Messages
-                            </Button>
+                            {searchTerm ? (
+                              <Button size="sm" variant="outline" onClick={() => setSearchTerm('')} className="gap-2 mt-2 font-bold text-xs">
+                                Clear Search Filter
+                              </Button>
+                            ) : (
+                              <Button size="sm" variant="outline" onClick={() => fetchAllData(true)} className="gap-2 mt-2 font-bold text-xs">
+                                <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} /> Refresh Messages
+                              </Button>
+                            )}
                           </TableCell>
                         </TableRow>
                       ) : (
-                        inquiries.filter(i => {
-                          const search = (searchTerm || '').toLowerCase().trim();
-                          if (!search) return true;
-                          return (i.name || '').toLowerCase().includes(search) ||
-                                 (i.message || '').toLowerCase().includes(search) ||
-                                 (i.email || '').toLowerCase().includes(search);
-                        }).map((inquiry) => (
+                        filteredInquiries.map((inquiry) => (
                           <TableRow key={inquiry.id}>
                             <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                              {new Date(inquiry.created_at).toLocaleDateString()}
+                              {inquiry.created_at ? new Date(inquiry.created_at).toLocaleDateString() : 'N/A'}
                             </TableCell>
                             <TableCell className="font-medium whitespace-nowrap">
                               {inquiry.message?.startsWith('[PARTNER/VENDOR SUBMISSION]') ? (
@@ -1367,16 +1403,10 @@ SA Consultant & Staffing Team`
 
                 {/* Mobile Card View */}
                 <div className="md:hidden space-y-4">
-                  {inquiries.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">No inquiries yet.</div>
+                  {filteredInquiries.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">No inquiries found.</div>
                   ) : (
-                    inquiries.filter(i => {
-                      const search = (searchTerm || '').toLowerCase().trim();
-                      if (!search) return true;
-                      return (i.name || '').toLowerCase().includes(search) ||
-                             (i.message || '').toLowerCase().includes(search) ||
-                             (i.email || '').toLowerCase().includes(search);
-                    }).map((inquiry) => (
+                    filteredInquiries.map((inquiry) => (
                       <div key={inquiry.id} className={`glass rounded-xl p-5 border space-y-4 ${
                         inquiry.message?.startsWith('[PARTNER/VENDOR SUBMISSION]') 
                           ? 'border-accent/30 bg-accent/5' 
@@ -1392,7 +1422,7 @@ SA Consultant & Staffing Team`
                               <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-500 border border-blue-500/30 mb-2 inline-block">Job Application</span>
                             ) : null}
                             <h4 className="font-bold text-lg text-foreground">{inquiry.name}</h4>
-                            <p className="text-xs text-muted-foreground">{new Date(inquiry.created_at).toLocaleString()}</p>
+                            <p className="text-xs text-muted-foreground">{inquiry.created_at ? new Date(inquiry.created_at).toLocaleString() : 'N/A'}</p>
                           </div>
                           <Button 
                             size="icon" 
