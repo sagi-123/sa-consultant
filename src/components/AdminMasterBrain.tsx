@@ -31,95 +31,10 @@ export function AdminMasterBrain() {
   const [partnerMessages, setPartnerMessages] = useState<any[]>([]);
   const [inquiries, setInquiries] = useState<any[]>([]);
 
-  // Interactive Mock Fallback State (Allows full editing, toggling, and deleting if live database is empty)
-  const [mockMatches, setMockMatches] = useState([
-    {
-      id: 'mock_m_1',
-      candidate_id: 'mock_c_1',
-      job_id: 'mock_j_1',
-      vendor_id: 'mock_vendor_1',
-      company_name: 'Apex Talent Solutions',
-      job_role: 'Senior React Developer',
-      match_percentage: 96,
-      salary_fit: 'Optimal Fit ($75/hr)',
-      location_fit: '100% Remote Fit',
-      partner_approved: false,
-      status: 'Pending Partner Approval',
-      interview_schedule: '',
-      interview_feedback: '',
-      offered_salary: '',
-      joining_date: '',
-      created_at: new Date(Date.now() - 3600000).toISOString(),
-      vendor_candidates: {
-        name: 'Marcus Vance',
-        email: 'marcus.v@apextalent.com',
-        phone: '+1 (555) 234-5678',
-        skills: ['React', 'TypeScript', 'Next.js'],
-        resume_url: '#'
-      }
-    },
-    {
-      id: 'mock_m_2',
-      candidate_id: 'mock_c_2',
-      job_id: 'mock_j_2',
-      vendor_id: 'mock_vendor_2',
-      company_name: 'Vanguard Tech Staffing',
-      job_role: 'Lead Cloud Architect (AWS)',
-      match_percentage: 94,
-      salary_fit: 'Strong Fit ($90/hr)',
-      location_fit: 'Hybrid New York Fit',
-      partner_approved: true,
-      status: 'Interview',
-      interview_schedule: 'Tomorrow at 2:00 PM EST (Zoom)',
-      interview_feedback: 'Cleared Round 1 technical screening with flying colors.',
-      offered_salary: '',
-      joining_date: '',
-      created_at: new Date(Date.now() - 86400000).toISOString(),
-      vendor_candidates: {
-        name: 'Sarah Jenkins',
-        email: 's.jenkins@vanguardtech.com',
-        phone: '+1 (555) 876-5432',
-        skills: ['AWS', 'Kubernetes', 'Terraform', 'Python'],
-        resume_url: '#'
-      }
-    },
-    {
-      id: 'mock_m_3',
-      candidate_id: null,
-      job_id: 'mock_j_3',
-      vendor_id: null,
-      company_name: 'Direct Candidate Submission',
-      job_role: 'Staff UI/UX Engineer',
-      match_percentage: 98,
-      salary_fit: 'Perfect Fit ($150k)',
-      location_fit: JSON.stringify({
-        location: 'Remote Fit',
-        cand_name: 'David Chen',
-        cand_email: 'david.chen@design.io',
-        cand_phone: '+1 (555) 345-6789',
-        source: 'Direct Candidate'
-      }),
-      partner_approved: true,
-      status: 'Offered',
-      interview_schedule: 'Completed Oct 15',
-      interview_feedback: 'Exceptional portfolio and system design skills. Offer extended.',
-      offered_salary: '$155,000 + Equity',
-      joining_date: 'Nov 15, 2026',
-      created_at: new Date(Date.now() - 172800000).toISOString()
-    }
-  ]);
-
+  const [mockMatches, setMockMatches] = useState<any[]>([]);
   const [mockRevenueShares, setMockRevenueShares] = useState<any[]>([]);
-
-  const [mockJobs, setMockJobs] = useState([
-    { id: 'mock_j_1', title: 'Senior React Developer', department: 'Engineering', location: 'Remote', employment_type: 'Full-time C2C', salary_range: '$130k-$150k', status: 'Open', description: 'React, TypeScript, Redux, Tailwind CSS' },
-    { id: 'mock_j_2', title: 'Lead Cloud Architect (AWS)', department: 'Infrastructure', location: 'New York, NY', employment_type: 'Contract C2C', salary_range: '$90-$110/hr', status: 'Open', description: 'AWS, Kubernetes, Terraform, CI/CD pipelines' }
-  ]);
-
-  const [mockInquiries, setMockInquiries] = useState([
-    { id: 'mock_inq_1', name: 'TechCorp HR', email: 'hr@techcorp.com', phone: '+1 (555) 987-6543', status: 'new', message: 'We are looking to hire 3 Senior React consultants immediately. Please share profiles.', created_at: new Date(Date.now() - 5000000).toISOString() },
-    { id: 'mock_inq_2', name: 'Elena Rostova', email: 'elena@rostova.dev', phone: '+1 (555) 123-4567', status: 'read', message: 'Submitted my resume via Candidate Portal. Available for C2C or W2.', created_at: new Date(Date.now() - 20000000).toISOString() }
-  ]);
+  const [mockJobs, setMockJobs] = useState<any[]>([]);
+  const [mockInquiries, setMockInquiries] = useState<any[]>([]);
 
   // Deleted IDs tracking for instant UI removal of both real and mock items
   const [deletedIds, setDeletedIds] = useState<string[]>([]);
@@ -443,11 +358,6 @@ export function AdminMasterBrain() {
         partnersMap.set(m.vendor_id, m.company_name || 'Talent Partner');
       }
     });
-
-    if (partnersMap.size === 0) {
-      partnersMap.set('mock_vendor_1', 'Apex Talent Solutions (C2C Partner)');
-      partnersMap.set('mock_vendor_2', 'Vanguard Tech Staffing');
-    }
 
     return Array.from(partnersMap.entries()).map(([id, name]) => ({ id, name }));
   }, [partnerCandidates, partnerMessages, displayMatches, deletedIds]);
@@ -1872,13 +1782,15 @@ export function AdminMasterBrain() {
                 <div className="glass p-6 rounded-3xl border border-primary/15 text-center space-y-2 bg-background/50">
                   <div className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Placement Conversion Rate</div>
                   <div className="text-4xl font-extrabold gradient-text">
-                    {displayMatches.length > 0 ? Math.round((displayMatches.filter(m => m.status === 'Placed' || m.status === 'Offered').length / displayMatches.length) * 100) : 66}%
+                    {displayMatches.length > 0 ? Math.round((displayMatches.filter(m => m.status === 'Placed' || m.status === 'Offered').length / displayMatches.length) * 100) : 0}%
                   </div>
                   <p className="text-[11px] text-muted-foreground">Submissions to Placed ratio</p>
                 </div>
                 <div className="glass p-6 rounded-3xl border border-primary/15 text-center space-y-2 bg-background/50">
                   <div className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Avg Time to Place</div>
-                  <div className="text-4xl font-extrabold text-purple-500">14 Days</div>
+                  <div className="text-4xl font-extrabold text-purple-500">
+                    {displayMatches.filter(m => m.status === 'Placed' || m.status === 'Offered').length > 0 ? '7-14 Days' : '0 Days'}
+                  </div>
                   <p className="text-[11px] text-muted-foreground">From submission to confirmed joining</p>
                 </div>
                 <div className="glass p-6 rounded-3xl border border-primary/15 text-center space-y-2 bg-background/50">
@@ -1900,37 +1812,43 @@ export function AdminMasterBrain() {
                 <h3 className="font-bold text-foreground text-lg flex items-center gap-2">
                   <Award className="text-primary" size={20} /> Top Performing Talent Partners
                 </h3>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="border-b border-primary/10 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                        <th className="py-3 px-4">Talent Partner Agency</th>
-                        <th className="py-3 px-4">Candidates Supplied</th>
-                        <th className="py-3 px-4">Active Submissions</th>
-                        <th className="py-3 px-4">Confirmed Placements</th>
-                        <th className="py-3 px-4 font-bold text-primary">Commission Generated</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-primary/10 text-sm">
-                      {uniquePartnersList.map((p, index) => {
-                        const suppCount = partnerCandidates.filter(c => c.vendor_id === p.id && !deletedIds.includes(`part_${c.id}`)).length || (index === 0 ? 5 : 3);
-                        const subCount = displayMatches.filter(m => m.vendor_id === p.id || (p.id.startsWith('mock_') && m.company_name.includes(p.name.split(' ')[0]))).length || 2;
-                        const placeCount = displayMatches.filter(m => (m.vendor_id === p.id || (p.id.startsWith('mock_') && m.company_name.includes(p.name.split(' ')[0]))) && (m.status === 'Placed' || m.status === 'Offered')).length || 1;
-                        const commTotal = displayRevenueShares.filter(r => r.vendor_id === p.id || (p.id.startsWith('mock_') && r.company_name.includes(p.name.split(' ')[0]))).reduce((acc, r) => acc + Number(r.partner_share), 0) || (index === 0 ? 19200 : 24000);
+                {uniquePartnersList.length === 0 ? (
+                  <div className="p-8 text-center glass rounded-2xl border border-primary/10 text-muted-foreground font-semibold">
+                    No active talent partners found.
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="border-b border-primary/10 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                          <th className="py-3 px-4">Talent Partner Agency</th>
+                          <th className="py-3 px-4">Candidates Supplied</th>
+                          <th className="py-3 px-4">Active Submissions</th>
+                          <th className="py-3 px-4">Confirmed Placements</th>
+                          <th className="py-3 px-4 font-bold text-primary">Commission Generated</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-primary/10 text-sm">
+                        {uniquePartnersList.map(p => {
+                          const suppCount = partnerCandidates.filter(c => c.vendor_id === p.id && !deletedIds.includes(`part_${c.id}`)).length;
+                          const subCount = displayMatches.filter(m => m.vendor_id === p.id).length;
+                          const placeCount = displayMatches.filter(m => m.vendor_id === p.id && (m.status === 'Placed' || m.status === 'Offered')).length;
+                          const commTotal = displayRevenueShares.filter(r => r.vendor_id === p.id).reduce((acc, r) => acc + Number(r.partner_share), 0);
 
-                        return (
-                          <tr key={p.id} className="hover:bg-primary/5 transition-colors">
-                            <td className="py-4 px-4 font-extrabold text-foreground">{p.name}</td>
-                            <td className="py-4 px-4 font-semibold text-muted-foreground">{suppCount} Candidates</td>
-                            <td className="py-4 px-4 font-semibold text-foreground">{subCount} Submissions</td>
-                            <td className="py-4 px-4 font-bold text-green-600">{placeCount} Placed</td>
-                            <td className="py-4 px-4 font-extrabold text-primary text-base">${commTotal.toLocaleString()}</td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
+                          return (
+                            <tr key={p.id} className="hover:bg-primary/5 transition-colors">
+                              <td className="py-4 px-4 font-extrabold text-foreground">{p.name}</td>
+                              <td className="py-4 px-4 font-semibold text-muted-foreground">{suppCount} Candidates</td>
+                              <td className="py-4 px-4 font-semibold text-foreground">{subCount} Submissions</td>
+                              <td className="py-4 px-4 font-bold text-green-600">{placeCount} Placed</td>
+                              <td className="py-4 px-4 font-extrabold text-primary text-base">${commTotal.toLocaleString()}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
