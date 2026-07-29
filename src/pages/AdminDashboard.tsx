@@ -418,19 +418,27 @@ const AdminDashboard = () => {
 
   // Auto-mark all 'new' inquiries as 'read' when Messages tab is opened
   const markInquiriesAsRead = useCallback(async () => {
-    const unread = inquiries.filter(i => i.status === 'new');
-    if (unread.length === 0) return;
-    const ids = unread.map(i => i.id);
-    await supabase.from('inquiries').update({ status: 'read' } as any).in('id', ids);
-    setInquiries(prev => prev.map(i => i.status === 'new' ? { ...i, status: 'read' } : i));
+    try {
+      const unread = inquiries.filter(i => i && i.status === 'new');
+      if (unread.length === 0) return;
+      const ids = unread.map(i => i.id);
+      await supabase.from('inquiries').update({ status: 'read' } as any).in('id', ids);
+      setInquiries(prev => prev.map(i => i && i.status === 'new' ? { ...i, status: 'read' } : i));
+    } catch (e) {
+      console.error('Error marking inquiries as read:', e);
+    }
   }, [inquiries]);
 
   const markCandidatesAsScreened = useCallback(async () => {
-    const newOnes = candidates.filter(c => c.status === 'New');
-    if (newOnes.length === 0) return;
-    const ids = newOnes.map(c => c.id);
-    await supabase.from('candidates').update({ status: 'Screened' } as any).in('id', ids);
-    setCandidates(prev => prev.map(c => c.status === 'New' ? { ...c, status: 'Screened' as any } : c));
+    try {
+      const newOnes = candidates.filter(c => c && c.status === 'New');
+      if (newOnes.length === 0) return;
+      const ids = newOnes.map(c => c.id);
+      await supabase.from('candidates').update({ status: 'Screened' } as any).in('id', ids);
+      setCandidates(prev => prev.map(c => c && c.status === 'New' ? { ...c, status: 'Screened' as any } : c));
+    } catch (e) {
+      console.error('Error marking candidates as screened:', e);
+    }
   }, [candidates]);
 
   const handleTabChange = (tab: string) => {
@@ -438,20 +446,15 @@ const AdminDashboard = () => {
     // Reset searches when switching tabs so they don't bleed between sections
     setSearchTerm('');
     setBookingSearchTerm('');
-    if (tab === 'inquiries') {
-      markInquiriesAsRead();
-    }
-    if (tab === 'candidates') {
-      markCandidatesAsScreened();
-    }
-    // Debug: log appointments when switching to appointments tab
-    if (tab === 'appointments') {
-      console.log('[Admin] Appointments loaded:', appointments.length, 'rows');
-      if (appointments.length > 0) {
-        console.log('[Admin] Sample slot_1:', appointments[0].slot_1);
-        console.log('[Admin] Sample slot_2:', appointments[0].slot_2);
-        console.log('[Admin] Sample slot_3:', appointments[0].slot_3);
+    try {
+      if (tab === 'inquiries') {
+        markInquiriesAsRead();
       }
+      if (tab === 'appointments') {
+        console.log('[Admin] Appointments loaded:', appointments.length, 'rows');
+      }
+    } catch (e) {
+      console.error('Error handling tab change:', e);
     }
   };
 
