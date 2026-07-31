@@ -253,8 +253,28 @@ const Auth = () => {
 
   useEffect(() => {
     if (!authLoading && user && view !== 'update_password') {
-      if (returnTo) navigate(returnTo);
-      else navigate(isAdmin ? '/admin' : '/dashboard');
+      if (returnTo) {
+        navigate(returnTo);
+      } else if (isAdmin) {
+        navigate('/admin');
+      } else {
+        // Smart route business accounts directly to Business Dashboard
+        supabase
+          .from('business_profiles')
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle()
+          .then(({ data }) => {
+            if (data) {
+              navigate('/business/dashboard');
+            } else {
+              const saved = localStorage.getItem('sa_business_profile');
+              if (saved) navigate('/business/dashboard');
+              else navigate('/dashboard');
+            }
+          })
+          .catch(() => navigate('/dashboard'));
+      }
     }
   }, [user, isAdmin, navigate, view, authLoading, returnTo]);
 

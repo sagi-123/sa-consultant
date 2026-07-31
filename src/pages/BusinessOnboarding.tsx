@@ -59,22 +59,51 @@ export default function BusinessOnboarding() {
   // On mount: check if user already has a saved profile → skip onboarding
   useEffect(() => {
     const checkExistingProfile = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { setChecking(false); return; }
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
 
-      const { data } = await supabase
-        .from("business_profiles")
-        .select("*")
-        .eq("user_id", user.id)
-        .maybeSingle();
+        // 1. Check Supabase business_profiles table
+        if (user) {
+          const { data } = await supabase
+            .from("business_profiles")
+            .select("*")
+            .eq("user_id", user.id)
+            .maybeSingle();
 
-      if (data) {
-        // Profile already exists — go straight to dashboard
-        navigate("/business/dashboard", { replace: true });
-      } else {
+          if (data && data.business_name) {
+            const profileObj = {
+              businessName: data.business_name,
+              location: data.location || "",
+              businessType: data.business_type || "",
+              hiringGroup: data.hiring_group || "",
+              businessSize: data.business_size || "",
+              hiringFrequency: data.hiring_frequency || "",
+              logo: data.logo_url || null,
+            };
+            localStorage.setItem("sa_business_profile", JSON.stringify(profileObj));
+            navigate("/business/dashboard", { replace: true });
+            return;
+          }
+        }
+
+        // 2. Check localStorage fallback
+        const saved = localStorage.getItem("sa_business_profile");
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            if (parsed && parsed.businessName) {
+              navigate("/business/dashboard", { replace: true });
+              return;
+            }
+          } catch {}
+        }
+      } catch (err) {
+        console.error("Profile check error:", err);
+      } finally {
         setChecking(false);
       }
     };
+
     checkExistingProfile();
   }, [navigate]);
 
