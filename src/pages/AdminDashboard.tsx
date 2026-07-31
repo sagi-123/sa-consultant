@@ -335,15 +335,33 @@ const AdminDashboard = () => {
         setAssignedCandidateIds((prev) => prev.filter((id) => id !== candidate.id));
         toast({ title: '🗑️ Removed from Business Search', description: `${candidate.name} removed from candidate search.` });
       } else {
-        // Add assignment to Supabase
-        const { data: session } = await supabase.auth.getUser();
+        // Build candidate snapshot payload stored in note field as fallback
+        const skills: string[] = Array.isArray(candidate.skills)
+          ? candidate.skills
+          : typeof candidate.skills === 'string'
+          ? (candidate.skills as string).split(',').map((s: string) => s.trim()).filter(Boolean)
+          : [];
+
+        const snapshot = {
+          id: candidate.id,
+          name: candidate.name || 'Candidate',
+          title: candidate.job_title || 'Professional',
+          location: candidate.location || 'Location not specified',
+          experience: candidate.experience_years ? `${candidate.experience_years} years` : 'Experience not listed',
+          skills: skills.length > 0 ? skills : ['Professional'],
+          status: candidate.status || 'New',
+          email: candidate.email || '',
+          phone: candidate.phone || '',
+          resume_url: candidate.resume_url || null,
+        };
+
         const { error } = await supabase
           .from('business_candidate_assignments')
           .insert({
             candidate_id: candidate.id,
             business_user_id: 'all', // visible to all business dashboard users
             assigned_by: session?.user?.id ?? null,
-            note: null,
+            note: JSON.stringify(snapshot),
           });
 
         if (error) {

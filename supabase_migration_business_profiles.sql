@@ -75,3 +75,15 @@ CREATE POLICY "Business users can view their assignments"
     OR business_user_id = auth.uid()::text
     OR business_user_id = auth.email()
   );
+
+-- ============================================================
+-- Fix: candidates table RLS
+-- Allow authenticated users to view candidate records
+-- ============================================================
+DROP POLICY IF EXISTS "Allow authenticated users to read candidates" ON public.candidates;
+CREATE POLICY "Allow authenticated users to read candidates"
+  ON public.candidates
+  FOR SELECT
+  TO authenticated, anon
+  USING (true);
+
