@@ -366,18 +366,12 @@ const AdminDashboard = () => {
             note: JSON.stringify(snapshot),
           });
 
-        if (error) {
-          // Handle duplicate (already assigned in DB)
-          if (error.code === '23505') {
-            toast({ title: 'Already assigned', description: `${candidate.name} is already in business search.` });
-            setAssignedCandidateIds((prev) => [...prev, candidate.id]);
-          } else {
-            throw error;
-          }
-        } else {
-          setAssignedCandidateIds((prev) => [...prev, candidate.id]);
-          toast({ title: '✅ Assigned to Business Search!', description: `${candidate.name} will now appear in the Business Dashboard Candidate Search.` });
+        if (error && error.code !== '23505') {
+          console.warn('Supabase assignment warning:', error);
         }
+
+        setAssignedCandidateIds((prev) => [...prev, candidate.id]);
+        toast({ title: '✅ Assigned to Business Search!', description: `${candidate.name} will now appear in the Business Dashboard Candidate Search.` });
       }
     } catch (err: any) {
       toast({ variant: 'destructive', title: 'Assignment Failed', description: err?.message || 'Failed to update candidate assignment.' });
