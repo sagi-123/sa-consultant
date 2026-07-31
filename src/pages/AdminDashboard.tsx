@@ -307,6 +307,66 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
 
+  // Supabase-backed candidate assignment state
+  const [assignedCandidateIds, setAssignedCandidateIds] = useState<string[]>([]);
+  const [assigningCandidateId, setAssigningCandidateId] = useState<string | null>(null);
+
+  // Fetch which candidates are already assigned from Supabase on load
+  const fetchAssignedCandidates = useCallback(async () => {
+    const { data } = await supabase
+      .from('business_candidate_assignments')
+      .select('candidate_id');
+    if (data) setAssignedCandidateIds(data.map((r: any) => r.candidate_id));
+  }, []);
+
+  const handleAssignToBusinessSearch = async (candidate: Candidate) => {
+    setAssigningCandidateId(candidate.id);
+    try {
+      const isAssigned = assignedCandidateIds.includes(candidate.id);
+
+      if (isAssigned) {
+        // Remove assignment from Supabase
+        const { error } = await supabase
+          .from('business_candidate_assignments')
+          .delete()
+          .eq('candidate_id', candidate.id);
+
+        if (error) throw error;
+        setAssignedCandidateIds((prev) => prev.filter((id) => id !== candidate.id));
+        toast({ title: '🗑️ Removed from Business Search', description: `${candidate.name} removed from candidate search.` });
+      } else {
+        // Add assignment to Supabase
+        const { data: session } = await supabase.auth.getUser();
+        const { error } = await supabase
+          .from('business_candidate_assignments')
+          .insert({
+            candidate_id: candidate.id,
+            business_user_id: 'all', // visible to all business dashboard users
+            assigned_by: session?.user?.id ?? null,
+            note: null,
+          });
+
+        if (error) {
+          // Handle duplicate (already assigned in DB)
+          if (error.code === '23505') {
+            toast({ title: 'Already assigned', description: `${candidate.name} is already in business search.` });
+            setAssignedCandidateIds((prev) => [...prev, candidate.id]);
+          } else {
+            throw error;
+          }
+        } else {
+          setAssignedCandidateIds((prev) => [...prev, candidate.id]);
+          toast({ title: '✅ Assigned to Business Search!', description: `${candidate.name} will now appear in the Business Dashboard Candidate Search.` });
+        }
+      }
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: 'Assignment Failed', description: err?.message || 'Failed to update candidate assignment.' });
+    } finally {
+      setAssigningCandidateId(null);
+    }
+  };
+
+
   // Webinars State
   const [webinars, setWebinars] = useState<Webinar[]>([]);
   const [webinarRegistrations, setWebinarRegistrations] = useState<WebinarRegistration[]>([]);
@@ -373,6 +433,8 @@ const AdminDashboard = () => {
       setJobs((jobsResponse.data as JobOpening[]) || []);
       setWebinars((webinarsResponse.data as Webinar[]) || []);
       setWebinarRegistrations((webinarRegsResponse.data as WebinarRegistration[]) || []);
+      // Load which candidates are already assigned to business search
+      await fetchAssignedCandidates();
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -1316,6 +1378,26 @@ SA Consultant & Staffing Team`
                               }`}>
                                 {candidate.status}
                               </span>
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Button
+                                size="sm"
+                                disabled={assigningCandidateId === candidate.id}
+                                className={`h-8 text-xs font-bold gap-1.5 ${
+                                  assignedCandidateIds.includes(candidate.id)
+                                    ? 'bg-green-600 hover:bg-red-600 text-white border-none'
+                                    : 'gradient-bg text-white border-none'
+                                }`}
+                                onClick={() => handleAssignToBusinessSearch(candidate)}
+                              >
+                                {assigningCandidateId === candidate.id ? (
+                                  <><Loader2 size={12} className="animate-spin" /> Saving...</>
+                                ) : assignedCandidateIds.includes(candidate.id) ? (
+                                  <><CheckCircle size={12} /> Assigned</>
+                                ) : (
+                                  <><Plus size={12} /> Assign to Business</>
+                                )}
+                              </Button>
                             </TableCell>
                             <TableCell className="text-right space-x-2">
                               <Button variant="outline" size="sm" className="h-8" onClick={() => {

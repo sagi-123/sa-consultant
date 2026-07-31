@@ -17,6 +17,9 @@ import AboutPage from "./pages/AboutPage.tsx";
 import ContactPage from "./pages/ContactPage.tsx";
 import PartnershipPage from "./pages/PartnershipPage.tsx";
 import BookingPage from "./pages/BookingPage.tsx";
+import PricingPage from "./pages/PricingPage.tsx";
+import BusinessOnboarding from "./pages/BusinessOnboarding.tsx";
+import BusinessDashboard from "./pages/BusinessDashboard.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -84,6 +87,9 @@ const App = () => (
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/partnership" element={<PartnershipPage />} />
               <Route path="/book" element={<BookingPage />} />
+              <Route path="/pricing" element={<PricingPage />} />
+              <Route path="/business/onboarding" element={<BusinessOnboarding />} />
+              <Route path="/business/dashboard" element={<BusinessDashboard />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
