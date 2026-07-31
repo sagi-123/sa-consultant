@@ -39,9 +39,15 @@ import {
   Eye,
   Download,
   ExternalLink,
+  Pencil,
+  Upload,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+
 
 export default function BusinessDashboard() {
   const navigate = useNavigate();
@@ -59,6 +65,87 @@ export default function BusinessDashboard() {
     businessName: "",
     location: "",
   });
+
+  // Edit Profile Modal State
+  const [editProfileOpen, setEditProfileOpen] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [editBusinessName, setEditBusinessName] = useState("");
+  const [editLocation, setEditLocation] = useState("");
+  const [editLogo, setEditLogo] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (profile) {
+      setEditBusinessName(profile.businessName || "");
+      setEditLocation(profile.location || "");
+      setEditLogo(profile.logo || null);
+    }
+  }, [profile]);
+
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editBusinessName.trim()) {
+      toast.error("Please enter a valid business name.");
+      return;
+    }
+    setSavingProfile(true);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Session expired. Please sign in again.");
+        return;
+      }
+
+      const { error } = await supabase
+        .from("business_profiles")
+        .upsert({
+          user_id: user.id,
+          business_name: editBusinessName,
+          location: editLocation,
+          logo_url: editLogo || null,
+        }, { onConflict: "user_id" });
+
+      if (error) throw error;
+
+      const updatedObj = {
+        businessName: editBusinessName,
+        location: editLocation,
+        logo: editLogo,
+      };
+
+      localStorage.setItem(`sa_business_profile_${user.id}`, JSON.stringify(updatedObj));
+
+      setProfile({
+        businessName: editBusinessName,
+        location: editLocation,
+        logo: editLogo || undefined,
+      });
+
+      toast.success("Business profile updated successfully!");
+      setEditProfileOpen(false);
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to update business profile.");
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
+  const handleLogoUploadInModal = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error("File size exceeds 10MB limit.");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setEditLogo(reader.result as string);
+        toast.success("Logo uploaded!");
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
 
   // State Management
   const [jobs, setJobs] = useState<any[]>([]);
@@ -307,9 +394,18 @@ export default function BusinessDashboard() {
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h4 className="font-bold text-foreground text-sm truncate">
-                    {profile.businessName || "Business Account"}
-                  </h4>
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-bold text-foreground text-sm truncate">
+                      {profile.businessName || "Business Account"}
+                    </h4>
+                    <button
+                      onClick={() => setEditProfileOpen(true)}
+                      className="text-xs text-primary hover:text-primary/80 p-1 rounded-md hover:bg-primary/10 transition-colors shrink-0"
+                      title="Edit Business Profile"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                   <p className="text-xs text-muted-foreground flex items-center gap-1 truncate mt-0.5">
                     <MapPin className="w-3 h-3 text-primary flex-shrink-0" />{" "}
                     {profile.location || "Location not set"}
@@ -1267,6 +1363,78 @@ export default function BusinessDashboard() {
           )}
         </SheetContent>
       </Sheet>
+
+      {/* Edit Business Profile Modal */}
+      <Dialog open={editProfileOpen} onOpenChange={setEditProfileOpen}>
+        <DialogContent className="sm:max-w-md rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold flex items-center gap-2">
+              <Building2 className="w-5 h-5 text-primary" /> Edit Business Profile
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              Update your business name, location, and logo displayed across your portal.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleSaveProfile} className="space-y-4 py-2">
+            {/* Logo */}
+            <div>
+              <Label className="text-xs font-bold block mb-1">Business Logo</Label>
+              <div className="flex items-center gap-3">
+                <div className="w-14 h-14 rounded-xl border border-dashed border-border bg-muted/30 flex items-center justify-center overflow-hidden">
+                  {editLogo ? (
+                    <img src={editLogo} alt="Logo" className="w-full h-full object-cover" />
+                  ) : (
+                    <Building2 className="w-6 h-6 text-muted-foreground" />
+                  )}
+                </div>
+                <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-secondary text-secondary-foreground font-semibold text-xs border border-border hover:bg-secondary/80">
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>Change Logo</span>
+                  <input type="file" accept="image/*" onChange={handleLogoUploadInModal} className="hidden" />
+                </label>
+              </div>
+            </div>
+
+            {/* Business Name */}
+            <div>
+              <Label htmlFor="editName" className="text-xs font-bold block mb-1">Business Name</Label>
+              <Input
+                id="editName"
+                value={editBusinessName}
+                onChange={(e) => setEditBusinessName(e.target.value)}
+                placeholder="Enter business name"
+                className="h-10 text-sm font-medium rounded-xl"
+                required
+              />
+            </div>
+
+            {/* Location */}
+            <div>
+              <Label htmlFor="editLoc" className="text-xs font-bold block mb-1">Business Location</Label>
+              <div className="relative">
+                <MapPin className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="editLoc"
+                  value={editLocation}
+                  onChange={(e) => setEditLocation(e.target.value)}
+                  placeholder="e.g. Seattle, WA or New York, NY"
+                  className="h-10 pl-9 text-sm font-medium rounded-xl"
+                />
+              </div>
+            </div>
+
+            <DialogFooter className="pt-2 flex gap-2 justify-end">
+              <Button type="button" variant="outline" size="sm" onClick={() => setEditProfileOpen(false)} className="rounded-xl">
+                Cancel
+              </Button>
+              <Button type="submit" size="sm" disabled={savingProfile} className="rounded-xl font-bold gradient-bg text-white gap-1.5">
+                {savingProfile ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Saving...</> : "Save Profile"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
