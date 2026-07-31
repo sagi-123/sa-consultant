@@ -27,7 +27,7 @@ export const PRICING_PLANS: PlanTier[] = [
     monthlyPrice: 0,
     yearlyPrice: 0,
     ctaText: "Get Started Free",
-    ctaHref: "/business/onboarding",
+    ctaHref: "/auth?mode=signup&returnTo=%2Fbusiness%2Fonboarding",
     perfectFor: "Perfect for testing demand before committing",
     featuresHeader: "What you get",
     features: [
@@ -46,7 +46,7 @@ export const PRICING_PLANS: PlanTier[] = [
     yearlyPrice: 31,
     popular: true,
     ctaText: "Start 14-Day Free Trial",
-    ctaHref: "/business/onboarding?plan=starter",
+    ctaHref: "/auth?mode=signup&returnTo=%2Fbusiness%2Fonboarding%3Fplan%3Dstarter",
     perfectFor: "Start hiring seriously with real candidate access",
     featuresHeader: "Everything in Free, plus",
     features: [

@@ -34,9 +34,19 @@ const ProtectedRoute = ({ children, requireAdmin = false }: { children: React.Re
     </div>
   );
 
-  // Render protected view directly so Admin Dashboard is always accessible
+  // Not logged in → redirect to sign-in, preserving the intended destination
+  if (!user) {
+    return <Navigate to={`/auth?returnTo=${encodeURIComponent(location.pathname + location.search)}`} replace />;
+  }
+
+  // Logged in but not admin, and admin required → redirect home
+  if (requireAdmin && !isAdmin) {
+    return <Navigate to="/" replace />;
+  }
+
   return <>{children}</>;
 };
+
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -88,8 +98,22 @@ const App = () => (
               <Route path="/partnership" element={<PartnershipPage />} />
               <Route path="/book" element={<BookingPage />} />
               <Route path="/pricing" element={<PricingPage />} />
-              <Route path="/business/onboarding" element={<BusinessOnboarding />} />
-              <Route path="/business/dashboard" element={<BusinessDashboard />} />
+              <Route
+                path="/business/onboarding"
+                element={
+                  <ProtectedRoute>
+                    <BusinessOnboarding />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/business/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <BusinessDashboard />
+                  </ProtectedRoute>
+                }
+              />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

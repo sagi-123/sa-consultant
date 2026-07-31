@@ -89,7 +89,7 @@ const PricingPage: React.FC = () => {
                   size="lg"
                   className="bg-white text-primary hover:bg-white/90 font-extrabold px-8 h-12 rounded-xl shadow-md border-0"
                 >
-                  <a href="/auth?mode=signup&plan=free" className="flex items-center gap-2 text-primary font-extrabold">
+                  <a href="/auth?mode=signup&returnTo=%2Fbusiness%2Fonboarding" className="flex items-center gap-2 text-primary font-extrabold">
                     <span>Post a Free Job</span> <ArrowRight className="w-4 h-4 text-primary" />
                   </a>
                 </Button>
