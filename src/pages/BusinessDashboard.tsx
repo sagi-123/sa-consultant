@@ -184,16 +184,25 @@ export default function BusinessDashboard() {
     toast.success("Candidate bookmark updated!");
   };
 
-  const filteredCandidates = searchCandidatesList.filter((c) => {
+  const filteredCandidates = (searchCandidatesList || []).filter((c) => {
+    if (!c) return false;
+    const name = (c.name || "Candidate").toString();
+    const title = (c.title || c.job_title || "Professional").toString();
+    const location = (c.location || "").toString();
+    const skills = Array.isArray(c.skills) ? c.skills : [];
+
     const matchesKeyword =
       !searchKeyword ||
-      c.name.toLowerCase().includes(searchKeyword.toLowerCase()) ||
-      c.title.toLowerCase().includes(searchKeyword.toLowerCase()) ||
-      c.skills.some((s) => s.toLowerCase().includes(searchKeyword.toLowerCase()));
-    const matchesLocation = !searchLocation || c.location.toLowerCase().includes(searchLocation.toLowerCase());
+      name.toLowerCase().includes(searchKeyword.toLowerCase()) ||
+      title.toLowerCase().includes(searchKeyword.toLowerCase()) ||
+      skills.some((s: string) => (s || "").toString().toLowerCase().includes(searchKeyword.toLowerCase()));
+
+    const matchesLocation = !searchLocation || location.toLowerCase().includes(searchLocation.toLowerCase());
     const matchesUnlocked = !filterUnlockedOnly || unlockedCandidateIds.includes(c.id);
+
     return matchesKeyword && matchesLocation && matchesUnlocked;
   });
+
 
   const handleCandidateCreated = (newCandidate: any) => {
     setCandidates((prev) => [newCandidate, ...prev]);
@@ -239,22 +248,31 @@ export default function BusinessDashboard() {
           ? c.skills.split(',').map((s: string) => s.trim()).filter(Boolean)
           : [];
 
+        const candidateName = c.name || c.full_name || 'Candidate';
+        const candidateEmail = c.email || 'candidate@example.com';
+        const candidatePhone = c.phone || '+1 (555) 000-0000';
+        const maskedEmail = c.maskedEmail || candidateEmail.replace(/(.{2})(.*)(?=@)/, '$1***');
+        const maskedPhone = c.maskedPhone || (candidatePhone.length > 6 ? candidatePhone.slice(0, 6) + '****' : '+1 (***) ***-****');
+
         return {
           id: c.id || row.candidate_id,
-          name: c.name || 'Candidate',
+          name: candidateName,
           title: c.title || c.job_title || 'Professional',
           location: c.location || 'Location not specified',
           experience: c.experience || (c.experience_years ? `${c.experience_years} years` : 'Experience not listed'),
           skills: skills.length > 0 ? skills : ['Professional'],
           status: c.status || 'New',
-          email: c.email || '',
-          phone: c.phone || '',
+          email: candidateEmail,
+          phone: candidatePhone,
+          maskedEmail,
+          maskedPhone,
           resume_url: c.resume_url || null,
           avatar: null,
           assignedByAdmin: true,
           assignedAt: row.assigned_at,
         };
       }).filter(Boolean);
+
 
       if (normalized.length > 0) {
         setSearchCandidatesList(normalized);
@@ -787,6 +805,16 @@ export default function BusinessDashboard() {
                     {filteredCandidates.map((c) => {
                     const isUnlocked = unlockedCandidateIds.includes(c.id);
                     const isBookmarked = bookmarkedCandidateIds.includes(c.id);
+                    const skillsList: string[] = Array.isArray(c.skills) ? c.skills : [];
+                    const initials = (c.name || "Candidate")
+                      .split(" ")
+                      .map((n: string) => n[0] || "")
+                      .join("")
+                      .slice(0, 2)
+                      .toUpperCase() || "C";
+                    const maskedEmail = c.maskedEmail || (c.email ? c.email.replace(/(.{2})(.*)(?=@)/, '$1***') : "c***@email.com");
+                    const maskedPhone = c.maskedPhone || (c.phone ? c.phone.slice(0, 6) + "****" : "+1 (***) ***-****");
+                    const additionalSkillsCount = Math.max(0, skillsList.length - 3);
 
                     return (
                       <Card
@@ -797,7 +825,7 @@ export default function BusinessDashboard() {
                           {/* Left Avatar & Candidate Meta */}
                           <div className="flex items-start gap-4 flex-1">
                             <div className="w-14 h-14 rounded-2xl gradient-bg text-white font-black flex items-center justify-center text-xl shadow-md shrink-0 relative">
-                              {c.name.split(" ").map((n: string) => n[0]).join("")}
+                              {initials}
                               <span className="w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-background absolute -bottom-1 -right-1"></span>
                             </div>
 
@@ -807,7 +835,7 @@ export default function BusinessDashboard() {
                                   onClick={() => setSelectedCandidate(c)}
                                   className="font-bold text-foreground text-lg hover:text-primary transition-colors cursor-pointer"
                                 >
-                                  {c.name}
+                                  {c.name || "Candidate"}
                                 </h3>
                                 {isUnlocked ? (
                                   <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30 text-[11px] font-bold">
@@ -820,29 +848,29 @@ export default function BusinessDashboard() {
                                 )}
                               </div>
 
-                              <p className="text-sm font-semibold text-primary">{c.title}</p>
+                              <p className="text-sm font-semibold text-primary">{c.title || "Professional"}</p>
 
                               <p className="text-xs text-muted-foreground flex items-center gap-3 flex-wrap pt-0.5">
                                 <span className="flex items-center gap-1 font-medium">
-                                  <MapPin className="w-3.5 h-3.5 text-primary" /> {c.location}
+                                  <MapPin className="w-3.5 h-3.5 text-primary" /> {c.location || "Location not specified"}
                                 </span>
                                 <span>•</span>
                                 <span className="flex items-center gap-1 font-medium">
-                                  <Briefcase className="w-3.5 h-3.5 text-muted-foreground" /> {c.experience} experience
+                                  <Briefcase className="w-3.5 h-3.5 text-muted-foreground" /> {c.experience || "Experience not listed"}
                                 </span>
                               </p>
 
                               {/* Skills Tags */}
                               <div className="flex items-center gap-1.5 flex-wrap pt-2">
                                 <span className="text-xs font-bold text-foreground mr-1">Skills:</span>
-                                {c.skills.slice(0, 3).map((skill: string, idx: number) => (
+                                {skillsList.slice(0, 3).map((skill: string, idx: number) => (
                                   <Badge key={idx} variant="secondary" className="text-[11px] font-medium bg-muted/80">
                                     {skill}
                                   </Badge>
                                 ))}
-                                {c.skills.length > 3 && (
+                                {additionalSkillsCount > 0 && (
                                   <Badge variant="outline" className="text-[11px] font-bold text-primary border-primary/30">
-                                    +{c.additionalSkillsCount} more
+                                    +{additionalSkillsCount} more
                                   </Badge>
                                 )}
                               </div>
@@ -850,10 +878,10 @@ export default function BusinessDashboard() {
                               {/* Masked vs Unlocked Contact Bar */}
                               <div className="pt-2 text-xs font-mono text-muted-foreground flex items-center gap-4 flex-wrap">
                                 <span className="bg-muted/50 px-2.5 py-1 rounded-lg border border-border">
-                                  ✉ {isUnlocked ? c.email : c.maskedEmail}
+                                  ✉ {isUnlocked ? c.email : maskedEmail}
                                 </span>
                                 <span className="bg-muted/50 px-2.5 py-1 rounded-lg border border-border">
-                                  📞 {isUnlocked ? c.phone : c.maskedPhone}
+                                  📞 {isUnlocked ? c.phone : maskedPhone}
                                 </span>
                               </div>
                             </div>
