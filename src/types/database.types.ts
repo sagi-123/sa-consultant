@@ -35,6 +35,46 @@ export interface Database {
           assigned_at?: string
         }
       }
+      business_profiles: {
+        Row: {
+          id: string
+          user_id: string
+          business_name: string
+          location: string | null
+          business_type: string | null
+          hiring_group: string | null
+          business_size: string | null
+          hiring_frequency: string | null
+          logo_url: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          business_name: string
+          location?: string | null
+          business_type?: string | null
+          hiring_group?: string | null
+          business_size?: string | null
+          hiring_frequency?: string | null
+          logo_url?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          business_name?: string
+          location?: string | null
+          business_type?: string | null
+          hiring_group?: string | null
+          business_size?: string | null
+          hiring_frequency?: string | null
+          logo_url?: string | null
+          updated_at?: string
+        }
+      }
       profiles: {
         Row: {
           id: string

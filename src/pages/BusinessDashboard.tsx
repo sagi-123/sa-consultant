@@ -164,16 +164,42 @@ export default function BusinessDashboard() {
   };
 
   useEffect(() => {
-    const saved = localStorage.getItem("sa_business_profile");
-    if (saved) {
+    const fetchBusinessProfile = async () => {
       try {
-        const parsed = JSON.parse(saved);
-        if (parsed.businessName) setProfile(parsed);
-      } catch (err) {
-        console.error(err);
-      }
-    }
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data } = await supabase
+            .from("business_profiles")
+            .select("*")
+            .eq("user_id", user.id)
+            .maybeSingle();
 
+          if (data) {
+            setProfile({
+              businessName: data.business_name || "",
+              location: data.location || "",
+              logo: data.logo_url || undefined,
+            });
+            return;
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching business profile from Supabase:", err);
+      }
+
+      // Fallback to localStorage
+      const saved = localStorage.getItem("sa_business_profile");
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed.businessName) setProfile(parsed);
+        } catch (err) {
+          console.error(err);
+        }
+      }
+    };
+
+    fetchBusinessProfile();
     // Load admin-assigned candidates from Supabase
     loadAdminAssignedCandidates();
   }, []);
