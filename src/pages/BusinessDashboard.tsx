@@ -79,7 +79,7 @@ export default function BusinessDashboard() {
       setEditLocation(profile.location || "");
       setEditLogo(profile.logo || null);
     }
-  }, [profile]);
+  }, [profile.businessName, profile.location, profile.logo]);
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1257,13 +1257,18 @@ export default function BusinessDashboard() {
               <div className="gradient-bg p-6 md:p-8 text-white relative">
                 <div className="flex items-start gap-4 pt-4">
                   <div className="w-20 h-20 rounded-2xl bg-white text-primary font-black text-3xl flex items-center justify-center shadow-xl border-4 border-white/20">
-                    {selectedCandidate.name.split(" ").map((n: string) => n[0]).join("")}
+                    {(selectedCandidate.name || "Candidate")
+                      .split(" ")
+                      .map((n: string) => n[0] || "")
+                      .join("")
+                      .slice(0, 2)
+                      .toUpperCase() || "C"}
                   </div>
                   <div>
-                    <h2 className="text-2xl font-bold font-display">{selectedCandidate.name}</h2>
-                    <p className="text-sm font-semibold opacity-90">{selectedCandidate.title}</p>
+                    <h2 className="text-2xl font-bold font-display">{selectedCandidate.name || "Candidate"}</h2>
+                    <p className="text-sm font-semibold opacity-90">{selectedCandidate.title || "Professional"}</p>
                     <p className="text-xs opacity-80 mt-1 flex items-center gap-1">
-                      <MapPin className="w-3.5 h-3.5" /> {selectedCandidate.location}
+                      <MapPin className="w-3.5 h-3.5" /> {selectedCandidate.location || "Location not specified"}
                     </p>
                   </div>
                 </div>
@@ -1282,8 +1287,8 @@ export default function BusinessDashboard() {
                         ✓ Profile & Contact Information Unlocked
                       </p>
                       <div className="text-xs font-mono space-y-1 pt-1 text-foreground">
-                        <p><strong>Email:</strong> {selectedCandidate.email}</p>
-                        <p><strong>Phone:</strong> {selectedCandidate.phone}</p>
+                        <p><strong>Email:</strong> {selectedCandidate.email || "candidate@example.com"}</p>
+                        <p><strong>Phone:</strong> {selectedCandidate.phone || "+1 (555) 000-0000"}</p>
                       </div>
                       <div className="flex gap-2 pt-2">
                         <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl h-8 px-4">
@@ -1297,14 +1302,14 @@ export default function BusinessDashboard() {
                   ) : (
                     <div className="space-y-3 bg-amber-500/10 border border-amber-500/30 p-4 rounded-xl">
                       <div className="text-xs font-mono text-muted-foreground space-y-1">
-                        <p><strong>Email:</strong> {selectedCandidate.maskedEmail}</p>
-                        <p><strong>Phone:</strong> {selectedCandidate.maskedPhone}</p>
+                        <p><strong>Email:</strong> {selectedCandidate.maskedEmail || "c***@email.com"}</p>
+                        <p><strong>Phone:</strong> {selectedCandidate.maskedPhone || "+1 (***) ***-****"}</p>
                       </div>
                       <p className="text-xs text-muted-foreground italic">
                         Contact details and full resume are protected. Click below to unlock with 1 free credit.
                       </p>
                       <Button
-                        onClick={() => handleUnlockProfile(selectedCandidate.id, selectedCandidate.name)}
+                        onClick={() => handleUnlockProfile(selectedCandidate.id, selectedCandidate.name || "Candidate")}
                         className="w-full gradient-bg text-white font-bold text-xs rounded-xl h-10 shadow-md flex items-center justify-center gap-2"
                       >
                         <Lock className="w-4 h-4" /> Unlock Profile & Resume
@@ -1323,14 +1328,14 @@ export default function BusinessDashboard() {
                       <div className="flex items-center justify-between border-b border-border pb-2">
                         <div className="flex items-center gap-2">
                           <FileCheck className="w-5 h-5 text-emerald-500" />
-                          <span className="text-xs font-bold">{selectedCandidate.name.replace(" ", "_")}_Resume.pdf</span>
+                          <span className="text-xs font-bold">{(selectedCandidate.name || "Candidate").replace(/\s+/g, "_")}_Resume.pdf</span>
                         </div>
                         <Button size="sm" variant="outline" className="text-[11px] h-7 px-2.5 rounded-lg">
                           <Download className="w-3 h-3 mr-1" /> Download
                         </Button>
                       </div>
                       <p className="text-xs text-muted-foreground leading-relaxed">
-                        "{selectedCandidate.summary}"
+                        "{selectedCandidate.summary || "Candidate profile summary and career history."}"
                       </p>
                     </div>
                   ) : (
@@ -1353,11 +1358,11 @@ export default function BusinessDashboard() {
                   </h3>
                   <div className="space-y-3 border-l-2 border-primary/30 pl-4 ml-1">
                     <div>
-                      <h4 className="font-bold text-xs text-foreground">{selectedCandidate.companyRole}</h4>
-                      <p className="text-[11px] text-primary font-semibold">{selectedCandidate.company}</p>
-                      <p className="text-[11px] text-muted-foreground">{selectedCandidate.dates}</p>
+                      <h4 className="font-bold text-xs text-foreground">{selectedCandidate.companyRole || selectedCandidate.title || "Professional Role"}</h4>
+                      <p className="text-[11px] text-primary font-semibold">{selectedCandidate.company || "Enterprise Firm"}</p>
+                      <p className="text-[11px] text-muted-foreground">{selectedCandidate.dates || selectedCandidate.experience || "Recent"}</p>
                       <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                        {selectedCandidate.summary}
+                        {selectedCandidate.summary || "Demonstrated expertise in software delivery, client communication, and teamwork."}
                       </p>
                     </div>
                   </div>
@@ -1369,7 +1374,7 @@ export default function BusinessDashboard() {
                     <GraduationCap className="w-4 h-4 text-primary" /> Education & Qualifications
                   </h3>
                   <p className="text-xs text-foreground font-semibold bg-muted/50 p-3 rounded-xl border border-border">
-                    🎓 {selectedCandidate.education}
+                    🎓 {selectedCandidate.education || "Bachelor Degree / Higher Qualification"}
                   </p>
                 </Card>
 
@@ -1379,7 +1384,7 @@ export default function BusinessDashboard() {
                     <Sparkles className="w-4 h-4 text-primary" /> Top Skills & Competencies
                   </h3>
                   <div className="flex flex-wrap gap-2">
-                    {selectedCandidate.skills.map((s: string, idx: number) => (
+                    {(Array.isArray(selectedCandidate.skills) ? selectedCandidate.skills : []).map((s: string, idx: number) => (
                       <Badge key={idx} className="bg-primary/10 text-primary border-primary/20 text-xs px-3 py-1 font-semibold">
                         {s}
                       </Badge>
