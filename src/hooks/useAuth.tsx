@@ -63,6 +63,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signOut = async () => {
+    try {
+      localStorage.removeItem("sa_business_profile");
+      localStorage.removeItem("sa_admin_assigned_candidates");
+      localStorage.removeItem("sa_shared_candidates");
+    } catch {}
     await supabase.auth.signOut();
   };
 

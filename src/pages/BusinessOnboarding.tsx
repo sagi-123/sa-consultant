@@ -80,22 +80,24 @@ export default function BusinessOnboarding() {
               hiringFrequency: data.hiring_frequency || "",
               logo: data.logo_url || null,
             };
-            localStorage.setItem("sa_business_profile", JSON.stringify(profileObj));
+            localStorage.setItem(`sa_business_profile_${user.id}`, JSON.stringify(profileObj));
             navigate("/business/dashboard", { replace: true });
             return;
           }
         }
 
-        // 2. Check localStorage fallback
-        const saved = localStorage.getItem("sa_business_profile");
-        if (saved) {
-          try {
-            const parsed = JSON.parse(saved);
-            if (parsed && parsed.businessName) {
-              navigate("/business/dashboard", { replace: true });
-              return;
-            }
-          } catch {}
+        // 2. Check user-specific localStorage fallback
+        if (user) {
+          const userSaved = localStorage.getItem(`sa_business_profile_${user.id}`);
+          if (userSaved) {
+            try {
+              const parsed = JSON.parse(userSaved);
+              if (parsed && parsed.businessName) {
+                navigate("/business/dashboard", { replace: true });
+                return;
+              }
+            } catch {}
+          }
         }
       } catch (err) {
         console.error("Profile check error:", err);
@@ -154,8 +156,8 @@ export default function BusinessOnboarding() {
 
       if (error) throw error;
 
-      // Also cache in localStorage for instant reads within same session
-      localStorage.setItem("sa_business_profile", JSON.stringify({
+      // Cache in user-specific localStorage key
+      localStorage.setItem(`sa_business_profile_${user.id}`, JSON.stringify({
         businessName, location, businessType, hiringGroup, businessSize, hiringFrequency, logo: logoPreview,
       }));
 

@@ -225,13 +225,14 @@ export default function BusinessDashboard() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
+          // 1. Query user-specific business profile from Supabase
           const { data } = await supabase
             .from("business_profiles")
             .select("*")
             .eq("user_id", user.id)
             .maybeSingle();
 
-          if (data) {
+          if (data && data.business_name) {
             setProfile({
               businessName: data.business_name || "",
               location: data.location || "",
@@ -239,21 +240,31 @@ export default function BusinessDashboard() {
             });
             return;
           }
+
+          // 2. Check user-specific localStorage key
+          const userSaved = localStorage.getItem(`sa_business_profile_${user.id}`);
+          if (userSaved) {
+            try {
+              const parsed = JSON.parse(userSaved);
+              if (parsed && parsed.businessName) {
+                setProfile({
+                  businessName: parsed.businessName,
+                  location: parsed.location || "",
+                  logo: parsed.logo || undefined,
+                });
+                return;
+              }
+            } catch (err) {
+              console.error(err);
+            }
+          }
         }
       } catch (err) {
         console.error("Error fetching business profile from Supabase:", err);
       }
 
-      // Fallback to localStorage
-      const saved = localStorage.getItem("sa_business_profile");
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (parsed.businessName) setProfile(parsed);
-        } catch (err) {
-          console.error(err);
-        }
-      }
+      // Default: clean state if no profile for this specific user
+      setProfile({ businessName: "", location: "" });
     };
 
     fetchBusinessProfile();
