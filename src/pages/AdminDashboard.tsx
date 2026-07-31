@@ -355,12 +355,14 @@ const AdminDashboard = () => {
           resume_url: candidate.resume_url || null,
         };
 
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
+
         const { error } = await supabase
           .from('business_candidate_assignments')
           .insert({
             candidate_id: candidate.id,
             business_user_id: 'all', // visible to all business dashboard users
-            assigned_by: session?.user?.id ?? null,
+            assigned_by: currentUser?.id ?? null,
             note: JSON.stringify(snapshot),
           });
 
